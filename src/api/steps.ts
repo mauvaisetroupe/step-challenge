@@ -41,3 +41,20 @@ export async function syncSteps(
     throw new Error(`Backend error: ${response.status}`)
   }
 }
+
+export async function getSteps(userId: string) {
+  const response = await fetch(`${API_URL}/api/steps/${userId}`)
+
+  if (!response.ok) {
+    throw new Error(`Backend error: ${response.status}`)
+  }
+
+  return response.json() as Promise<
+    Array<{
+      user_id: string
+      date: string
+      steps: number
+      updated_at: string
+    }>
+  >
+}

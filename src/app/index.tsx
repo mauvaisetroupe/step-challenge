@@ -6,9 +6,11 @@ import {
   initialize,
   requestPermission,
 } from 'react-native-health-connect'
-import { createUser, syncSteps } from '../api/steps'
+import { createUser, getSteps, syncSteps } from '../api/steps'
 
 const USER_ID_KEY = '@step-challenge/user-id-v2'
+
+
 
 async function getUserId() {
   const existingId = await AsyncStorage.getItem(USER_ID_KEY)
@@ -75,6 +77,9 @@ export default function HomeScreen() {
         now.toISOString().slice(0, 10),
         todaySteps,
       )
+
+      const storedSteps = await getSteps(userId)
+      console.log('Steps from backend:', storedSteps)
 
       console.log('Steps synchronized:', {
         userId,
