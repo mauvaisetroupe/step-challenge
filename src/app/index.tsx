@@ -6,8 +6,8 @@ import {
   initialize,
   requestPermission,
 } from 'react-native-health-connect'
+import { createUser, syncSteps } from '../api/steps'
 
-const API_URL = 'http://192.168.1.109:3000'
 const USER_ID_KEY = '@step-challenge/user-id-v2'
 
 async function getUserId() {
@@ -17,27 +17,14 @@ async function getUserId() {
     return existingId
   }
 
-  const response = await fetch(`${API_URL}/api/users`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      name: 'Lionel',
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`User registration error: ${response.status}`)
-  }
-
-  const user = await response.json()
+  const user = await createUser('Lionel')
 
   await AsyncStorage.setItem(USER_ID_KEY, user.id)
 
   console.log('User registered:', user.id)
 
   return user.id
+
 }
 
 export default function HomeScreen() {
@@ -83,21 +70,11 @@ export default function HomeScreen() {
 
       const userId = await getUserId()
 
-      const response = await fetch(`${API_URL}/api/steps`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          date: now.toISOString().slice(0, 10),
-          steps: todaySteps,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Backend error: ${response.status}`)
-      }
+      await syncSteps(
+        userId,
+        now.toISOString().slice(0, 10),
+        todaySteps,
+      )
 
       console.log('Steps synchronized:', {
         userId,
