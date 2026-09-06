@@ -3,6 +3,7 @@ import Fastify from 'fastify'
 import { checkDatabase } from './db.js'
 import healthRoutes from './routes/health.js'
 import stepsRoutes from './routes/steps.js'
+import usersRoutes from './routes/users.js'
 
 console.log('DATABASE_HOST:', process.env.DATABASE_HOST)
 console.log('DATABASE_NAME:', process.env.DATABASE_NAME)
@@ -21,6 +22,10 @@ await app.register(healthRoutes, {
 await app.register(stepsRoutes, {
   prefix: '/api',
 })
+await app.register(usersRoutes, {
+  prefix: '/api',
+})
+
 try {
   await checkDatabase()
 

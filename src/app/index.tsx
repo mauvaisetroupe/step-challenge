@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import {
@@ -5,6 +6,39 @@ import {
   initialize,
   requestPermission,
 } from 'react-native-health-connect'
+
+const API_URL = 'http://192.168.1.109:3000'
+const USER_ID_KEY = '@step-challenge/user-id-v2'
+
+async function getUserId() {
+  const existingId = await AsyncStorage.getItem(USER_ID_KEY)
+
+  if (existingId) {
+    return existingId
+  }
+
+  const response = await fetch(`${API_URL}/api/users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: 'Lionel',
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`User registration error: ${response.status}`)
+  }
+
+  const user = await response.json()
+
+  await AsyncStorage.setItem(USER_ID_KEY, user.id)
+
+  console.log('User registered:', user.id)
+
+  return user.id
+}
 
 export default function HomeScreen() {
   const [steps, setSteps] = useState<number | null>(null)
@@ -43,19 +77,39 @@ export default function HomeScreen() {
         },
       })
 
-      console.log(
-        'Health Connect steps:',
-        JSON.stringify(result)
-      )
+      const todaySteps = result.COUNT_TOTAL ?? 0
 
-      setSteps(result.COUNT_TOTAL ?? 0)
+      setSteps(todaySteps)
+
+      const userId = await getUserId()
+
+      const response = await fetch(`${API_URL}/api/steps`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          date: now.toISOString().slice(0, 10),
+          steps: todaySteps,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Backend error: ${response.status}`)
+      }
+
+      console.log('Steps synchronized:', {
+        userId,
+        steps: todaySteps,
+      })
     } catch (err) {
-      console.error('Health Connect error:', err)
+      console.error('Step synchronization error:', err)
 
       setError(
         err instanceof Error
           ? err.message
-          : 'Unable to read steps from Health Connect'
+          : 'Unable to synchronize steps'
       )
     } finally {
       setLoading(false)
