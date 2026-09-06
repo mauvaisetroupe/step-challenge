@@ -21,6 +21,29 @@ const usersRoutes: FastifyPluginAsync = async (app) => {
 
     return reply.send(result.rows[0])
   })
+
+  app.get('/users/:id', async (request, reply) => {
+    const { id } = request.params as {
+      id: string
+    }
+
+    const result = await pool.query(
+      `
+      SELECT id, name, created_at
+      FROM users
+      WHERE id = $1
+      `,
+      [id]
+    )
+
+    if (result.rows.length === 0) {
+      return reply.code(404).send({
+        error: 'User not found',
+      })
+    }
+
+    return reply.send(result.rows[0])
+  })
 }
 
 export default usersRoutes
