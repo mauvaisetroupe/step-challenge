@@ -62,39 +62,3 @@ export async function getSteps(userId: string) {
     }>
   >
 }
-
-export async function syncStepSample(
-  userId: string,
-  recordedAt: string,
-  steps: number,
-) {
-  const response = await fetch(`${API_URL}/api/steps/sample`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      userId,
-      recordedAt,
-      steps,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Backend error: ${response.status}`)
-  }
-}
-
-export async function getStepSamples(userId: string) {
-  const response = await fetch(`${API_URL}/api/steps/samples/${userId}`)
-
-  if (!response.ok) {
-    throw new Error(`Backend error: ${response.status}`)
-  }
-
-  return response.json() as Promise<Array<{
-    user_id: string
-    recorded_at: string
-    steps: number
-  }>>
-}
