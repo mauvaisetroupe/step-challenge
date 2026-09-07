@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native'
+
 import { getLeaderboard } from '../../api/steps'
 import { syncLast30Days } from '../../services/stepSync'
 
@@ -83,21 +84,6 @@ export default function LeaderboardScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.title}>🏆 Classement</Text>
-
-        <Pressable
-          style={[
-            styles.refreshButton,
-            refreshing && styles.refreshButtonDisabled,
-          ]}
-          onPress={handleRefresh}
-          disabled={refreshing}
-        >
-          {refreshing ? (
-            <ActivityIndicator size="small" />
-          ) : (
-            <Text style={styles.refreshIcon}>↻</Text>
-          )}
-        </Pressable>
       </View>
 
       <View style={styles.periodSelector}>
@@ -136,6 +122,32 @@ export default function LeaderboardScreen() {
         </Pressable>
       </View>
 
+      <View style={styles.refreshRow}>
+        <Pressable
+          style={[
+            styles.refreshButton,
+            refreshing && styles.refreshButtonDisabled,
+          ]}
+          onPress={handleRefresh}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <ActivityIndicator
+              size="small"
+              color="#111827"
+            />
+          ) : (
+            <>
+              <Text style={styles.refreshIcon}>↻</Text>
+
+              <Text style={styles.refreshText}>
+                Actualiser
+              </Text>
+            </>
+          )}
+        </Pressable>
+      </View>
+
       <Text style={styles.periodTitle}>{periodLabel}</Text>
 
       {loading ? (
@@ -158,7 +170,10 @@ export default function LeaderboardScreen() {
       ) : (
         <View style={styles.list}>
           {results.map((user, index) => (
-            <View key={user.id} style={styles.row}>
+            <View
+              key={user.id}
+              style={styles.row}
+            >
               <View style={styles.rank}>
                 {index < 3 ? (
                   <Text style={styles.medal}>
@@ -200,9 +215,6 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 20,
   },
 
@@ -211,30 +223,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  refreshButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f1f1f1',
-  },
-
-  refreshButtonDisabled: {
-    opacity: 0.6,
-  },
-
-  refreshIcon: {
-    fontSize: 26,
-    lineHeight: 30,
-  },
-
   periodSelector: {
     flexDirection: 'row',
     backgroundColor: '#f1f1f1',
     borderRadius: 10,
     padding: 3,
-    marginBottom: 24,
+    marginBottom: 12,
   },
 
   periodButton: {
@@ -255,6 +249,36 @@ const styles = StyleSheet.create({
 
   periodTextActive: {
     fontWeight: '700',
+  },
+
+  refreshRow: {
+    alignItems: 'flex-end',
+    marginBottom: 20,
+  },
+
+  refreshButton: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: '#f1f1f1',
+  },
+
+  refreshButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  refreshIcon: {
+    fontSize: 22,
+    lineHeight: 24,
+  },
+
+  refreshText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 
   periodTitle: {
