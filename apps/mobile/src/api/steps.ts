@@ -13,6 +13,10 @@ export async function createUser(name: string) {
     body: JSON.stringify({ name }),
   })
 
+  if (response.status === 409) {
+    throw new Error('Ce prénom est déjà utilisé')
+  }
+
   if (!response.ok) {
     throw new Error(`User registration error: ${response.status}`)
   }

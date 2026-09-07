@@ -2,13 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 
 import { createUser } from '../api/steps'
@@ -54,9 +54,9 @@ export default function OnboardingScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.content}>
-        <Text style={styles.eyebrow}>PREMIER LANCEMENT</Text>
+    > 
+    <View style={styles.content}>
+      <Text style={styles.eyebrow}>PREMIER LANCEMENT</Text>
 
         <Text style={styles.title}>Step Challenge</Text>
 
@@ -67,7 +67,10 @@ export default function OnboardingScreen() {
         <TextInput
           style={styles.input}
           value={name}
-          onChangeText={setName}
+          onChangeText={(value) => {
+            setName(value)
+            setError(null)
+          }}
           placeholder="Ton prénom"
           placeholderTextColor="#9CA3AF"
           autoCapitalize="words"
