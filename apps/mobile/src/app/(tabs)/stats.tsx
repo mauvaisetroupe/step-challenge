@@ -1,34 +1,52 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
-  Dimensions,
+  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native'
+import Svg, {
+  Circle,
+  Line,
+  Polyline,
+  Rect,
+  Text as SvgText,
+} from 'react-native-svg'
+
 import {
   aggregateGroupByDuration,
   aggregateGroupByPeriod,
   initialize,
   requestPermission,
 } from 'react-native-health-connect'
-import Svg, {
-  Circle,
-  Line,
-  Path,
-  Rect,
-  Text as SvgText,
-} from 'react-native-svg'
+
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { getSteps } from '../../api/steps'
+
+const USER_ID_KEY = '@step-challenge/user-id-v2'
+const DAILY_GOAL = 10_000
 
 type Period = '1d' | '7d' | '30d' | '1y'
 
 type ChartPoint = {
-  date: Date
+  label: string
+  value: number
+}
+
+type DayStat = {
+  date: string
   steps: number
 }
 
-const PERIODS: Array<{ key: Period; label: string }> = [
+type MonthStat = {
+  date: string
+  steps: number
+}
+
+const PERIODS: { key: Period; label: string }[] = [
   { key: '1d', label: '1j' },
   { key: '7d', label: '7j' },
   { key: '30d', label: '30j' },
@@ -41,7 +59,7 @@ function getStartOfDay(date: Date) {
   return result
 }
 
-function getLocalDateKey(date: Date) {
+function formatDateKey(date: Date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -49,80 +67,75 @@ function getLocalDateKey(date: Date) {
   return `${year}-${month}-${day}`
 }
 
-function getPeriodRange(period: Period) {
-  const end = new Date()
-
-  if (period === '1d') {
-    return {
-      start: getStartOfDay(end),
-      end,
-    }
-  }
-
-  const start = getStartOfDay(end)
-
-  if (period === '7d') {
-    start.setDate(start.getDate() - 6)
-  } else if (period === '30d') {
-    start.setDate(start.getDate() - 29)
-  } else {
-    start.setFullYear(start.getFullYear() - 1)
-    start.setDate(start.getDate() + 1)
-  }
-
-  return {
-    start,
-    end,
-  }
+function parseDateKey(value: string) {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
 }
 
-async function ensureHealthConnect() {
-  const initialized = await initialize()
-
-  if (!initialized) {
-    throw new Error('Health Connect is not available')
-  }
-
-  await requestPermission([
-    {
-      accessType: 'read',
-      recordType: 'Steps',
-    },
-  ])
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('fr-FR').format(Math.round(value))
 }
 
-async function getIntradayData(): Promise<ChartPoint[]> {
-  const { start, end } = getPeriodRange('1d')
-
-  const result = await aggregateGroupByDuration({
-    recordType: 'Steps',
-    timeRangeFilter: {
-      operator: 'between',
-      startTime: start.toISOString(),
-      endTime: end.toISOString(),
-    },
-    timeRangeSlicer: {
-      duration: 'HOURS',
-      length: 1,
-    },
+function formatShortDate(date: Date) {
+  return date.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
   })
-
-  return result.map((bucket) => ({
-    date: new Date(bucket.startTime),
-    steps: bucket.result.COUNT_TOTAL ?? 0,
-  }))
 }
 
-async function getDailyData(days: 7 | 30): Promise<ChartPoint[]> {
-  const period: Period = days === 7 ? '7d' : '30d'
-  const { start, end } = getPeriodRange(period)
+function formatMonth(date: Date) {
+  return date.toLocaleDateString('fr-FR', {
+    month: 'short',
+  })
+}
 
+function formatWeekDay(date: Date) {
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+  })
+}
+
+function getDaysAgo(date: Date, days: number) {
+  const result = new Date(date)
+  result.setDate(result.getDate() - days)
+  return result
+}
+
+function getMonthStart(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+function getMonthsAgo(date: Date, months: number) {
+  return new Date(date.getFullYear(), date.getMonth() - months, 1)
+}
+
+function getMonthDays(date: Date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    0,
+  ).getDate()
+}
+
+function getPercent(steps: number, goal = DAILY_GOAL) {
+  return Math.round((steps / goal) * 100)
+}
+
+function getMonthPercent(steps: number, date: Date) {
+  const goal = DAILY_GOAL * getMonthDays(date)
+  return Math.round((steps / goal) * 100)
+}
+
+async function getHealthConnectDailyStats(
+  startDate: Date,
+  endDate: Date,
+): Promise<DayStat[]> {
   const result = await aggregateGroupByPeriod({
     recordType: 'Steps',
     timeRangeFilter: {
       operator: 'between',
-      startTime: start.toISOString(),
-      endTime: end.toISOString(),
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
     },
     timeRangeSlicer: {
       period: 'DAYS',
@@ -130,75 +143,355 @@ async function getDailyData(days: 7 | 30): Promise<ChartPoint[]> {
     },
   })
 
-  return result.map((bucket) => ({
-    date: new Date(bucket.startTime),
-    steps: bucket.result.COUNT_TOTAL ?? 0,
-  }))
+  const stats = new Map<string, number>()
+
+  for (const bucket of result) {
+    const date = new Date(bucket.startTime)
+    const key = formatDateKey(date)
+
+    stats.set(
+      key,
+      Number(bucket.result?.COUNT_TOTAL ?? 0),
+    )
+  }
+
+  const days: DayStat[] = []
+
+  const current = new Date(startDate)
+
+  while (current < endDate) {
+    const key = formatDateKey(current)
+
+    days.push({
+      date: key,
+      steps: stats.get(key) ?? 0,
+    })
+
+    current.setDate(current.getDate() + 1)
+  }
+
+  return days
 }
 
-async function getMonthlyData(): Promise<ChartPoint[]> {
-  const { start, end } = getPeriodRange('1y')
-
+async function getHealthConnectMonthlyStats(
+  startDate: Date,
+  endDate: Date,
+): Promise<MonthStat[]> {
   const result = await aggregateGroupByPeriod({
     recordType: 'Steps',
     timeRangeFilter: {
       operator: 'between',
-      startTime: start.toISOString(),
-      endTime: end.toISOString(),
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
+    },
+      timeRangeSlicer: {
+        period: 'MONTHS',
+        length: 1,
+      },
+  })
+
+  const stats = new Map<string, number>()
+
+  for (const bucket of result) {
+    const date = new Date(bucket.startTime)
+    const key = `${date.getFullYear()}-${String(
+      date.getMonth() + 1,
+    ).padStart(2, '0')}`
+
+    stats.set(
+      key,
+      Number(bucket.result?.COUNT_TOTAL ?? 0),
+    )
+  }
+
+  const months: MonthStat[] = []
+
+  const current = new Date(startDate)
+
+  while (current < endDate) {
+    const key = `${current.getFullYear()}-${String(
+      current.getMonth() + 1,
+    ).padStart(2, '0')}`
+
+    months.push({
+      date: formatDateKey(current),
+      steps: stats.get(key) ?? 0,
+    })
+
+    current.setMonth(current.getMonth() + 1)
+  }
+
+  return months
+}
+
+async function getHealthConnectIntradayStats(
+  startDate: Date,
+  endDate: Date,
+): Promise<ChartPoint[]> {
+  const result = await aggregateGroupByDuration({
+    recordType: 'Steps',
+    timeRangeFilter: {
+      operator: 'between',
+      startTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
     },
     timeRangeSlicer: {
-      period: 'MONTHS',
+      duration: 'HOURS',
       length: 1,
     },
   })
 
-  return result.map((bucket) => ({
-    date: new Date(bucket.startTime),
-    steps: bucket.result.COUNT_TOTAL ?? 0,
-  }))
+console.log('INTRADAY START', startDate.toString())
+console.log('INTRADAY END', endDate.toString())
+console.log(
+  'INTRADAY SLICER',
+  JSON.stringify({
+    type: 'HOURS',
+    length: 1,
+  }),
+)
+console.log(
+  'INTRADAY BUCKETS',
+  result.length,
+)
+console.log(
+  'INTRADAY RESULT',
+  JSON.stringify(result, null, 2),
+)
+
+
+  return result.map((bucket) => {
+    const date = new Date(bucket.startTime)
+
+    return {
+      label: date.toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+      }),
+      value: Number(bucket.result?.COUNT_TOTAL ?? 0),
+    }
+  })
+}
+
+async function getWebDailyStats(
+  userId: string,
+  startDate: Date,
+  endDate: Date,
+): Promise<DayStat[]> {
+  const data = await getSteps(userId)
+
+  const stats = new Map<string, number>()
+
+  for (const item of data) {
+    const key = String(item.date).slice(0, 10)
+
+    stats.set(key, Number(item.steps ?? 0))
+  }
+
+  const days: DayStat[] = []
+
+  const current = new Date(startDate)
+
+  while (current < endDate) {
+    const key = formatDateKey(current)
+
+    days.push({
+      date: key,
+      steps: stats.get(key) ?? 0,
+    })
+
+    current.setDate(current.getDate() + 1)
+  }
+
+  return days
+}
+
+async function getWebMonthlyStats(
+  userId: string,
+  startDate: Date,
+  endDate: Date,
+): Promise<MonthStat[]> {
+  const data = await getSteps(userId)
+
+  const stats = new Map<string, number>()
+
+  for (const item of data) {
+    const date = parseDateKey(String(item.date).slice(0, 10))
+
+    if (date < startDate || date >= endDate) {
+      continue
+    }
+
+    const key = `${date.getFullYear()}-${String(
+      date.getMonth() + 1,
+    ).padStart(2, '0')}`
+
+    stats.set(
+      key,
+      (stats.get(key) ?? 0) + Number(item.steps ?? 0),
+    )
+  }
+
+  const months: MonthStat[] = []
+
+  const current = new Date(startDate)
+
+  while (current < endDate) {
+    const key = `${current.getFullYear()}-${String(
+      current.getMonth() + 1,
+    ).padStart(2, '0')}`
+
+    months.push({
+      date: formatDateKey(current),
+      steps: stats.get(key) ?? 0,
+    })
+
+    current.setMonth(current.getMonth() + 1)
+  }
+
+  return months
 }
 
 export default function StatsScreen() {
-  const [period, setPeriod] = useState<Period>('1d')
-  const [data, setData] = useState<ChartPoint[]>([])
+  const [period, setPeriod] = useState<Period>('7d')
+  const [dailyStats, setDailyStats] = useState<DayStat[]>([])
+  const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
+  const [intradayStats, setIntradayStats] = useState<ChartPoint[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const loadStats = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+
     try {
-      setLoading(true)
-      setError(null)
+      const now = new Date()
 
-      await ensureHealthConnect()
+      if (Platform.OS === 'web') {
+        const userId = await AsyncStorage.getItem(USER_ID_KEY)
 
-      let result: ChartPoint[]
+        if (!userId) {
+          throw new Error('Utilisateur introuvable')
+        }
 
-      switch (period) {
-        case '1d':
-          result = await getIntradayData()
-          break
+        if (period === '7d' || period === '30d') {
+          const days = period === '7d' ? 7 : 30
+          const startDate = getStartOfDay(getDaysAgo(now, days - 1))
+          const endDate = new Date(now)
+          endDate.setDate(endDate.getDate() + 1)
+          endDate.setHours(0, 0, 0, 0)
 
-        case '7d':
-          result = await getDailyData(7)
-          break
+          const stats = await getWebDailyStats(
+            userId,
+            startDate,
+            endDate,
+          )
 
-        case '30d':
-          result = await getDailyData(30)
-          break
+          setDailyStats(stats)
+          setMonthlyStats([])
+          setIntradayStats([])
 
-        case '1y':
-          result = await getMonthlyData()
-          break
+          return
+        }
+
+        if (period === '1y') {
+          const startDate = getMonthsAgo(
+            getMonthStart(now),
+            11,
+          )
+          const endDate = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            1,
+          )
+
+          const stats = await getWebMonthlyStats(
+            userId,
+            startDate,
+            endDate,
+          )
+
+          setMonthlyStats(stats)
+          setDailyStats([])
+          setIntradayStats([])
+
+          return
+        }
+
+        setDailyStats([])
+        setMonthlyStats([])
+        setIntradayStats([])
+
+        return
       }
 
-      setData(result)
+      await initialize()
+
+      await requestPermission([
+        {
+          accessType: 'read',
+          recordType: 'Steps',
+        },
+      ])
+
+      if (period === '1d') {
+        const startDate = getStartOfDay(now)
+
+        const stats = await getHealthConnectIntradayStats(
+          startDate,
+          now,
+        )
+
+        setIntradayStats(stats)
+        setDailyStats([])
+        setMonthlyStats([])
+
+        return
+      }
+
+      if (period === '7d' || period === '30d') {
+        const days = period === '7d' ? 7 : 30
+        const startDate = getStartOfDay(
+          getDaysAgo(now, days - 1),
+        )
+        const endDate = new Date(now)
+
+        const stats = await getHealthConnectDailyStats(
+          startDate,
+          endDate,
+        )
+
+        setDailyStats(stats)
+        setMonthlyStats([])
+        setIntradayStats([])
+
+        return
+      }
+
+      const startDate = getMonthsAgo(
+        getMonthStart(now),
+        11,
+      )
+      const endDate = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        1,
+      )
+
+      const stats = await getHealthConnectMonthlyStats(
+        startDate,
+        endDate,
+      )
+
+      setMonthlyStats(stats)
+      setDailyStats([])
+      setIntradayStats([])
     } catch (err) {
-      console.error('Failed to load statistics', err)
+      console.error(err)
 
       setError(
         err instanceof Error
           ? err.message
-          : 'Unable to load statistics',
+          : 'Impossible de charger les statistiques',
       )
     } finally {
       setLoading(false)
@@ -211,408 +504,610 @@ export default function StatsScreen() {
 
   const totalSteps = useMemo(() => {
     if (period === '1d') {
-      return data.length > 0
-        ? data[data.length - 1].steps
-        : 0
+      return intradayStats.reduce(
+        (total, item) => total + item.value,
+        0,
+      )
     }
 
-    return data.reduce((total, point) => total + point.steps, 0)
-  }, [data, period])
-
-  const screenWidth = Dimensions.get('window').width
-  const chartWidth = Math.max(screenWidth - 48, 300)
-  const chartHeight = 250
-
-  const graphLeft = 48
-  const graphRight = chartWidth - 12
-  const graphTop = 20
-  const graphBottom = chartHeight - 40
-
-  const graphWidth = graphRight - graphLeft
-  const graphHeight = graphBottom - graphTop
-
-  const maxSteps = Math.max(
-    ...data.map((point) => point.steps),
-    1,
-  )
-
-  const intradayPoints = data.map((point) => {
-    const startOfDay = getStartOfDay(new Date())
-    const endOfDay = new Date(startOfDay)
-    endOfDay.setDate(endOfDay.getDate() + 1)
-
-    const elapsed =
-      point.date.getTime() - startOfDay.getTime()
-
-    const duration =
-      endOfDay.getTime() - startOfDay.getTime()
-
-    const x =
-      graphLeft +
-      Math.max(0, Math.min(1, elapsed / duration)) *
-        graphWidth
-
-    const y =
-      graphBottom -
-      (point.steps / maxSteps) * graphHeight
-
-    return {
-      ...point,
-      x,
-      y,
+    if (period === '1y') {
+      return monthlyStats.reduce(
+        (total, item) => total + item.steps,
+        0,
+      )
     }
-  })
 
-  const intradayPath =
-    intradayPoints.length > 0
-      ? intradayPoints
-          .map(
-            (point, index) =>
-              `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`,
-          )
-          .join(' ')
-      : ''
-
-  const barWidth =
-    data.length > 0
-      ? Math.max(
-          4,
-          Math.min(24, (graphWidth / data.length) * 0.6),
-        )
-      : 0
-
-  const bars = data.map((point, index) => {
-    const slotWidth = graphWidth / Math.max(data.length, 1)
-
-    const x =
-      graphLeft +
-      index * slotWidth +
-      (slotWidth - barWidth) / 2
-
-    const height =
-      (point.steps / maxSteps) * graphHeight
-
-    const y = graphBottom - height
-
-    return {
-      ...point,
-      x,
-      y,
-      height,
-    }
-  })
-
-  const gridValues = [0, 0.25, 0.5, 0.75, 1]
+    return dailyStats.reduce(
+      (total, item) => total + item.steps,
+      0,
+    )
+  }, [
+    period,
+    dailyStats,
+    monthlyStats,
+    intradayStats,
+  ])
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
     >
-      <Text style={styles.title}>Stats</Text>
+      <Text style={styles.title}>Statistiques</Text>
 
       <View style={styles.periodSelector}>
-        {PERIODS.map((item) => {
-          const active = item.key === period
-
-          return (
-            <View
-              key={item.key}
+        {PERIODS.map((item) => (
+          <Pressable
+            key={item.key}
+            style={[
+              styles.periodButton,
+              period === item.key &&
+                styles.periodButtonActive,
+            ]}
+            onPress={() => setPeriod(item.key)}
+          >
+            <Text
               style={[
-                styles.period,
-                active && styles.periodActive,
+                styles.periodButtonText,
+                period === item.key &&
+                  styles.periodButtonTextActive,
               ]}
-              onTouchEnd={() => setPeriod(item.key)}
             >
-              <Text
-                style={[
-                  styles.periodText,
-                  active && styles.periodActiveText,
-                ]}
-              >
-                {item.label}
-              </Text>
-            </View>
-          )
-        })}
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View>
-            <Text style={styles.cardTitle}>
-              {period === '1d'
-                ? "Aujourd'hui"
-                : period === '7d'
-                  ? '7 derniers jours'
-                  : period === '30d'
-                    ? '30 derniers jours'
-                    : '12 derniers mois'}
+      {loading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" />
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+
+          <Pressable
+            style={styles.retryButton}
+            onPress={loadStats}
+          >
+            <Text style={styles.retryText}>
+              Réessayer
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <>
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalValue}>
+              {formatNumber(totalSteps)}
             </Text>
 
-            {!loading && !error && (
-              <Text style={styles.total}>
-                {totalSteps.toLocaleString('fr-FR')}
-                <Text style={styles.totalLabel}> pas</Text>
-              </Text>
+            <Text style={styles.totalLabel}>
+              pas
+            </Text>
+          </View>
+
+          <View style={styles.chartContainer}>
+            {period === '1d' ? (
+              <IntradayChart data={intradayStats} />
+            ) : period === '1y' ? (
+              <BarChart
+                data={monthlyStats.map((item) => ({
+                  label: formatMonth(
+                    parseDateKey(item.date),
+                  ),
+                  value: item.steps,
+                }))}
+              />
+            ) : (
+              <BarChart
+                data={dailyStats.map((item) => ({
+                  label: formatShortDate(
+                    parseDateKey(item.date),
+                  ),
+                  value: item.steps,
+                }))}
+              />
             )}
           </View>
-        </View>
 
-        {loading && (
-          <View style={styles.loading}>
-            <ActivityIndicator size="large" />
-          </View>
-        )}
+          {period === '7d' || period === '30d' ? (
+            <DailyStatsList stats={dailyStats} />
+          ) : null}
 
-        {!loading && error && (
-          <View style={styles.empty}>
-            <Text style={styles.error}>{error}</Text>
-          </View>
-        )}
-
-        {!loading && !error && data.length === 0 && (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>
-              Pas encore de données
-            </Text>
-          </View>
-        )}
-
-        {!loading && !error && data.length > 0 && (
-          <View style={styles.chartContainer}>
-            <Svg width={chartWidth} height={chartHeight}>
-              {gridValues.map((value) => {
-                const y =
-                  graphBottom - value * graphHeight
-
-                const label = Math.round(
-                  maxSteps * value,
-                ).toLocaleString('fr-FR')
-
-                return (
-                  <React.Fragment key={value}>
-                    <Line
-                      x1={graphLeft}
-                      y1={y}
-                      x2={graphRight}
-                      y2={y}
-                      stroke="#E5E7EB"
-                      strokeWidth="1"
-                    />
-
-                    <SvgText
-                      x={graphLeft - 8}
-                      y={y + 4}
-                      fontSize="10"
-                      fill="#9CA3AF"
-                      textAnchor="end"
-                    >
-                      {label}
-                    </SvgText>
-                  </React.Fragment>
-                )
-              })}
-
-              {period === '1d' && (
-                <>
-                  {intradayPath && (
-                    <Path
-                      d={intradayPath}
-                      fill="none"
-                      stroke="#208AEF"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  )}
-
-                  {intradayPoints.map((point, index) => (
-                    <Circle
-                      key={`${point.date.toISOString()}-${index}`}
-                      cx={point.x}
-                      cy={point.y}
-                      r="4"
-                      fill="#208AEF"
-                    />
-                  ))}
-
-                  {[0, 6, 12, 18, 24].map((hour) => {
-                    const x =
-                      graphLeft +
-                      (hour / 24) * graphWidth
-
-                    return (
-                      <SvgText
-                        key={hour}
-                        x={x}
-                        y={chartHeight - 12}
-                        fontSize="10"
-                        fill="#9CA3AF"
-                        textAnchor={
-                          hour === 0
-                            ? 'start'
-                            : hour === 24
-                              ? 'end'
-                              : 'middle'
-                        }
-                      >
-                        {String(hour).padStart(2, '0')}h
-                      </SvgText>
-                    )
-                  })}
-                </>
-              )}
-
-              {period !== '1d' && (
-                <>
-                  {bars.map((bar, index) => (
-                    <Rect
-                      key={`${bar.date.toISOString()}-${index}`}
-                      x={bar.x}
-                      y={bar.y}
-                      width={barWidth}
-                      height={bar.height}
-                      rx="3"
-                      fill="#208AEF"
-                    />
-                  ))}
-
-                  {bars.map((bar, index) => {
-                    let label = ''
-
-                    if (period === '1y') {
-                      label = bar.date.toLocaleDateString(
-                        'fr-FR',
-                        { month: 'short' },
-                      )
-                    } else {
-                      label = bar.date.toLocaleDateString(
-                        'fr-FR',
-                        {
-                          day: 'numeric',
-                          month: 'short',
-                        },
-                      )
-                    }
-
-                    const showLabel =
-                      period === '7d' ||
-                      period === '30d'
-                        ? index %
-                            Math.max(
-                              1,
-                              Math.ceil(data.length / 6),
-                            ) === 0
-                        : index % 2 === 0
-
-                    if (!showLabel) {
-                      return null
-                    }
-
-                    return (
-                      <SvgText
-                        key={`label-${index}`}
-                        x={bar.x + barWidth / 2}
-                        y={chartHeight - 12}
-                        fontSize="9"
-                        fill="#9CA3AF"
-                        textAnchor="middle"
-                      >
-                        {label}
-                      </SvgText>
-                    )
-                  })}
-                </>
-              )}
-            </Svg>
-          </View>
-        )}
-      </View>
+          {period === '1y' ? (
+            <MonthlyStatsList stats={monthlyStats} />
+          ) : null}
+        </>
+      )}
     </ScrollView>
   )
 }
 
+function DailyStatsList({
+  stats,
+}: {
+  stats: DayStat[]
+}) {
+  return (
+    <View style={styles.statsList}>
+      {stats
+        .slice()
+        .reverse()
+        .map((item) => {
+          const date = parseDateKey(item.date)
+          const percent = getPercent(item.steps)
+          const reached = item.steps >= DAILY_GOAL
+
+          return (
+            <View
+              key={item.date}
+              style={styles.statItem}
+            >
+              <View style={styles.statMainRow}>
+                <Text style={styles.dayName}>
+                  {formatWeekDay(date)}
+                </Text>
+
+                <View style={styles.stepsStatus}>
+                  <Text style={styles.stepsValue}>
+                    {formatNumber(item.steps)}
+                  </Text>
+
+                  <View
+                    style={[
+                      styles.statusCircle,
+                      reached
+                        ? styles.statusCircleSuccess
+                        : styles.statusCircleFailure,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusIcon,
+                        reached
+                          ? styles.statusIconSuccess
+                          : styles.statusIconFailure,
+                      ]}
+                    >
+                      {reached ? '✓' : '✕'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.statSubRow}>
+                <Text style={styles.dateText}>
+                  {formatShortDate(date)}
+                </Text>
+
+                <Text style={styles.percentText}>
+                  {percent} %
+                </Text>
+              </View>
+            </View>
+          )
+        })}
+    </View>
+  )
+}
+
+function MonthlyStatsList({
+  stats,
+}: {
+  stats: MonthStat[]
+}) {
+  return (
+    <View style={styles.statsList}>
+      {stats
+        .slice()
+        .reverse()
+        .map((item) => {
+          const date = parseDateKey(item.date)
+          const percent = getMonthPercent(
+            item.steps,
+            date,
+          )
+          const reached =
+            percent >= 100
+
+          return (
+            <View
+              key={item.date}
+              style={styles.statItem}
+            >
+              <View style={styles.statMainRow}>
+                <Text style={styles.dayName}>
+                  {date.toLocaleDateString('fr-FR', {
+                    month: 'long',
+                  })}
+                </Text>
+
+                <View style={styles.stepsStatus}>
+                  <Text style={styles.stepsValue}>
+                    {formatNumber(item.steps)}
+                  </Text>
+
+                  <View
+                    style={[
+                      styles.statusCircle,
+                      reached
+                        ? styles.statusCircleSuccess
+                        : styles.statusCircleFailure,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusIcon,
+                        reached
+                          ? styles.statusIconSuccess
+                          : styles.statusIconFailure,
+                      ]}
+                    >
+                      {reached ? '✓' : '✕'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.statSubRow}>
+                <Text style={styles.dateText}>
+                  {date.getFullYear()}
+                </Text>
+
+                <Text style={styles.percentText}>
+                  {percent} %
+                </Text>
+              </View>
+            </View>
+          )
+        })}
+    </View>
+  )
+}
+
+function BarChart({
+  data,
+}: {
+  data: ChartPoint[]
+}) {
+  if (data.length === 0) {
+    return (
+      <View style={styles.emptyChart}>
+        <Text style={styles.emptyText}>
+          Aucune donnée
+        </Text>
+      </View>
+    )
+  }
+
+  const width = 340
+  const height = 220
+  const paddingLeft = 40
+  const paddingRight = 10
+  const paddingTop = 20
+  const paddingBottom = 35
+
+  const chartWidth =
+    width - paddingLeft - paddingRight
+
+  const chartHeight =
+    height - paddingTop - paddingBottom
+
+  const maxValue = Math.max(
+    DAILY_GOAL,
+    ...data.map((item) => item.value),
+  )
+
+  const barWidth = Math.max(
+    4,
+    (chartWidth / data.length) * 0.65,
+  )
+
+  const gap =
+    chartWidth / data.length
+
+  return (
+    <Svg
+      width="100%"
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+    >
+      <Line
+        x1={paddingLeft}
+        y1={paddingTop + chartHeight}
+        x2={width - paddingRight}
+        y2={paddingTop + chartHeight}
+        stroke="#d1d5db"
+        strokeWidth={1}
+      />
+
+      {data.map((item, index) => {
+        const barHeight =
+          (item.value / maxValue) * chartHeight
+
+        const x =
+          paddingLeft +
+          index * gap +
+          (gap - barWidth) / 2
+
+        const y =
+          paddingTop +
+          chartHeight -
+          barHeight
+
+        return (
+          <React.Fragment key={`${item.label}-${index}`}>
+            <Rect
+              x={x}
+              y={y}
+              width={barWidth}
+              height={barHeight}
+              rx={3}
+              fill="#111827"
+            />
+
+            {(data.length <= 7 ||
+              index % Math.ceil(data.length / 7) ===
+                0) && (
+              <SvgText
+                x={x + barWidth / 2}
+                y={height - 10}
+                fontSize={9}
+                fill="#6b7280"
+                textAnchor="middle"
+              >
+                {item.label}
+              </SvgText>
+            )}
+          </React.Fragment>
+        )
+      })}
+    </Svg>
+  )
+}
+
+function IntradayChart({
+  data,
+}: {
+  data: ChartPoint[]
+}) {
+  if (data.length === 0) {
+    return (
+      <View style={styles.emptyChart}>
+        <Text style={styles.emptyText}>
+          Aucune donnée aujourd'hui
+        </Text>
+      </View>
+    )
+  }
+
+  // Transforme les pas horaires en cumul sur la journée
+  let cumulative = 0
+
+  const cumulativeData = data.map((item) => {
+    cumulative += item.value
+
+    return {
+      label: item.label,
+      value: cumulative,
+    }
+  })
+
+  const width = 340
+  const height = 220
+  const paddingLeft = 40
+  const paddingRight = 10
+  const paddingTop = 20
+  const paddingBottom = 35
+
+  const chartWidth =
+    width - paddingLeft - paddingRight
+
+  const chartHeight =
+    height - paddingTop - paddingBottom
+
+  const maxValue = Math.max(
+    DAILY_GOAL,
+    ...cumulativeData.map((item) => item.value),
+  )
+
+  const points = cumulativeData
+    .map((item, index) => {
+      const x =
+        paddingLeft +
+        (index / Math.max(cumulativeData.length - 1, 1)) *
+          chartWidth
+
+      const y =
+        paddingTop +
+        chartHeight -
+        (item.value / maxValue) * chartHeight
+
+      return `${x},${y}`
+    })
+    .join(' ')
+
+  return (
+    <Svg
+      width="100%"
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+    >
+      {/* Ligne objectif 10 000 */}
+      <Line
+        x1={paddingLeft}
+        y1={
+          paddingTop +
+          chartHeight -
+          (DAILY_GOAL / maxValue) * chartHeight
+        }
+        x2={width - paddingRight}
+        y2={
+          paddingTop +
+          chartHeight -
+          (DAILY_GOAL / maxValue) * chartHeight
+        }
+        stroke="#d1d5db"
+        strokeWidth={1}
+        strokeDasharray="4 4"
+      />
+
+      {/* Axe horizontal */}
+      <Line
+        x1={paddingLeft}
+        y1={paddingTop + chartHeight}
+        x2={width - paddingRight}
+        y2={paddingTop + chartHeight}
+        stroke="#d1d5db"
+        strokeWidth={1}
+      />
+
+      {/* Courbe cumulative */}
+      <Polyline
+        points={points}
+        fill="none"
+        stroke="#111827"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      {/* Points */}
+      {cumulativeData.map((item, index) => {
+        const x =
+          paddingLeft +
+          (index / Math.max(cumulativeData.length - 1, 1)) *
+            chartWidth
+
+        const y =
+          paddingTop +
+          chartHeight -
+          (item.value / maxValue) * chartHeight
+
+        return (
+          <Circle
+            key={`${item.label}-${index}`}
+            cx={x}
+            cy={y}
+            r={2.5}
+            fill="#111827"
+          />
+        )
+      })}
+
+      {/* Heures */}
+      {cumulativeData.map((item, index) => {
+        if (
+          index !== 0 &&
+          index !== cumulativeData.length - 1 &&
+          index % 4 !== 0
+        ) {
+          return null
+        }
+
+        const x =
+          paddingLeft +
+          (index / Math.max(cumulativeData.length - 1, 1)) *
+            chartWidth
+
+        return (
+          <SvgText
+            key={`label-${item.label}-${index}`}
+            x={x}
+            y={height - 10}
+            fontSize={9}
+            fill="#6b7280"
+            textAnchor="middle"
+          >
+            {item.label}
+          </SvgText>
+        )
+      })}
+    </Svg>
+  )
+}
+
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#fff',
   },
 
   content: {
-    padding: 24,
+    padding: 20,
     paddingBottom: 40,
   },
 
   title: {
-    color: '#111827',
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
+    color: '#111827',
     marginBottom: 20,
   },
 
   periodSelector: {
     flexDirection: 'row',
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#f3f4f6',
     borderRadius: 10,
     padding: 3,
-    marginBottom: 20,
+    marginBottom: 24,
   },
 
-  period: {
+  periodButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 38,
+    paddingVertical: 9,
     borderRadius: 8,
   },
 
-  periodActive: {
-    backgroundColor: '#FFFFFF',
+  periodButtonActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    elevation: 2,
   },
 
-  periodText: {
-    color: '#6B7280',
+  periodButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
+    color: '#6b7280',
   },
 
-  periodActiveText: {
+  periodButtonTextActive: {
     color: '#111827',
-  },
-
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-  },
-
-  cardHeader: {
-    marginBottom: 8,
-  },
-
-  cardTitle: {
-    color: '#111827',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-
-  total: {
-    color: '#111827',
-    fontSize: 28,
     fontWeight: '700',
-    marginTop: 6,
+  },
+
+  totalContainer: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  totalValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#111827',
   },
 
   totalLabel: {
-    color: '#6B7280',
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 2,
   },
 
   chartContainer: {
-    alignItems: 'center',
-    marginTop: 8,
+    width: '100%',
+    marginBottom: 18,
   },
 
   loading: {
@@ -621,22 +1116,125 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  empty: {
-    height: 250,
+  errorContainer: {
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+
+  errorText: {
+    color: '#dc2626',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+
+  retryButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#111827',
+  },
+
+  retryText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+
+  emptyChart: {
+    height: 220,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
   },
 
   emptyText: {
-    color: '#6B7280',
-    fontSize: 15,
-    textAlign: 'center',
+    color: '#9ca3af',
   },
 
-  error: {
-    color: '#DC2626',
-    fontSize: 15,
-    textAlign: 'center',
+  statsList: {
+    marginTop: 4,
+  },
+
+  statItem: {
+    paddingVertical: 11,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e5e7eb',
+  },
+
+  statMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  dayName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+    textTransform: 'capitalize',
+  },
+
+  stepsStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  stepsValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    minWidth: 70,
+    textAlign: 'right',
+  },
+
+  statusCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+
+  statusCircleSuccess: {
+    borderColor: '#16a34a',
+    backgroundColor: '#dcfce7',
+  },
+
+  statusCircleFailure: {
+    borderColor: '#dc2626',
+    backgroundColor: '#fee2e2',
+  },
+
+  statusIcon: {
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 16,
+  },
+
+  statusIconSuccess: {
+    color: '#16a34a',
+  },
+
+  statusIconFailure: {
+    color: '#dc2626',
+  },
+
+  statSubRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+
+  dateText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    textTransform: 'capitalize',
+  },
+
+  percentText: {
+    fontSize: 12,
+    color: '#9ca3af',
   },
 })
