@@ -25,6 +25,7 @@ import {
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { getSteps } from '../../api/steps'
+import { syncTodaySteps } from '../../services/stepSync'
 
 const USER_ID_KEY = '@step-challenge/user-id-v2'
 const DAILY_GOAL = 10_000
@@ -413,6 +414,10 @@ export default function StatsScreen() {
           recordType: 'Steps',
         },
       ])
+
+      // Synchronise Health Connect avec le backend 
+      // avant de charger les statistiques.
+     await syncTodaySteps()
 
       if (period === '1d') {
         const startDate = getStartOfDay(now)

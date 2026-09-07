@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
@@ -6,25 +5,8 @@ import {
   Text,
   View,
 } from 'react-native'
-import {
-  aggregateRecord,
-  initialize,
-  requestPermission,
-} from 'react-native-health-connect'
 
-import { syncSteps } from '../../api/steps'
-
-const USER_ID_KEY = '@step-challenge/user-id-v2'
-
-async function getUserId() {
-  const userId = await AsyncStorage.getItem(USER_ID_KEY)
-
-  if (!userId) {
-    throw new Error('User profile not configured')
-  }
-
-  return userId
-}
+import { syncTodaySteps } from '../../services/stepSync'
 
 export default function HomeScreen() {
   const [steps, setSteps] = useState<number | null>(null)
@@ -36,45 +18,9 @@ export default function HomeScreen() {
       setLoading(true)
       setError(null)
 
-      const initialized = await initialize()
-
-      if (!initialized) {
-        throw new Error('Health Connect is not available')
-      }
-
-      await requestPermission([
-        {
-          accessType: 'read',
-          recordType: 'Steps',
-        },
-      ])
-
-      const now = new Date()
-
-      const startOfDay = new Date(now)
-      startOfDay.setHours(0, 0, 0, 0)
-
-      const result = await aggregateRecord({
-        recordType: 'Steps',
-        timeRangeFilter: {
-          operator: 'between',
-          startTime: startOfDay.toISOString(),
-          endTime: now.toISOString(),
-        },
-      })
-
-      const todaySteps = result.COUNT_TOTAL ?? 0
+      const todaySteps = await syncTodaySteps()
 
       setSteps(todaySteps)
-
-      const userId = await getUserId()
-
-      await syncSteps(
-        userId,
-        now.toISOString().slice(0, 10),
-        todaySteps,
-      )
-
     } catch (err) {
       console.error('Step synchronization error:', err)
 
