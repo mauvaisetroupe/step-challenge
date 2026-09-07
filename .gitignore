@@ -42,3 +42,4 @@ example
 /ios
 /android
 backend/.env
+apps/mobile/.env.production
