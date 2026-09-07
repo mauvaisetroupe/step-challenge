@@ -12,7 +12,7 @@ import {
   requestPermission,
 } from 'react-native-health-connect'
 
-import { getSteps, syncSteps } from '../../api/steps'
+import { getSteps, syncStepSample, syncSteps } from '../../api/steps'
 
 const USER_ID_KEY = '@step-challenge/user-id-v2'
 
@@ -72,6 +72,12 @@ export default function HomeScreen() {
       await syncSteps(
         userId,
         now.toISOString().slice(0, 10),
+        todaySteps,
+      )
+
+      await syncStepSample(
+        userId,
+        now.toISOString(),
         todaySteps,
       )
 
