@@ -43,6 +43,43 @@ const stepsRoutes: FastifyPluginAsync = async (app) => {
 
     return reply.send(result.rows)
   })
+
+  app.post('/steps/sample', async (request, reply) => {
+    const { userId, recordedAt, steps } = request.body as {
+      userId: string
+      recordedAt: string
+      steps: number
+    }
+
+    await pool.query(
+      `
+      INSERT INTO step_samples (user_id, recorded_at, steps)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (user_id, recorded_at)
+      DO UPDATE SET
+        steps = EXCLUDED.steps
+      `,
+      [userId, recordedAt, steps]
+    )
+
+    return reply.send({ success: true })
+  })
+
+  app.get('/steps/samples/:userId', async (request, reply) => {
+    const { userId } = request.params as { userId: string }
+
+    const result = await pool.query(
+      `
+      SELECT user_id, recorded_at, steps
+      FROM step_samples
+      WHERE user_id = $1
+      ORDER BY recorded_at ASC
+      `,
+      [userId]
+    )
+
+    return reply.send(result.rows)
+  })
 }
 
 export default stepsRoutes
