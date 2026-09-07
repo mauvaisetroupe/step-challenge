@@ -2,7 +2,7 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs'
 
 export default function TabsLayout() {
   return (
-    <NativeTabs>
+    <NativeTabs labelVisibilityMode="labeled">
       <NativeTabs.Trigger name="home">
         <NativeTabs.Trigger.Icon
           sf="house.fill"
@@ -43,6 +43,5 @@ export default function TabsLayout() {
         </NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
-)
-
+  )
 }
