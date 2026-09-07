@@ -4,6 +4,7 @@ import Fastify from 'fastify'
 import path from 'node:path'
 import { checkDatabase } from './db.js'
 import healthRoutes from './routes/health.js'
+import leaderboardRoutes from './routes/leaderboard.js'
 import stepsRoutes from './routes/steps.js'
 import usersRoutes from './routes/users.js'
 
@@ -28,6 +29,9 @@ await app.register(stepsRoutes, {
 })
 await app.register(usersRoutes, {
   prefix: '/api',
+})
+await app.register(leaderboardRoutes, { 
+  prefix: '/api', 
 })
 
 try {

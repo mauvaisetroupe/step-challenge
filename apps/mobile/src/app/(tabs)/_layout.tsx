@@ -22,6 +22,14 @@ export default function TabsLayout() {
           Stats
         </NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="leaderboard">
+        <NativeTabs.Trigger.Icon
+          sf="trophy.fill"
+          md="emoji_events"
+        />
+        <NativeTabs.Trigger.Label>Classement</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   )
   

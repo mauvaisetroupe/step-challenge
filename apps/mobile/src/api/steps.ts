@@ -62,3 +62,24 @@ export async function getSteps(userId: string) {
     }>
   >
 }
+
+export async function getLeaderboard(
+  period: 'week' | 'month',
+) {
+  const response = await fetch(
+    `${API_URL}/api/leaderboard?period=${period}`,
+  )
+
+  if (!response.ok) {
+    throw new Error(`Leaderboard error: ${response.status}`)
+  }
+
+  return response.json() as Promise<{
+    period: 'week' | 'month'
+    results: Array<{
+      id: string
+      name: string
+      steps: number
+    }>
+  }>
+}
