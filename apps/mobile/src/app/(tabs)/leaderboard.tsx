@@ -9,7 +9,10 @@ import {
 } from 'react-native'
 
 import { getLeaderboard } from '../../api/steps'
-import { syncLast30Days } from '../../services/stepSync'
+import {
+  needsRefreshLast30Days,
+  syncLast30Days,
+} from '../../services/stepSync'
 
 type Period = 'week' | 'month'
 
@@ -24,6 +27,8 @@ export default function LeaderboardScreen() {
   const [results, setResults] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [checkingRefresh, setCheckingRefresh] = useState(true)
+  const [canRefresh, setCanRefresh] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const loadLeaderboard = useCallback(async () => {
@@ -41,12 +46,35 @@ export default function LeaderboardScreen() {
     }
   }, [period])
 
+  const checkRefreshNeeded = useCallback(async () => {
+    setCheckingRefresh(true)
+
+    try {
+      const needed = await needsRefreshLast30Days()
+
+      setCanRefresh(needed)
+    } catch (err) {
+      console.error(
+        'Refresh check error:',
+        err,
+      )
+
+      setCanRefresh(false)
+    } finally {
+      setCheckingRefresh(false)
+    }
+  }, [])
+
   useEffect(() => {
     loadLeaderboard()
   }, [loadLeaderboard])
 
+  useEffect(() => {
+    checkRefreshNeeded()
+  }, [checkRefreshNeeded])
+
   const handleRefresh = async () => {
-    if (refreshing) {
+    if (refreshing || !canRefresh) {
       return
     }
 
@@ -59,8 +87,12 @@ export default function LeaderboardScreen() {
       const data = await getLeaderboard(period)
 
       setResults(data.results)
+      setCanRefresh(false)
     } catch (err) {
-      console.error('Leaderboard refresh error:', err)
+      console.error(
+        'Leaderboard refresh error:',
+        err,
+      )
 
       setError(
         err instanceof Error
@@ -77,6 +109,11 @@ export default function LeaderboardScreen() {
       ? 'Cette semaine'
       : 'Ce mois-ci'
 
+  const refreshDisabled =
+    checkingRefresh ||
+    refreshing ||
+    !canRefresh
+
   return (
     <ScrollView
       contentContainerStyle={styles.container}
@@ -90,14 +127,16 @@ export default function LeaderboardScreen() {
         <Pressable
           style={[
             styles.periodButton,
-            period === 'week' && styles.periodButtonActive,
+            period === 'week' &&
+              styles.periodButtonActive,
           ]}
           onPress={() => setPeriod('week')}
         >
           <Text
             style={[
               styles.periodText,
-              period === 'week' && styles.periodTextActive,
+              period === 'week' &&
+                styles.periodTextActive,
             ]}
           >
             Semaine
@@ -107,14 +146,16 @@ export default function LeaderboardScreen() {
         <Pressable
           style={[
             styles.periodButton,
-            period === 'month' && styles.periodButtonActive,
+            period === 'month' &&
+              styles.periodButtonActive,
           ]}
           onPress={() => setPeriod('month')}
         >
           <Text
             style={[
               styles.periodText,
-              period === 'month' && styles.periodTextActive,
+              period === 'month' &&
+                styles.periodTextActive,
             ]}
           >
             Mois
@@ -126,21 +167,30 @@ export default function LeaderboardScreen() {
         <Pressable
           style={[
             styles.refreshButton,
-            refreshing && styles.refreshButtonDisabled,
+            refreshDisabled &&
+              styles.refreshButtonDisabled,
           ]}
           onPress={handleRefresh}
-          disabled={refreshing}
+          disabled={refreshDisabled}
         >
-          {refreshing ? (
+          {checkingRefresh || refreshing ? (
             <ActivityIndicator
               size="small"
               color="#111827"
             />
           ) : (
             <>
-              <Text style={styles.refreshIcon}>↻</Text>
+              <Text style={styles.refreshIcon}>
+                ↻
+              </Text>
 
-              <Text style={styles.refreshText}>
+              <Text
+                style={[
+                  styles.refreshText,
+                  !canRefresh &&
+                    styles.refreshTextDisabled,
+                ]}
+              >
                 Actualiser
               </Text>
             </>
@@ -148,7 +198,9 @@ export default function LeaderboardScreen() {
         </Pressable>
       </View>
 
-      <Text style={styles.periodTitle}>{periodLabel}</Text>
+      <Text style={styles.periodTitle}>
+        {periodLabel}
+      </Text>
 
       {loading ? (
         <View style={styles.center}>
@@ -156,7 +208,9 @@ export default function LeaderboardScreen() {
         </View>
       ) : error ? (
         <View style={styles.center}>
-          <Text style={styles.error}>{error}</Text>
+          <Text style={styles.error}>
+            {error}
+          </Text>
 
           <Pressable
             style={styles.retryButton}
@@ -268,7 +322,7 @@ const styles = StyleSheet.create({
   },
 
   refreshButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.45,
   },
 
   refreshIcon: {
@@ -279,6 +333,10 @@ const styles = StyleSheet.create({
   refreshText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+
+  refreshTextDisabled: {
+    color: '#9CA3AF',
   },
 
   periodTitle: {

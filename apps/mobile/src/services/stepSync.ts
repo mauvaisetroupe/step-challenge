@@ -195,3 +195,37 @@ export async function syncLast30Days() {
 
   return syncedDates
 }
+
+export async function needsRefreshLast30Days() {
+  const userId = await getUserId()
+
+  await initializeHealthConnect()
+
+  const now = new Date()
+
+  const startDate = getStartOfDay(
+    getDaysAgo(now, HISTORY_DAYS - 1),
+  )
+
+  const healthConnectStats =
+    await getHealthConnectDailyStats(
+      startDate,
+      now,
+    )
+
+  const serverData = await getSteps(userId)
+
+  const serverStepsByDate = new Map(
+    serverData.map((item) => [
+      String(item.date).slice(0, 10),
+      Number(item.steps),
+    ]),
+  )
+
+  return healthConnectStats.some((item) => {
+    const serverSteps =
+      serverStepsByDate.get(item.date) ?? 0
+
+    return item.steps > serverSteps
+  })
+}
