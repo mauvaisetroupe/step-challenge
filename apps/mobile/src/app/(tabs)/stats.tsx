@@ -1,5 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
@@ -8,116 +7,302 @@ import {
   Text,
   View,
 } from 'react-native'
+import {
+  aggregateGroupByDuration,
+  aggregateGroupByPeriod,
+  initialize,
+  requestPermission,
+} from 'react-native-health-connect'
 import Svg, {
   Circle,
   Line,
   Path,
+  Rect,
   Text as SvgText,
 } from 'react-native-svg'
 
-import { getStepSamples } from '../../api/steps'
+type Period = '1d' | '7d' | '30d' | '1y'
 
-type StepSample = {
-  user_id: string
-  recorded_at: string
+type ChartPoint = {
+  date: Date
   steps: number
 }
 
-const USER_ID_KEY = '@step-challenge/user-id-v2'
+const PERIODS: Array<{ key: Period; label: string }> = [
+  { key: '1d', label: '1j' },
+  { key: '7d', label: '7j' },
+  { key: '30d', label: '30j' },
+  { key: '1y', label: '1a' },
+]
 
-async function getUserId() {
-  const userId = await AsyncStorage.getItem(USER_ID_KEY)
+function getStartOfDay(date: Date) {
+  const result = new Date(date)
+  result.setHours(0, 0, 0, 0)
+  return result
+}
 
-  if (!userId) {
-    throw new Error('User profile not configured')
+function getLocalDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function getPeriodRange(period: Period) {
+  const end = new Date()
+
+  if (period === '1d') {
+    return {
+      start: getStartOfDay(end),
+      end,
+    }
   }
 
-  return userId
+  const start = getStartOfDay(end)
+
+  if (period === '7d') {
+    start.setDate(start.getDate() - 6)
+  } else if (period === '30d') {
+    start.setDate(start.getDate() - 29)
+  } else {
+    start.setFullYear(start.getFullYear() - 1)
+    start.setDate(start.getDate() + 1)
+  }
+
+  return {
+    start,
+    end,
+  }
+}
+
+async function ensureHealthConnect() {
+  const initialized = await initialize()
+
+  if (!initialized) {
+    throw new Error('Health Connect is not available')
+  }
+
+  await requestPermission([
+    {
+      accessType: 'read',
+      recordType: 'Steps',
+    },
+  ])
+}
+
+async function getIntradayData(): Promise<ChartPoint[]> {
+  const { start, end } = getPeriodRange('1d')
+
+  const result = await aggregateGroupByDuration({
+    recordType: 'Steps',
+    timeRangeFilter: {
+      operator: 'between',
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+    },
+    timeRangeSlicer: {
+      duration: 'HOURS',
+      length: 1,
+    },
+  })
+
+  return result.map((bucket) => ({
+    date: new Date(bucket.startTime),
+    steps: bucket.result.COUNT_TOTAL ?? 0,
+  }))
+}
+
+async function getDailyData(days: 7 | 30): Promise<ChartPoint[]> {
+  const period: Period = days === 7 ? '7d' : '30d'
+  const { start, end } = getPeriodRange(period)
+
+  const result = await aggregateGroupByPeriod({
+    recordType: 'Steps',
+    timeRangeFilter: {
+      operator: 'between',
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+    },
+    timeRangeSlicer: {
+      period: 'DAYS',
+      length: 1,
+    },
+  })
+
+  return result.map((bucket) => ({
+    date: new Date(bucket.startTime),
+    steps: bucket.result.COUNT_TOTAL ?? 0,
+  }))
+}
+
+async function getMonthlyData(): Promise<ChartPoint[]> {
+  const { start, end } = getPeriodRange('1y')
+
+  const result = await aggregateGroupByPeriod({
+    recordType: 'Steps',
+    timeRangeFilter: {
+      operator: 'between',
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+    },
+    timeRangeSlicer: {
+      period: 'MONTHS',
+      length: 1,
+    },
+  })
+
+  return result.map((bucket) => ({
+    date: new Date(bucket.startTime),
+    steps: bucket.result.COUNT_TOTAL ?? 0,
+  }))
 }
 
 export default function StatsScreen() {
-  const [samples, setSamples] = useState<StepSample[]>([])
+  const [period, setPeriod] = useState<Period>('1d')
+  const [data, setData] = useState<ChartPoint[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const loadSamples = useCallback(async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true)
+      setError(null)
 
-      const userId = await getUserId()
-      const data = await getStepSamples(userId)
+      await ensureHealthConnect()
 
-      setSamples(data)
-    } catch (error) {
-      console.error('Failed to load step samples', error)
+      let result: ChartPoint[]
+
+      switch (period) {
+        case '1d':
+          result = await getIntradayData()
+          break
+
+        case '7d':
+          result = await getDailyData(7)
+          break
+
+        case '30d':
+          result = await getDailyData(30)
+          break
+
+        case '1y':
+          result = await getMonthlyData()
+          break
+      }
+
+      setData(result)
+    } catch (err) {
+      console.error('Failed to load statistics', err)
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to load statistics',
+      )
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [period])
 
   useEffect(() => {
-    loadSamples()
-  }, [loadSamples])
+    loadStats()
+  }, [loadStats])
+
+  const totalSteps = useMemo(() => {
+    if (period === '1d') {
+      return data.length > 0
+        ? data[data.length - 1].steps
+        : 0
+    }
+
+    return data.reduce((total, point) => total + point.steps, 0)
+  }, [data, period])
 
   const screenWidth = Dimensions.get('window').width
-  const chartWidth = Math.max(screenWidth - 48, 280)
-  const chartHeight = 240
+  const chartWidth = Math.max(screenWidth - 48, 300)
+  const chartHeight = 250
 
-  const graphLeft = 42
+  const graphLeft = 48
   const graphRight = chartWidth - 12
   const graphTop = 20
-  const graphBottom = chartHeight - 35
+  const graphBottom = chartHeight - 40
 
   const graphWidth = graphRight - graphLeft
   const graphHeight = graphBottom - graphTop
 
   const maxSteps = Math.max(
-    ...samples.map((sample) => sample.steps),
+    ...data.map((point) => point.steps),
     1,
   )
 
-  const now = new Date()
-
-  const startOfDay = new Date(now)
-  startOfDay.setHours(0, 0, 0, 0)
-
-  const endOfDay = new Date(startOfDay)
-  endOfDay.setDate(endOfDay.getDate() + 1)
-
-  const dayDuration =
-    endOfDay.getTime() - startOfDay.getTime()
-
-  const points = samples.map((sample) => {
-    const recordedAt = new Date(sample.recorded_at)
+  const intradayPoints = data.map((point) => {
+    const startOfDay = getStartOfDay(new Date())
+    const endOfDay = new Date(startOfDay)
+    endOfDay.setDate(endOfDay.getDate() + 1)
 
     const elapsed =
-      recordedAt.getTime() - startOfDay.getTime()
+      point.date.getTime() - startOfDay.getTime()
+
+    const duration =
+      endOfDay.getTime() - startOfDay.getTime()
 
     const x =
       graphLeft +
-      Math.max(0, Math.min(1, elapsed / dayDuration)) *
+      Math.max(0, Math.min(1, elapsed / duration)) *
         graphWidth
 
     const y =
       graphBottom -
-      (sample.steps / maxSteps) * graphHeight
+      (point.steps / maxSteps) * graphHeight
 
     return {
+      ...point,
       x,
       y,
-      sample,
     }
   })
 
-  const path =
-    points.length > 0
-      ? points
-          .map((point, index) => {
-            return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
-          })
+  const intradayPath =
+    intradayPoints.length > 0
+      ? intradayPoints
+          .map(
+            (point, index) =>
+              `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`,
+          )
           .join(' ')
       : ''
 
-  const lastSample = samples[samples.length - 1]
+  const barWidth =
+    data.length > 0
+      ? Math.max(
+          4,
+          Math.min(24, (graphWidth / data.length) * 0.6),
+        )
+      : 0
+
+  const bars = data.map((point, index) => {
+    const slotWidth = graphWidth / Math.max(data.length, 1)
+
+    const x =
+      graphLeft +
+      index * slotWidth +
+      (slotWidth - barWidth) / 2
+
+    const height =
+      (point.steps / maxSteps) * graphHeight
+
+    const y = graphBottom - height
+
+    return {
+      ...point,
+      x,
+      y,
+      height,
+    }
+  })
+
+  const gridValues = [0, 0.25, 0.5, 0.75, 1]
 
   return (
     <ScrollView
@@ -127,54 +312,77 @@ export default function StatsScreen() {
       <Text style={styles.title}>Stats</Text>
 
       <View style={styles.periodSelector}>
-        <View style={[styles.period, styles.periodActive]}>
-          <Text style={styles.periodActiveText}>1j</Text>
-        </View>
+        {PERIODS.map((item) => {
+          const active = item.key === period
 
-        <View style={styles.period}>
-          <Text style={styles.periodText}>7j</Text>
-        </View>
-
-        <View style={styles.period}>
-          <Text style={styles.periodText}>4s</Text>
-        </View>
-
-        <View style={styles.period}>
-          <Text style={styles.periodText}>1a</Text>
-        </View>
+          return (
+            <View
+              key={item.key}
+              style={[
+                styles.period,
+                active && styles.periodActive,
+              ]}
+              onTouchEnd={() => setPeriod(item.key)}
+            >
+              <Text
+                style={[
+                  styles.periodText,
+                  active && styles.periodActiveText,
+                ]}
+              >
+                {item.label}
+              </Text>
+            </View>
+          )
+        })}
       </View>
 
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Aujourd'hui</Text>
+          <View>
+            <Text style={styles.cardTitle}>
+              {period === '1d'
+                ? "Aujourd'hui"
+                : period === '7d'
+                  ? '7 derniers jours'
+                  : period === '30d'
+                    ? '30 derniers jours'
+                    : '12 derniers mois'}
+            </Text>
 
-          {!loading && lastSample && (
-            <View style={styles.totalContainer}>
+            {!loading && !error && (
               <Text style={styles.total}>
-                {lastSample.steps.toLocaleString('fr-FR')}
+                {totalSteps.toLocaleString('fr-FR')}
+                <Text style={styles.totalLabel}> pas</Text>
               </Text>
-              <Text style={styles.totalLabel}>pas</Text>
-            </View>
-          )}
+            )}
+          </View>
         </View>
 
-        {loading ? (
+        {loading && (
           <View style={styles.loading}>
-            <ActivityIndicator />
+            <ActivityIndicator size="large" />
           </View>
-        ) : samples.length === 0 ? (
+        )}
+
+        {!loading && error && (
+          <View style={styles.empty}>
+            <Text style={styles.error}>{error}</Text>
+          </View>
+        )}
+
+        {!loading && !error && data.length === 0 && (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
-              Pas encore de données aujourd'hui
+              Pas encore de données
             </Text>
           </View>
-        ) : (
+        )}
+
+        {!loading && !error && data.length > 0 && (
           <View style={styles.chartContainer}>
-            <Svg
-              width={chartWidth}
-              height={chartHeight}
-            >
-              {[0, 0.25, 0.5, 0.75, 1].map((value) => {
+            <Svg width={chartWidth} height={chartHeight}>
+              {gridValues.map((value) => {
                 const y =
                   graphBottom - value * graphHeight
 
@@ -183,7 +391,7 @@ export default function StatsScreen() {
                 ).toLocaleString('fr-FR')
 
                 return (
-                  <View key={value}>
+                  <React.Fragment key={value}>
                     <Line
                       x1={graphLeft}
                       y1={y}
@@ -202,80 +410,121 @@ export default function StatsScreen() {
                     >
                       {label}
                     </SvgText>
-                  </View>
+                  </React.Fragment>
                 )
               })}
 
-              {path && (
-                <Path
-                  d={path}
-                  fill="none"
-                  stroke="#208AEF"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+              {period === '1d' && (
+                <>
+                  {intradayPath && (
+                    <Path
+                      d={intradayPath}
+                      fill="none"
+                      stroke="#208AEF"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+
+                  {intradayPoints.map((point, index) => (
+                    <Circle
+                      key={`${point.date.toISOString()}-${index}`}
+                      cx={point.x}
+                      cy={point.y}
+                      r="4"
+                      fill="#208AEF"
+                    />
+                  ))}
+
+                  {[0, 6, 12, 18, 24].map((hour) => {
+                    const x =
+                      graphLeft +
+                      (hour / 24) * graphWidth
+
+                    return (
+                      <SvgText
+                        key={hour}
+                        x={x}
+                        y={chartHeight - 12}
+                        fontSize="10"
+                        fill="#9CA3AF"
+                        textAnchor={
+                          hour === 0
+                            ? 'start'
+                            : hour === 24
+                              ? 'end'
+                              : 'middle'
+                        }
+                      >
+                        {String(hour).padStart(2, '0')}h
+                      </SvgText>
+                    )
+                  })}
+                </>
               )}
 
-              {points.map((point, index) => (
-                <Circle
-                  key={`${point.sample.recorded_at}-${index}`}
-                  cx={point.x}
-                  cy={point.y}
-                  r="4"
-                  fill="#208AEF"
-                />
-              ))}
+              {period !== '1d' && (
+                <>
+                  {bars.map((bar, index) => (
+                    <Rect
+                      key={`${bar.date.toISOString()}-${index}`}
+                      x={bar.x}
+                      y={bar.y}
+                      width={barWidth}
+                      height={bar.height}
+                      rx="3"
+                      fill="#208AEF"
+                    />
+                  ))}
 
-              <SvgText
-                x={graphLeft}
-                y={chartHeight - 8}
-                fontSize="10"
-                fill="#9CA3AF"
-                textAnchor="middle"
-              >
-                00h
-              </SvgText>
+                  {bars.map((bar, index) => {
+                    let label = ''
 
-              <SvgText
-                x={graphLeft + graphWidth * 0.25}
-                y={chartHeight - 8}
-                fontSize="10"
-                fill="#9CA3AF"
-                textAnchor="middle"
-              >
-                06h
-              </SvgText>
+                    if (period === '1y') {
+                      label = bar.date.toLocaleDateString(
+                        'fr-FR',
+                        { month: 'short' },
+                      )
+                    } else {
+                      label = bar.date.toLocaleDateString(
+                        'fr-FR',
+                        {
+                          day: 'numeric',
+                          month: 'short',
+                        },
+                      )
+                    }
 
-              <SvgText
-                x={graphLeft + graphWidth * 0.5}
-                y={chartHeight - 8}
-                fontSize="10"
-                fill="#9CA3AF"
-                textAnchor="middle"
-              >
-                12h
-              </SvgText>
+                    const showLabel =
+                      period === '7d' ||
+                      period === '30d'
+                        ? index %
+                            Math.max(
+                              1,
+                              Math.ceil(data.length / 6),
+                            ) === 0
+                        : index % 2 === 0
 
-              <SvgText
-                x={graphLeft + graphWidth * 0.75}
-                y={chartHeight - 8}
-                fontSize="10"
-                fill="#9CA3AF"
-                textAnchor="middle"
-              >
-                18h
-              </SvgText>
+                    if (!showLabel) {
+                      return null
+                    }
 
-              <SvgText
-                x={graphRight}
-                y={chartHeight - 8}
-                fontSize="10"
-                fill="#9CA3AF"
-                textAnchor="middle"
-              >
-                24h
-              </SvgText>
+                    return (
+                      <SvgText
+                        key={`label-${index}`}
+                        x={bar.x + barWidth / 2}
+                        y={chartHeight - 12}
+                        fontSize="9"
+                        fill="#9CA3AF"
+                        textAnchor="middle"
+                      >
+                        {label}
+                      </SvgText>
+                    )
+                  })}
+                </>
+              )}
             </Svg>
           </View>
         )}
@@ -287,12 +536,11 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F9FAFB',
   },
 
   content: {
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 40,
   },
 
@@ -300,22 +548,23 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontSize: 32,
     fontWeight: '700',
-    marginBottom: 24,
+    marginBottom: 20,
   },
 
   periodSelector: {
     flexDirection: 'row',
     backgroundColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 4,
+    borderRadius: 10,
+    padding: 3,
     marginBottom: 20,
   },
 
   period: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: 9,
+    justifyContent: 'center',
+    minHeight: 38,
+    borderRadius: 8,
   },
 
   periodActive: {
@@ -324,68 +573,70 @@ const styles = StyleSheet.create({
 
   periodText: {
     color: '#6B7280',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
 
   periodActiveText: {
     color: '#111827',
-    fontSize: 15,
-    fontWeight: '700',
   },
 
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 16,
   },
 
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
   },
 
   cardTitle: {
     color: '#111827',
     fontSize: 18,
-    fontWeight: '700',
-  },
-
-  totalContainer: {
-    alignItems: 'flex-end',
+    fontWeight: '600',
   },
 
   total: {
     color: '#111827',
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: '700',
+    marginTop: 6,
   },
 
   totalLabel: {
     color: '#6B7280',
-    fontSize: 12,
+    fontSize: 16,
+    fontWeight: '400',
   },
 
   chartContainer: {
     alignItems: 'center',
+    marginTop: 8,
   },
 
   loading: {
-    height: 240,
+    height: 250,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   empty: {
-    height: 240,
+    height: 250,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 20,
   },
 
   emptyText: {
     color: '#6B7280',
     fontSize: 15,
+    textAlign: 'center',
+  },
+
+  error: {
+    color: '#DC2626',
+    fontSize: 15,
+    textAlign: 'center',
   },
 })
