@@ -8,31 +8,49 @@ const usersRoutes: FastifyPluginAsync = async (app) => {
       name: string
     }
 
+    const trimmedName = name.trim()
+
+    if (!trimmedName) {
+      return reply.code(400).send({
+        error: 'Name is required',
+      })
+    }
+
     const id = randomUUID()
 
-    const result = await pool.query(
-      `
-      INSERT INTO users (id, name)
-      VALUES ($1, $2)
-      RETURNING id, name, created_at
-      `,
-      [id, name]
-    )
+    try {
+      const result = await pool.query(
+        `
+    INSERT INTO users (id, name)
+    VALUES ($1, $2)
+    RETURNING id, name, created_at
+    `,
+        [id, trimmedName]
+      )
 
-    return reply.send(result.rows[0])
+      return reply.send(result.rows[0])
+    } catch (error: any) {
+      if (error.code === '23505') {
+        return reply.code(409).send({
+          error: 'Username already exists',
+        })
+      }
+
+      throw error
+    }
   })
 
-  app.get('/users/:id', async (request, reply) => {
+  app.get('/users/', async (request, reply) => {
     const { id } = request.params as {
       id: string
     }
 
     const result = await pool.query(
       `
-      SELECT id, name, created_at
-      FROM users
-      WHERE id = $1
-      `,
+  SELECT id, name, created_at
+  FROM users
+  WHERE id = $1
+  `,
       [id]
     )
 
