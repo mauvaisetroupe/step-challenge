@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
+import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
   StyleSheet,
@@ -13,7 +14,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadSteps = async () => {
+  const loadSteps = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -32,11 +33,13 @@ export default function HomeScreen() {
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadSteps()
   }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSteps()
+    }, [loadSteps]),
+  )
 
   return (
     <View style={styles.container}>
