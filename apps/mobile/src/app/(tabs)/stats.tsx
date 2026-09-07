@@ -241,25 +241,6 @@ async function getHealthConnectIntradayStats(
     },
   })
 
-console.log('INTRADAY START', startDate.toString())
-console.log('INTRADAY END', endDate.toString())
-console.log(
-  'INTRADAY SLICER',
-  JSON.stringify({
-    type: 'HOURS',
-    length: 1,
-  }),
-)
-console.log(
-  'INTRADAY BUCKETS',
-  result.length,
-)
-console.log(
-  'INTRADAY RESULT',
-  JSON.stringify(result, null, 2),
-)
-
-
   return result.map((bucket) => {
     const date = new Date(bucket.startTime)
 

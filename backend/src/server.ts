@@ -1,15 +1,19 @@
 import cors from '@fastify/cors'
+import fastifyStatic from '@fastify/static'
 import Fastify from 'fastify'
+import path from 'node:path'
 import { checkDatabase } from './db.js'
 import healthRoutes from './routes/health.js'
 import stepsRoutes from './routes/steps.js'
 import usersRoutes from './routes/users.js'
 
-console.log('DATABASE_HOST:', process.env.DATABASE_HOST)
-console.log('DATABASE_NAME:', process.env.DATABASE_NAME)
-
 const app = Fastify({
   logger: true,
+})
+
+await app.register(fastifyStatic, {
+  root: path.join(process.cwd(), '..', 'download'),
+  prefix: '/download/',
 })
 
 await app.register(cors, {
