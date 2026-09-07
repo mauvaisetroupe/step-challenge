@@ -1,4 +1,8 @@
-const API_URL = 'http://192.168.1.109:3000'
+const API_URL = process.env.EXPO_PUBLIC_API_URL
+
+if (!API_URL) {
+  throw new Error('EXPO_PUBLIC_API_URL is not configured')
+}
 
 export async function createUser(name: string) {
   const response = await fetch(`${API_URL}/api/users`, {
