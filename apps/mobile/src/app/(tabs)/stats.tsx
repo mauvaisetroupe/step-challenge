@@ -75,12 +75,27 @@ export default function StatsScreen() {
     1,
   )
 
-  const points = samples.map((sample, index) => {
+  const now = new Date()
+
+  const startOfDay = new Date(now)
+  startOfDay.setHours(0, 0, 0, 0)
+
+  const endOfDay = new Date(startOfDay)
+  endOfDay.setDate(endOfDay.getDate() + 1)
+
+  const dayDuration =
+    endOfDay.getTime() - startOfDay.getTime()
+
+  const points = samples.map((sample) => {
+    const recordedAt = new Date(sample.recorded_at)
+
+    const elapsed =
+      recordedAt.getTime() - startOfDay.getTime()
+
     const x =
-      samples.length === 1
-        ? graphLeft
-        : graphLeft +
-          (index / (samples.length - 1)) * graphWidth
+      graphLeft +
+      Math.max(0, Math.min(1, elapsed / dayDuration)) *
+        graphWidth
 
     const y =
       graphBottom -
@@ -212,40 +227,55 @@ export default function StatsScreen() {
                 />
               ))}
 
-              {points.length > 0 && (
-                <>
-                  <SvgText
-                    x={graphLeft}
-                    y={chartHeight - 8}
-                    fontSize="10"
-                    fill="#9CA3AF"
-                    textAnchor="middle"
-                  >
-                    {new Date(
-                      samples[0].recorded_at,
-                    ).toLocaleTimeString('fr-FR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </SvgText>
+              <SvgText
+                x={graphLeft}
+                y={chartHeight - 8}
+                fontSize="10"
+                fill="#9CA3AF"
+                textAnchor="middle"
+              >
+                00h
+              </SvgText>
 
-                  <SvgText
-                    x={graphRight}
-                    y={chartHeight - 8}
-                    fontSize="10"
-                    fill="#9CA3AF"
-                    textAnchor="middle"
-                  >
-                    {new Date(
-                      samples[samples.length - 1]
-                        .recorded_at,
-                    ).toLocaleTimeString('fr-FR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </SvgText>
-                </>
-              )}
+              <SvgText
+                x={graphLeft + graphWidth * 0.25}
+                y={chartHeight - 8}
+                fontSize="10"
+                fill="#9CA3AF"
+                textAnchor="middle"
+              >
+                06h
+              </SvgText>
+
+              <SvgText
+                x={graphLeft + graphWidth * 0.5}
+                y={chartHeight - 8}
+                fontSize="10"
+                fill="#9CA3AF"
+                textAnchor="middle"
+              >
+                12h
+              </SvgText>
+
+              <SvgText
+                x={graphLeft + graphWidth * 0.75}
+                y={chartHeight - 8}
+                fontSize="10"
+                fill="#9CA3AF"
+                textAnchor="middle"
+              >
+                18h
+              </SvgText>
+
+              <SvgText
+                x={graphRight}
+                y={chartHeight - 8}
+                fontSize="10"
+                fill="#9CA3AF"
+                textAnchor="middle"
+              >
+                24h
+              </SvgText>
             </Svg>
           </View>
         )}
