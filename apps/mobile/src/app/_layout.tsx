@@ -8,6 +8,7 @@ import * as SplashScreen from 'expo-splash-screen'
 import { useColorScheme } from 'react-native'
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon'
+import AppUpdateChecker from '@/components/AppUpdateChecker'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -19,6 +20,7 @@ export default function RootLayout() {
       value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
     >
       <AnimatedSplashOverlay />
+      <AppUpdateChecker />
       <Slot />
     </ThemeProvider>
   )
