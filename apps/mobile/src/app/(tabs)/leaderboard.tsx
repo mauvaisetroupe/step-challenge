@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native'
 import { getLeaderboard } from '../../api/steps'
+import { syncLast30Days } from '../../services/stepSync'
 
 type Period = 'week' | 'month'
 
@@ -21,47 +22,83 @@ export default function LeaderboardScreen() {
   const [period, setPeriod] = useState<Period>('week')
   const [results, setResults] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
+  const loadLeaderboard = useCallback(async () => {
+    setLoading(true)
+    setError(null)
 
-    const loadLeaderboard = async () => {
-      setLoading(true)
-      setError(null)
+    try {
+      const data = await getLeaderboard(period)
 
-      try {
-        const data = await getLeaderboard(period)
-
-        if (!cancelled) {
-          setResults(data.results)
-        }
-      } catch {
-        if (!cancelled) {
-          setError('Impossible de charger le classement.')
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    loadLeaderboard()
-
-    return () => {
-      cancelled = true
+      setResults(data.results)
+    } catch {
+      setError('Impossible de charger le classement.')
+    } finally {
+      setLoading(false)
     }
   }, [period])
 
-  const periodLabel = period === 'week' ? 'Cette semaine' : 'Ce mois-ci'
+  useEffect(() => {
+    loadLeaderboard()
+  }, [loadLeaderboard])
+
+  const handleRefresh = async () => {
+    if (refreshing) {
+      return
+    }
+
+    setRefreshing(true)
+    setError(null)
+
+    try {
+      await syncLast30Days()
+
+      const data = await getLeaderboard(period)
+
+      setResults(data.results)
+    } catch (err) {
+      console.error('Leaderboard refresh error:', err)
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Impossible de mettre à jour les pas.',
+      )
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const periodLabel =
+    period === 'week'
+      ? 'Cette semaine'
+      : 'Ce mois-ci'
 
   return (
     <ScrollView
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>🏆 Classement</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>🏆 Classement</Text>
+
+        <Pressable
+          style={[
+            styles.refreshButton,
+            refreshing && styles.refreshButtonDisabled,
+          ]}
+          onPress={handleRefresh}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <Text style={styles.refreshIcon}>↻</Text>
+          )}
+        </Pressable>
+      </View>
 
       <View style={styles.periodSelector}>
         <Pressable
@@ -108,6 +145,15 @@ export default function LeaderboardScreen() {
       ) : error ? (
         <View style={styles.center}>
           <Text style={styles.error}>{error}</Text>
+
+          <Pressable
+            style={styles.retryButton}
+            onPress={loadLeaderboard}
+          >
+            <Text style={styles.retryText}>
+              Réessayer
+            </Text>
+          </Pressable>
         </View>
       ) : (
         <View style={styles.list}>
@@ -116,14 +162,23 @@ export default function LeaderboardScreen() {
               <View style={styles.rank}>
                 {index < 3 ? (
                   <Text style={styles.medal}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                    {index === 0
+                      ? '🥇'
+                      : index === 1
+                        ? '🥈'
+                        : '🥉'}
                   </Text>
                 ) : (
-                  <Text style={styles.rankNumber}>{index + 1}</Text>
+                  <Text style={styles.rankNumber}>
+                    {index + 1}
+                  </Text>
                 )}
               </View>
 
-              <Text style={styles.name} numberOfLines={1}>
+              <Text
+                style={styles.name}
+                numberOfLines={1}
+              >
                 {user.name}
               </Text>
 
@@ -143,11 +198,37 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 32,
   },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+
   title: {
     fontSize: 28,
     fontWeight: '700',
-    marginBottom: 20,
   },
+
+  refreshButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f1f1f1',
+  },
+
+  refreshButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  refreshIcon: {
+    fontSize: 26,
+    lineHeight: 30,
+  },
+
   periodSelector: {
     flexDirection: 'row',
     backgroundColor: '#f1f1f1',
@@ -155,30 +236,37 @@ const styles = StyleSheet.create({
     padding: 3,
     marginBottom: 24,
   },
+
   periodButton: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 10,
     borderRadius: 8,
   },
+
   periodButtonActive: {
     backgroundColor: '#ffffff',
   },
+
   periodText: {
     fontSize: 15,
     fontWeight: '500',
   },
+
   periodTextActive: {
     fontWeight: '700',
   },
+
   periodTitle: {
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 12,
   },
+
   list: {
     gap: 8,
   },
+
   row: {
     minHeight: 60,
     flexDirection: 'row',
@@ -187,32 +275,53 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
   },
+
   rank: {
     width: 42,
     alignItems: 'center',
   },
+
   medal: {
     fontSize: 22,
   },
+
   rankNumber: {
     fontSize: 16,
     fontWeight: '600',
   },
+
   name: {
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
     marginRight: 8,
   },
+
   steps: {
     fontSize: 14,
     fontWeight: '600',
   },
+
   center: {
     paddingVertical: 40,
     alignItems: 'center',
   },
+
   error: {
     fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+
+  retryButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#111827',
+  },
+
+  retryText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 })

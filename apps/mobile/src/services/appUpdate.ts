@@ -37,6 +37,10 @@ function isNewerVersion(
 }
 
 export async function checkForAppUpdate() {
+  if (__DEV__) {
+    return null
+  }
+
   const currentVersion =
     Constants.expoConfig?.version
 
