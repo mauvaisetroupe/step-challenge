@@ -1,6 +1,12 @@
 const API_URL = process.env.EXPO_PUBLIC_API_URL
 const API_KEY = process.env.EXPO_PUBLIC_API_KEY
 
+console.log('API URL:', process.env.EXPO_PUBLIC_API_URL)
+console.log(
+  'API KEY configured:',
+  Boolean(process.env.EXPO_PUBLIC_API_KEY),
+)
+
 if (!API_URL) {
   throw new Error('EXPO_PUBLIC_API_URL is not configured')
 }
