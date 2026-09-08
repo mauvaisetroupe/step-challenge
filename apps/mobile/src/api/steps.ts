@@ -1,15 +1,23 @@
 const API_URL = process.env.EXPO_PUBLIC_API_URL
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY
 
 if (!API_URL) {
   throw new Error('EXPO_PUBLIC_API_URL is not configured')
 }
 
+if (!API_KEY) {
+  throw new Error('EXPO_PUBLIC_API_KEY is not configured')
+}
+
+const apiHeaders: HeadersInit = {
+  'Content-Type': 'application/json',
+  'X-API-Key': API_KEY,
+}
+
 export async function createUser(name: string) {
   const response = await fetch(`${API_URL}/api/users`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: apiHeaders,
     body: JSON.stringify({ name }),
   })
 
@@ -35,9 +43,7 @@ export async function syncSteps(
 ) {
   const response = await fetch(`${API_URL}/api/steps`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: apiHeaders,
     body: JSON.stringify({
       userId,
       date,
@@ -51,7 +57,12 @@ export async function syncSteps(
 }
 
 export async function getSteps(userId: string) {
-  const response = await fetch(`${API_URL}/api/steps/${userId}`)
+  const response = await fetch(
+    `${API_URL}/api/steps/${userId}`,
+    {
+      headers: apiHeaders,
+    },
+  )
 
   if (!response.ok) {
     throw new Error(`Backend error: ${response.status}`)
@@ -72,6 +83,9 @@ export async function getLeaderboard(
 ) {
   const response = await fetch(
     `${API_URL}/api/leaderboard?period=${period}`,
+    {
+      headers: apiHeaders,
+    },
   )
 
   if (!response.ok) {

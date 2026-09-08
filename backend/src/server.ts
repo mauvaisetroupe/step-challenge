@@ -12,6 +12,27 @@ const app = Fastify({
   logger: true,
 })
 
+const API_KEY = process.env.API_KEY
+
+if (!API_KEY) {
+  throw new Error('API_KEY is not configured')
+}
+
+app.addHook('onRequest', async (request, reply) => {
+  if (!request.url.startsWith('/api/')) {
+    return
+  }
+
+  // wait for client migration
+  // const apiKey = request.headers['x-api-key']
+
+  // if (apiKey !== API_KEY) {
+  //   return reply.code(401).send({
+  //     error: 'Unauthorized',
+  //   })
+  // }
+})
+
 await app.register(fastifyStatic, {
   root: path.join(process.cwd(), '..', 'download'),
   prefix: '/download/',
@@ -24,14 +45,17 @@ await app.register(cors, {
 await app.register(healthRoutes, {
   prefix: '/api',
 })
+
 await app.register(stepsRoutes, {
   prefix: '/api',
 })
+
 await app.register(usersRoutes, {
   prefix: '/api',
 })
-await app.register(leaderboardRoutes, { 
-  prefix: '/api', 
+
+await app.register(leaderboardRoutes, {
+  prefix: '/api',
 })
 
 try {

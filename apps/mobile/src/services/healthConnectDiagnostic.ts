@@ -1,12 +1,25 @@
 import Constants from 'expo-constants'
 import { Platform } from 'react-native'
 import {
-    getGrantedPermissions,
-    getSdkStatus,
-    initialize,
+  getGrantedPermissions,
+  getSdkStatus,
+  initialize,
 } from 'react-native-health-connect'
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY
+
+if (!API_URL) {
+  throw new Error('EXPO_PUBLIC_API_URL is not configured')
+}
+
+if (!API_KEY) {
+  throw new Error('EXPO_PUBLIC_API_KEY is not configured')
+}
+
+const headers: HeadersInit = {
+  'X-API-Key': API_KEY,
+}
 
 export type DiagnosticStatus =
   | 'ok'
@@ -39,17 +52,12 @@ function formatSdkStatus(status: number | string) {
 }
 
 async function checkBackend(): Promise<DiagnosticItem> {
-  if (!API_URL) {
-    return {
-      label: 'Backend',
-      value: 'URL non configurée',
-      status: 'error',
-    }
-  }
-
   try {
     const response = await fetch(
       `${API_URL}/api/health`,
+      {
+        headers,
+      },
     )
 
     if (!response.ok) {
