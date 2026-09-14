@@ -1,21 +1,27 @@
 import * as Clipboard from 'expo-clipboard'
 import Constants from 'expo-constants'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native'
 
+import { getBackgroundSyncStatus } from '../../services/backgroundSync'
 import {
-    formatDiagnostic,
-    getHealthConnectDiagnostic,
-    type DiagnosticItem,
-    type HealthConnectDiagnostic,
+  formatDiagnostic,
+  getHealthConnectDiagnostic,
+  type DiagnosticItem,
+  type HealthConnectDiagnostic,
 } from '../../services/healthConnectDiagnostic'
+
+type BackgroundSyncStatus = {
+  lastRun: string | null
+  status: string | null
+}
 
 export default function SettingsScreen() {
   const [diagnostic, setDiagnostic] =
@@ -28,6 +34,24 @@ export default function SettingsScreen() {
 
   const [copied, setCopied] =
     useState(false)
+
+  const [backgroundSync, setBackgroundSync] =
+    useState<BackgroundSyncStatus>({
+      lastRun: null,
+      status: null,
+    })
+
+  const loadBackgroundSyncStatus =
+    useCallback(async () => {
+      const status =
+        await getBackgroundSyncStatus()
+
+      setBackgroundSync(status)
+    }, [])
+
+  useEffect(() => {
+    loadBackgroundSyncStatus()
+  }, [loadBackgroundSyncStatus])
 
   const runDiagnostic = useCallback(
     async () => {
@@ -118,6 +142,73 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>
+          Synchronisation en arrière-plan
+        </Text>
+
+        <Text style={styles.description}>
+          La synchronisation vérifie régulièrement
+          les 30 derniers jours de données.
+        </Text>
+
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.label}>
+              Dernière exécution
+            </Text>
+
+            <Text style={styles.value}>
+              {backgroundSync.lastRun
+                ? new Date(
+                    backgroundSync.lastRun,
+                  ).toLocaleString('fr-FR')
+                : 'Jamais'}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.row,
+              styles.lastRow,
+            ]}
+          >
+            <Text style={styles.label}>
+              Résultat
+            </Text>
+
+            <Text
+              style={[
+                styles.value,
+                backgroundSync.status ===
+                  'success' &&
+                  styles.successValue,
+                backgroundSync.status ===
+                  'failed' &&
+                  styles.errorValue,
+              ]}
+            >
+              {backgroundSync.status ===
+              'success'
+                ? '✓ Succès'
+                : backgroundSync.status ===
+                    'failed'
+                  ? '✕ Échec'
+                  : 'Pas encore exécutée'}
+            </Text>
+          </View>
+        </View>
+
+        <Pressable
+          style={styles.refreshButton}
+          onPress={loadBackgroundSyncStatus}
+        >
+          <Text style={styles.refreshButtonText}>
+            Actualiser
+          </Text>
+        </Pressable>
       </View>
 
       <View style={styles.section}>
@@ -279,6 +370,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
 
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+
   label: {
     fontSize: 15,
     color: '#6B7280',
@@ -286,6 +381,31 @@ const styles = StyleSheet.create({
 
   value: {
     fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+    maxWidth: '60%',
+    textAlign: 'right',
+  },
+
+  successValue: {
+    color: '#15803D',
+  },
+
+  errorValue: {
+    color: '#DC2626',
+  },
+
+  refreshButton: {
+    marginTop: 10,
+    minHeight: 44,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E5E7EB',
+  },
+
+  refreshButtonText: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#111827',
   },
