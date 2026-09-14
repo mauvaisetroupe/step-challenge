@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo "sdk.dir=$HOME/Library/Android/sdk" > android/local.properties
+
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 MOBILE_DIR="$APP_DIR/apps/mobile"
 ANDROID_DIR="$MOBILE_DIR/android"
