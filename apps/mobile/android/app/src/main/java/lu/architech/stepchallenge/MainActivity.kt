@@ -1,4 +1,4 @@
-package com.anonymous.stepchallenge
+package lu.architech.stepchallenge
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

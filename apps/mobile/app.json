@@ -10,7 +10,7 @@
 
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.anonymous.stepchallenge"
+      "bundleIdentifier": "lu.architech.stepchallenge"
     },
 
     "android": {
@@ -21,7 +21,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.stepchallenge",
+      "package": "lu.architech.stepchallenge",
       "permissions": [
         "android.permission.health.READ_STEPS"
       ]

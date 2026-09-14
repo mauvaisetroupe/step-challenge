@@ -1,4 +1,4 @@
-package com.anonymous.stepchallenge
+package lu.architech.stepchallenge
 
 import android.app.Application
 import android.content.res.Configuration
