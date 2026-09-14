@@ -21,11 +21,11 @@ const usersRoutes: FastifyPluginAsync = async (app) => {
     try {
       const result = await pool.query(
         `
-    INSERT INTO users (id, name)
-    VALUES ($1, $2)
-    RETURNING id, name, created_at
-    `,
-        [id, trimmedName]
+        INSERT INTO users (id, name)
+        VALUES ($1, $2)
+        RETURNING id, name, created_at
+        `,
+        [id, trimmedName],
       )
 
       return reply.send(result.rows[0])
@@ -40,18 +40,41 @@ const usersRoutes: FastifyPluginAsync = async (app) => {
     }
   })
 
-  app.get('/users/', async (request, reply) => {
+  app.get('/users/by-name/:name', async (request, reply) => {
+    const { name } = request.params as {
+      name: string
+    }
+
+    const result = await pool.query(
+      `
+      SELECT id, name, created_at
+      FROM users
+      WHERE LOWER(name) = LOWER($1)
+      `,
+      [name.trim()],
+    )
+
+    if (result.rows.length === 0) {
+      return reply.code(404).send({
+        error: 'User not found',
+      })
+    }
+
+    return reply.send(result.rows[0])
+  })
+
+  app.get('/users/:id', async (request, reply) => {
     const { id } = request.params as {
       id: string
     }
 
     const result = await pool.query(
       `
-  SELECT id, name, created_at
-  FROM users
-  WHERE id = $1
-  `,
-      [id]
+      SELECT id, name, created_at
+      FROM users
+      WHERE id = $1
+      `,
+      [id],
     )
 
     if (result.rows.length === 0) {

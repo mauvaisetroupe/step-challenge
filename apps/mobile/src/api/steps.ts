@@ -20,28 +20,6 @@ const apiHeaders: HeadersInit = {
   'X-API-Key': API_KEY,
 }
 
-export async function createUser(name: string) {
-  const response = await fetch(`${API_URL}/api/users`, {
-    method: 'POST',
-    headers: apiHeaders,
-    body: JSON.stringify({ name }),
-  })
-
-  if (response.status === 409) {
-    throw new Error('Ce prénom est déjà utilisé')
-  }
-
-  if (!response.ok) {
-    throw new Error(`User registration error: ${response.status}`)
-  }
-
-  return response.json() as Promise<{
-    id: string
-    name: string
-    created_at: string
-  }>
-}
-
 export async function syncSteps(
   userId: string,
   date: string,

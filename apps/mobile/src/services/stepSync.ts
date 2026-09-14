@@ -15,6 +15,12 @@ type DayStat = {
   steps: number
 }
 
+/**
+ * Retrieves the configured user ID from local storage.
+ *
+ * The user ID is required to associate step data with the
+ * corresponding user on the backend.
+ */
 async function getUserId() {
   const userId = await AsyncStorage.getItem(USER_ID_KEY)
 
@@ -25,12 +31,23 @@ async function getUserId() {
   return userId
 }
 
+/**
+ * Returns a copy of the given date set to the beginning of its day.
+ *
+ * The time is reset to 00:00:00.000 using the device's local timezone.
+ */
 function getStartOfDay(date: Date) {
   const result = new Date(date)
   result.setHours(0, 0, 0, 0)
   return result
 }
 
+/**
+ * Converts a Date into the local calendar date format YYYY-MM-DD.
+ *
+ * This is used as the common date key between Health Connect
+ * and the Step Challenge backend.
+ */
 function getDateKey(date: Date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -39,12 +56,20 @@ function getDateKey(date: Date) {
   return `${year}-${month}-${day}`
 }
 
+/**
+ * Returns a new Date shifted backwards by the specified number of days.
+ */
 function getDaysAgo(date: Date, days: number) {
   const result = new Date(date)
   result.setDate(result.getDate() - days)
   return result
 }
 
+/**
+ * Initializes Health Connect and requests permission to read step data.
+ *
+ * Throws an error if Health Connect is not available on the device.
+ */
 async function initializeHealthConnect() {
   const initialized = await initialize()
 
@@ -60,6 +85,13 @@ async function initializeHealthConnect() {
   ])
 }
 
+/**
+ * Retrieves daily step totals from Health Connect for the given period.
+ *
+ * Health Connect returns one aggregated result per day.
+ * Missing days are explicitly added with 0 steps so that the returned
+ * array always contains one entry for every day in the requested period.
+ */
 async function getHealthConnectDailyStats(
   startDate: Date,
   endDate: Date,
@@ -106,6 +138,12 @@ async function getHealthConnectDailyStats(
   return days
 }
 
+/**
+ * Returns today's step count from Health Connect.
+ *
+ * Health Connect is initialized and the data is queried from the
+ * beginning of the current local day until the current time.
+ */
 export async function getHealthConnectTodaySteps() {
   await initializeHealthConnect()
 
@@ -120,6 +158,15 @@ export async function getHealthConnectTodaySteps() {
   return stats[0]?.steps ?? 0
 }
 
+/**
+ * Synchronizes today's step count with the backend.
+ *
+ * The Health Connect value is compared with the server value.
+ * The backend is updated only when Health Connect contains a higher
+ * number of steps, preventing an older value from overwriting a newer one.
+ *
+ * Returns the highest value between Health Connect and the server.
+ */
 export async function syncTodaySteps() {
   const userId = await getUserId()
   const now = new Date()
@@ -150,6 +197,15 @@ export async function syncTodaySteps() {
   )
 }
 
+/**
+ * Synchronizes the last 30 days of step data with the backend.
+ *
+ * For each day, the Health Connect total is compared with the value
+ * already stored on the server. Only higher Health Connect values
+ * are sent to the backend.
+ *
+ * Returns the list of dates that were actually synchronized.
+ */
 export async function syncLast30Days() {
   const userId = await getUserId()
 
@@ -196,6 +252,16 @@ export async function syncLast30Days() {
   return syncedDates
 }
 
+/**
+ * Checks whether the last 30 days contain step data that is newer
+ * than the data currently stored on the backend.
+ *
+ * Returns true as soon as at least one day has more steps in
+ * Health Connect than on the server.
+ *
+ * This allows the application to decide whether a full refresh
+ * of the last 30 days is necessary without performing any writes.
+ */
 export async function needsRefreshLast30Days() {
   const userId = await getUserId()
 

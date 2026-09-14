@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native'
 
-import { createUser } from '../api/steps'
+import { createUser, getUserByName } from '../api/users'
 
 const USER_ID_KEY = '@step-challenge/user-id-v2'
 
@@ -32,18 +32,22 @@ export default function OnboardingScreen() {
       setLoading(true)
       setError(null)
 
-      const user = await createUser(trimmedName)
+      let user = await getUserByName(trimmedName)
+
+      if (!user) {
+        user = await createUser(trimmedName)
+      }
 
       await AsyncStorage.setItem(USER_ID_KEY, user.id)
 
       router.replace('/home')
     } catch (err) {
-      console.error('User registration error:', err)
+      console.error('User setup error:', err)
 
       setError(
         err instanceof Error
           ? err.message
-          : 'Impossible de créer le profil',
+          : 'Impossible de configurer le profil',
       )
     } finally {
       setLoading(false)
@@ -54,9 +58,9 @@ export default function OnboardingScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    > 
-    <View style={styles.content}>
-      <Text style={styles.eyebrow}>PREMIER LANCEMENT</Text>
+    >
+      <View style={styles.content}>
+        <Text style={styles.eyebrow}>PREMIER LANCEMENT</Text>
 
         <Text style={styles.title}>Step Challenge</Text>
 
@@ -92,7 +96,7 @@ export default function OnboardingScreen() {
           activeOpacity={0.8}
         >
           <Text style={styles.buttonText}>
-            {loading ? 'Création...' : 'Continuer'}
+            {loading ? 'Connexion...' : 'Continuer'}
           </Text>
         </TouchableOpacity>
       </View>
