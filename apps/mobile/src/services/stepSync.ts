@@ -10,7 +10,7 @@ import { getSteps, syncSteps } from '../api/steps'
 const USER_ID_KEY = '@step-challenge/user-id-v2'
 const HISTORY_DAYS = 30
 
-type DayStat = {
+export type DayStat = {
   date: string
   steps: number
 }
@@ -139,6 +139,29 @@ async function getHealthConnectDailyStats(
 }
 
 /**
+ * Retrieves the last 30 days of steps from Health Connect.
+ *
+ * This function only reads local Health Connect data.
+ * It does not access the backend and does not perform any synchronization.
+ */
+export async function getHealthConnectLast30Days(): Promise<
+  DayStat[]
+> {
+  await initializeHealthConnect()
+
+  const now = new Date()
+
+  const startDate = getStartOfDay(
+    getDaysAgo(now, HISTORY_DAYS - 1),
+  )
+
+  return getHealthConnectDailyStats(
+    startDate,
+    now,
+  )
+}
+
+/**
  * Returns today's step count from Health Connect.
  *
  * Health Connect is initialized and the data is queried from the
@@ -198,30 +221,17 @@ export async function syncTodaySteps() {
 }
 
 /**
- * Synchronizes the last 30 days of step data with the backend.
+ * Synchronizes the supplied Health Connect statistics with the backend.
  *
- * For each day, the Health Connect total is compared with the value
- * already stored on the server. Only higher Health Connect values
- * are sent to the backend.
+ * The server is only updated when Health Connect contains a higher
+ * value than the one already stored.
  *
  * Returns the list of dates that were actually synchronized.
  */
-export async function syncLast30Days() {
+export async function syncStatsToServer(
+  healthConnectStats: DayStat[],
+) {
   const userId = await getUserId()
-
-  await initializeHealthConnect()
-
-  const now = new Date()
-
-  const startDate = getStartOfDay(
-    getDaysAgo(now, HISTORY_DAYS - 1),
-  )
-
-  const healthConnectStats =
-    await getHealthConnectDailyStats(
-      startDate,
-      now,
-    )
 
   const serverData = await getSteps(userId)
 
@@ -253,6 +263,23 @@ export async function syncLast30Days() {
 }
 
 /**
+ * Synchronizes the last 30 days of step data with the backend.
+ *
+ * This is the complete synchronization operation used by background
+ * synchronization and manual refreshes:
+ *
+ * Health Connect → read 30 days → PostgreSQL
+ */
+export async function syncLast30Days() {
+  const healthConnectStats =
+    await getHealthConnectLast30Days()
+
+  return syncStatsToServer(
+    healthConnectStats,
+  )
+}
+
+/**
  * Checks whether the last 30 days contain step data that is newer
  * than the data currently stored on the backend.
  *
@@ -265,19 +292,8 @@ export async function syncLast30Days() {
 export async function needsRefreshLast30Days() {
   const userId = await getUserId()
 
-  await initializeHealthConnect()
-
-  const now = new Date()
-
-  const startDate = getStartOfDay(
-    getDaysAgo(now, HISTORY_DAYS - 1),
-  )
-
   const healthConnectStats =
-    await getHealthConnectDailyStats(
-      startDate,
-      now,
-    )
+    await getHealthConnectLast30Days()
 
   const serverData = await getSteps(userId)
 

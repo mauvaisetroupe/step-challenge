@@ -8,8 +8,8 @@ import {
 } from 'react-native'
 
 import {
-  syncLast30Days,
-  syncTodaySteps,
+  getHealthConnectLast30Days,
+  syncStatsToServer,
 } from '../../services/stepSync'
 
 export default function HomeScreen() {
@@ -22,18 +22,36 @@ export default function HomeScreen() {
       setLoading(true)
       setError(null)
 
-      await syncLast30Days()
+      const stats = await getHealthConnectLast30Days()
 
-      const todaySteps = await syncTodaySteps()
+      const today = new Date()
+      const todayKey = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, '0'),
+        String(today.getDate()).padStart(2, '0'),
+      ].join('-')
 
-      setSteps(todaySteps)
+      const todayEntry = stats.find(
+        (item) => item.date === todayKey,
+      )
+
+      setSteps(todayEntry?.steps ?? 0)
+
+      // Synchronisation serveur en arrière-plan.
+      // Elle ne bloque pas l'affichage de Home.
+      syncStatsToServer(stats).catch((err) => {
+        console.error(
+          'Background step synchronization error:',
+          err,
+        )
+      })
     } catch (err) {
-      console.error('Step synchronization error:', err)
+      console.error('Health Connect step read error:', err)
 
       setError(
         err instanceof Error
           ? err.message
-          : 'Unable to synchronize steps',
+          : 'Unable to read steps from Health Connect',
       )
     } finally {
       setLoading(false)
