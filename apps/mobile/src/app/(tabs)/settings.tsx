@@ -1,3 +1,4 @@
+import * as BackgroundTask from 'expo-background-task'
 import * as Clipboard from 'expo-clipboard'
 import Constants from 'expo-constants'
 import { useCallback, useEffect, useState } from 'react'
@@ -10,7 +11,10 @@ import {
   View,
 } from 'react-native'
 
-import { getBackgroundSyncStatus } from '../../services/backgroundSync'
+import {
+  getBackgroundSyncStatus,
+  type BackgroundSyncRun,
+} from '../../services/backgroundSync'
 import {
   formatDiagnostic,
   getHealthConnectDiagnostic,
@@ -21,6 +25,7 @@ import {
 type BackgroundSyncStatus = {
   lastRun: string | null
   status: string | null
+  history: BackgroundSyncRun[]
 }
 
 export default function SettingsScreen() {
@@ -39,6 +44,7 @@ export default function SettingsScreen() {
     useState<BackgroundSyncStatus>({
       lastRun: null,
       status: null,
+      history: [],
     })
 
   const loadBackgroundSyncStatus =
@@ -52,6 +58,26 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadBackgroundSyncStatus()
   }, [loadBackgroundSyncStatus])
+
+  const triggerBackgroundSync = useCallback(
+    async () => {
+      try {
+        console.log(
+          'Calling triggerTaskWorkerForTestingAsync',
+        )
+
+        await BackgroundTask.triggerTaskWorkerForTestingAsync()
+
+        await loadBackgroundSyncStatus()
+      } catch (error) {
+        console.error(
+          'Background task test failed:',
+          error,
+        )
+      }
+    },
+    [loadBackgroundSyncStatus],
+  )
 
   const runDiagnostic = useCallback(
     async () => {
@@ -201,12 +227,85 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        <Text style={styles.historyTitle}>
+          Dernières exécutions (LCO)
+        </Text>
+
+        {backgroundSync.history.length === 0 ? (
+          <View style={styles.historyEmpty}>
+            <Text style={styles.historyEmptyText}>
+              Aucune exécution enregistrée
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.historyCard}>
+            {backgroundSync.history.map(
+              (run, index) => (
+                <View
+                  key={`${run.timestamp}-${index}`}
+                  style={[
+                    styles.historyRow,
+                    index ===
+                      backgroundSync.history
+                        .length -
+                        1 &&
+                      styles.lastHistoryRow,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.historyStatus,
+                      run.status ===
+                        'success' &&
+                        styles.successValue,
+                      run.status ===
+                        'failed' &&
+                        styles.errorValue,
+                    ]}
+                  >
+                    {run.status ===
+                    'success'
+                      ? '✓'
+                      : '✕'}
+                  </Text>
+
+                  <Text
+                    style={styles.historyDate}
+                  >
+                    {new Date(
+                      run.timestamp,
+                    ).toLocaleString('fr-FR')}
+                  </Text>
+
+                  <Text
+                    style={styles.historyDays}
+                  >
+                    {run.status ===
+                    'success'
+                      ? `${run.syncedDays ?? 0} j`
+                      : 'Échec'}
+                  </Text>
+                </View>
+              ),
+            )}
+          </View>
+        )}
+
         <Pressable
           style={styles.refreshButton}
           onPress={loadBackgroundSyncStatus}
         >
           <Text style={styles.refreshButtonText}>
             Actualiser
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.refreshButton}
+          onPress={triggerBackgroundSync}
+        >
+          <Text style={styles.refreshButtonText}>
+            Tester la synchronisation
           </Text>
         </Pressable>
       </View>
@@ -410,6 +509,63 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#111827',
+  },
+
+  historyTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 18,
+    marginBottom: 8,
+  },
+
+  historyCard: {
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+  },
+
+  historyRow: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+
+  lastHistoryRow: {
+    borderBottomWidth: 0,
+  },
+
+  historyStatus: {
+    width: 28,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  historyDate: {
+    flex: 1,
+    fontSize: 14,
+    color: '#374151',
+  },
+
+  historyDays: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginLeft: 8,
+  },
+
+  historyEmpty: {
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    padding: 14,
+  },
+
+  historyEmptyText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
   },
 
   primaryButton: {

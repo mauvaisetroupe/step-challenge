@@ -12,21 +12,62 @@ const LAST_SYNC_KEY =
 const LAST_SYNC_STATUS_KEY =
   '@step-challenge/background-sync-last-status'
 
+const SYNC_HISTORY_KEY =
+  '@step-challenge/background-sync-history'
+
+const MAX_HISTORY = 10
+
+export type BackgroundSyncRun = {
+  timestamp: string
+  status: 'success' | 'failed'
+  syncedDays?: number
+}
+
+async function saveSyncRun(
+  run: BackgroundSyncRun,
+) {
+  const raw = await AsyncStorage.getItem(
+    SYNC_HISTORY_KEY,
+  )
+
+  const history: BackgroundSyncRun[] = raw
+    ? JSON.parse(raw)
+    : []
+
+  history.unshift(run)
+
+  await AsyncStorage.setItem(
+    SYNC_HISTORY_KEY,
+    JSON.stringify(
+      history.slice(0, MAX_HISTORY),
+    ),
+  )
+
+  await AsyncStorage.setItem(
+    LAST_SYNC_KEY,
+    run.timestamp,
+  )
+
+  await AsyncStorage.setItem(
+    LAST_SYNC_STATUS_KEY,
+    run.status,
+  )
+}
+
 TaskManager.defineTask(STEP_SYNC_TASK, async () => {
   console.log('Background step sync started')
 
   try {
     const syncedDates = await syncLast30Days()
 
-    await AsyncStorage.setItem(
-      LAST_SYNC_KEY,
-      new Date().toISOString(),
-    )
+    const timestamp =
+      new Date().toISOString()
 
-    await AsyncStorage.setItem(
-      LAST_SYNC_STATUS_KEY,
-      'success',
-    )
+    await saveSyncRun({
+      timestamp,
+      status: 'success',
+      syncedDays: syncedDates.length,
+    })
 
     console.log(
       'Background step sync completed:',
@@ -36,15 +77,13 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
 
     return BackgroundTask.BackgroundTaskResult.Success
   } catch (error) {
-    await AsyncStorage.setItem(
-      LAST_SYNC_KEY,
-      new Date().toISOString(),
-    )
+    const timestamp =
+      new Date().toISOString()
 
-    await AsyncStorage.setItem(
-      LAST_SYNC_STATUS_KEY,
-      'failed',
-    )
+    await saveSyncRun({
+      timestamp,
+      status: 'failed',
+    })
 
     console.error(
       'Background step sync failed:',
@@ -92,8 +131,17 @@ export async function getBackgroundSyncStatus() {
     LAST_SYNC_STATUS_KEY,
   )
 
+  const rawHistory =
+    await AsyncStorage.getItem(
+      SYNC_HISTORY_KEY,
+    )
+
+  const history: BackgroundSyncRun[] =
+    rawHistory ? JSON.parse(rawHistory) : []
+
   return {
     lastRun,
     status,
+    history,
   }
 }
