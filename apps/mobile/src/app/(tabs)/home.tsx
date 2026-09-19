@@ -7,7 +7,10 @@ import {
   View,
 } from 'react-native'
 
-import { syncTodaySteps } from '../../services/stepSync'
+import {
+  syncLast30Days,
+  syncTodaySteps,
+} from '../../services/stepSync'
 
 export default function HomeScreen() {
   const [steps, setSteps] = useState<number | null>(null)
@@ -18,6 +21,8 @@ export default function HomeScreen() {
     try {
       setLoading(true)
       setError(null)
+
+      await syncLast30Days()
 
       const todaySteps = await syncTodaySteps()
 
