@@ -6,12 +6,6 @@ import { syncLast30Days } from './stepSync'
 
 const STEP_SYNC_TASK = 'step-challenge-sync'
 
-const LAST_SYNC_KEY =
-  '@step-challenge/background-sync-last-run'
-
-const LAST_SYNC_STATUS_KEY =
-  '@step-challenge/background-sync-last-status'
-
 const SYNC_HISTORY_KEY =
   '@step-challenge/background-sync-history'
 
@@ -41,16 +35,6 @@ async function saveSyncRun(
     JSON.stringify(
       history.slice(0, MAX_HISTORY),
     ),
-  )
-
-  await AsyncStorage.setItem(
-    LAST_SYNC_KEY,
-    run.timestamp,
-  )
-
-  await AsyncStorage.setItem(
-    LAST_SYNC_STATUS_KEY,
-    run.status,
   )
 }
 
@@ -123,14 +107,6 @@ export async function registerBackgroundStepSync() {
 }
 
 export async function getBackgroundSyncStatus() {
-  const lastRun = await AsyncStorage.getItem(
-    LAST_SYNC_KEY,
-  )
-
-  const status = await AsyncStorage.getItem(
-    LAST_SYNC_STATUS_KEY,
-  )
-
   const rawHistory =
     await AsyncStorage.getItem(
       SYNC_HISTORY_KEY,
@@ -140,8 +116,6 @@ export async function getBackgroundSyncStatus() {
     rawHistory ? JSON.parse(rawHistory) : []
 
   return {
-    lastRun,
-    status,
     history,
   }
 }

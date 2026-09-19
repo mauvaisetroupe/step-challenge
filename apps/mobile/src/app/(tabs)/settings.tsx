@@ -23,8 +23,6 @@ import {
 } from '../../services/healthConnectDiagnostic'
 
 type BackgroundSyncStatus = {
-  lastRun: string | null
-  status: string | null
   history: BackgroundSyncRun[]
 }
 
@@ -42,8 +40,6 @@ export default function SettingsScreen() {
 
   const [backgroundSync, setBackgroundSync] =
     useState<BackgroundSyncStatus>({
-      lastRun: null,
-      status: null,
       history: [],
     })
 
@@ -180,55 +176,8 @@ export default function SettingsScreen() {
           les 30 derniers jours de données.
         </Text>
 
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.label}>
-              Dernière exécution
-            </Text>
-
-            <Text style={styles.value}>
-              {backgroundSync.lastRun
-                ? new Date(
-                    backgroundSync.lastRun,
-                  ).toLocaleString('fr-FR')
-                : 'Jamais'}
-            </Text>
-          </View>
-
-          <View
-            style={[
-              styles.row,
-              styles.lastRow,
-            ]}
-          >
-            <Text style={styles.label}>
-              Résultat
-            </Text>
-
-            <Text
-              style={[
-                styles.value,
-                backgroundSync.status ===
-                  'success' &&
-                  styles.successValue,
-                backgroundSync.status ===
-                  'failed' &&
-                  styles.errorValue,
-              ]}
-            >
-              {backgroundSync.status ===
-              'success'
-                ? '✓ Succès'
-                : backgroundSync.status ===
-                    'failed'
-                  ? '✕ Échec'
-                  : 'Pas encore exécutée'}
-            </Text>
-          </View>
-        </View>
-
         <Text style={styles.historyTitle}>
-          Dernières exécutions (LCO)
+          Dernières exécutions
         </Text>
 
         {backgroundSync.history.length === 0 ? (
@@ -515,7 +464,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#374151',
-    marginTop: 18,
     marginBottom: 8,
   },
 
