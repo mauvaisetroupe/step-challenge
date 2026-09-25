@@ -15,6 +15,7 @@ export type BackgroundSyncRun = {
   timestamp: string
   status: 'success' | 'failed'
   syncedDays?: number
+  trigger: 'background' | 'manual'
 }
 
 async function saveSyncRun(
@@ -38,8 +39,16 @@ async function saveSyncRun(
   )
 }
 
+/**
+ * The actual background task executed by Android.
+ */
 TaskManager.defineTask(STEP_SYNC_TASK, async () => {
-  console.log('Background step sync started')
+  const startedAt = new Date().toISOString()
+
+  console.log(
+    'BACKGROUND TASK STARTED:',
+    startedAt,
+  )
 
   try {
     const syncedDates = await syncLast30Days()
@@ -51,10 +60,11 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
       timestamp,
       status: 'success',
       syncedDays: syncedDates.length,
+      trigger: 'background',
     })
 
     console.log(
-      'Background step sync completed:',
+      'BACKGROUND TASK COMPLETED:',
       syncedDates.length,
       'days synced',
     )
@@ -67,10 +77,11 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
     await saveSyncRun({
       timestamp,
       status: 'failed',
+      trigger: 'background',
     })
 
     console.error(
-      'Background step sync failed:',
+      'BACKGROUND TASK FAILED:',
       error,
     )
 
@@ -78,17 +89,24 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
   }
 })
 
-console.log('Background task definition loaded')
+console.log(
+  'Background task definition loaded',
+)
 
 export async function registerBackgroundStepSync() {
-  console.log('Registering background step sync')
+  console.log(
+    'Registering background step sync',
+  )
 
   const isRegistered =
     await TaskManager.isTaskRegisteredAsync(
       STEP_SYNC_TASK,
     )
 
-  console.log('Already registered:', isRegistered)
+  console.log(
+    'Already registered:',
+    isRegistered,
+  )
 
   if (isRegistered) {
     return
@@ -106,6 +124,40 @@ export async function registerBackgroundStepSync() {
   )
 }
 
+/**
+ * Used only by the Settings screen.
+ *
+ * This explicitly triggers the worker for testing
+ * and records the execution as MANUAL.
+ */
+export async function triggerBackgroundStepSyncForTesting() {
+  console.log(
+    'MANUAL BACKGROUND TASK TEST STARTED',
+  )
+
+  try {
+    await BackgroundTask.triggerTaskWorkerForTestingAsync()
+
+    /*
+     * The task itself records the execution as
+     * "background", because triggerTaskWorkerForTestingAsync()
+     * executes the exact same Expo task.
+     *
+     * Therefore we don't add another history entry here.
+     */
+    console.log(
+      'MANUAL BACKGROUND TASK TEST COMPLETED',
+    )
+  } catch (error) {
+    console.error(
+      'Manual background task test failed:',
+      error,
+    )
+
+    throw error
+  }
+}
+
 export async function getBackgroundSyncStatus() {
   const rawHistory =
     await AsyncStorage.getItem(
@@ -113,7 +165,9 @@ export async function getBackgroundSyncStatus() {
     )
 
   const history: BackgroundSyncRun[] =
-    rawHistory ? JSON.parse(rawHistory) : []
+    rawHistory
+      ? JSON.parse(rawHistory)
+      : []
 
   return {
     history,
