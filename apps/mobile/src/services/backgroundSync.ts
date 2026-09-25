@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+
 import * as BackgroundTask from 'expo-background-task'
 import * as TaskManager from 'expo-task-manager'
 
@@ -8,6 +9,9 @@ const STEP_SYNC_TASK = 'step-challenge-sync'
 
 const SYNC_HISTORY_KEY =
   '@step-challenge/background-sync-history'
+
+const MANUAL_TEST_PENDING_KEY =
+  '@step-challenge/background-sync-manual-test-pending'
 
 const MAX_HISTORY = 10
 
@@ -25,9 +29,8 @@ async function saveSyncRun(
     SYNC_HISTORY_KEY,
   )
 
-  const history: BackgroundSyncRun[] = raw
-    ? JSON.parse(raw)
-    : []
+  const history: BackgroundSyncRun[] =
+    raw ? JSON.parse(raw) : []
 
   history.unshift(run)
 
@@ -40,7 +43,20 @@ async function saveSyncRun(
 }
 
 /**
- * The actual background task executed by Android.
+ * Mark the next task execution as a manual test.
+ *
+ * This marker is consumed by the background task,
+ * so it cannot affect a later automatic execution.
+ */
+export async function markManualBackgroundSyncTest() {
+  await AsyncStorage.setItem(
+    MANUAL_TEST_PENDING_KEY,
+    new Date().toISOString(),
+  )
+}
+
+/**
+ * The actual task executed by Android.
  */
 TaskManager.defineTask(STEP_SYNC_TASK, async () => {
   const startedAt = new Date().toISOString()
@@ -48,6 +64,38 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
   console.log(
     'BACKGROUND TASK STARTED:',
     startedAt,
+  )
+
+  /*
+   * If Settings requested a manual test immediately
+   * before this task execution, classify this run as
+   * manual. Otherwise it is an automatic background run.
+   */
+  const manualTestRequestedAt =
+    await AsyncStorage.getItem(
+      MANUAL_TEST_PENDING_KEY,
+    )
+
+  const trigger: 'background' | 'manual' =
+    manualTestRequestedAt
+      ? 'manual'
+      : 'background'
+
+  /*
+   * Consume the marker immediately.
+   *
+   * This is important: a later automatic execution
+   * must not inherit the "manual" classification.
+   */
+  if (manualTestRequestedAt) {
+    await AsyncStorage.removeItem(
+      MANUAL_TEST_PENDING_KEY,
+    )
+  }
+
+  console.log(
+    'BACKGROUND TASK TRIGGER:',
+    trigger,
   )
 
   try {
@@ -60,13 +108,15 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
       timestamp,
       status: 'success',
       syncedDays: syncedDates.length,
-      trigger: 'background',
+      trigger,
     })
 
     console.log(
       'BACKGROUND TASK COMPLETED:',
       syncedDates.length,
       'days synced',
+      'trigger:',
+      trigger,
     )
 
     return BackgroundTask.BackgroundTaskResult.Success
@@ -77,12 +127,14 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
     await saveSyncRun({
       timestamp,
       status: 'failed',
-      trigger: 'background',
+      trigger,
     })
 
     console.error(
       'BACKGROUND TASK FAILED:',
       error,
+      'trigger:',
+      trigger,
     )
 
     return BackgroundTask.BackgroundTaskResult.Failed
@@ -124,31 +176,29 @@ export async function registerBackgroundStepSync() {
   )
 }
 
-/**
- * Used only by the Settings screen.
- *
- * This explicitly triggers the worker for testing
- * and records the execution as MANUAL.
- */
 export async function triggerBackgroundStepSyncForTesting() {
   console.log(
     'MANUAL BACKGROUND TASK TEST STARTED',
   )
 
   try {
+    await markManualBackgroundSyncTest()
+
     await BackgroundTask.triggerTaskWorkerForTestingAsync()
 
-    /*
-     * The task itself records the execution as
-     * "background", because triggerTaskWorkerForTestingAsync()
-     * executes the exact same Expo task.
-     *
-     * Therefore we don't add another history entry here.
-     */
     console.log(
       'MANUAL BACKGROUND TASK TEST COMPLETED',
     )
   } catch (error) {
+    /*
+     * If the worker could not be triggered, remove the
+     * marker so it cannot incorrectly classify a future
+     * automatic execution as manual.
+     */
+    await AsyncStorage.removeItem(
+      MANUAL_TEST_PENDING_KEY,
+    )
+
     console.error(
       'Manual background task test failed:',
       error,

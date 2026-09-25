@@ -1,7 +1,9 @@
-import * as BackgroundTask from 'expo-background-task'
 import * as Clipboard from 'expo-clipboard'
+
 import Constants from 'expo-constants'
+
 import { useCallback, useEffect, useState } from 'react'
+
 import {
   ActivityIndicator,
   Pressable,
@@ -13,8 +15,10 @@ import {
 
 import {
   getBackgroundSyncStatus,
+  triggerBackgroundStepSyncForTesting,
   type BackgroundSyncRun,
 } from '../../services/backgroundSync'
+
 import {
   formatDiagnostic,
   getHealthConnectDiagnostic,
@@ -55,14 +59,14 @@ export default function SettingsScreen() {
     loadBackgroundSyncStatus()
   }, [loadBackgroundSyncStatus])
 
-  const triggerBackgroundSync = useCallback(
-    async () => {
+  const triggerBackgroundSync =
+    useCallback(async () => {
       try {
         console.log(
-          'Calling triggerTaskWorkerForTestingAsync',
+          'Calling manual background task test',
         )
 
-        await BackgroundTask.triggerTaskWorkerForTestingAsync()
+        await triggerBackgroundStepSyncForTesting()
 
         await loadBackgroundSyncStatus()
       } catch (error) {
@@ -71,9 +75,7 @@ export default function SettingsScreen() {
           error,
         )
       }
-    },
-    [loadBackgroundSyncStatus],
-  )
+    }, [loadBackgroundSyncStatus])
 
   const runDiagnostic = useCallback(
     async () => {
@@ -218,13 +220,32 @@ export default function SettingsScreen() {
                       : '✕'}
                   </Text>
 
-                  <Text
-                    style={styles.historyDate}
-                  >
-                    {new Date(
-                      run.timestamp,
-                    ).toLocaleString('fr-FR')}
-                  </Text>
+                  <View style={styles.historyMain}>
+                    <Text
+                      style={styles.historyDate}
+                    >
+                      {new Date(
+                        run.timestamp,
+                      ).toLocaleString('fr-FR')}
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.historyTrigger,
+                        run.trigger ===
+                          'manual' &&
+                          styles.manualTrigger,
+                        run.trigger ===
+                          'background' &&
+                          styles.backgroundTrigger,
+                      ]}
+                    >
+                      {run.trigger ===
+                      'manual'
+                        ? '🔵 MANUEL'
+                        : '🟢 AUTOMATIQUE'}
+                    </Text>
+                  </View>
 
                   <Text
                     style={styles.historyDays}
@@ -474,7 +495,7 @@ const styles = StyleSheet.create({
   },
 
   historyRow: {
-    minHeight: 44,
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
@@ -491,10 +512,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  historyDate: {
+  historyMain: {
     flex: 1,
+    justifyContent: 'center',
+  },
+
+  historyDate: {
     fontSize: 14,
     color: '#374151',
+  },
+
+  historyTrigger: {
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+
+  manualTrigger: {
+    color: '#2563EB',
+  },
+
+  backgroundTrigger: {
+    color: '#15803D',
   },
 
   historyDays: {
