@@ -26,6 +26,10 @@ import {
   type HealthConnectDiagnostic,
 } from '../../services/healthConnectDiagnostic'
 
+import {
+  getHuaweiHealthDiagnostic,
+} from '../../services/huaweiHealthDiagnostic'
+
 type BackgroundSyncStatus = {
   history: BackgroundSyncRun[]
 }
@@ -83,10 +87,21 @@ export default function SettingsScreen() {
       setCopied(false)
 
       try {
+
         const result =
           await getHealthConnectDiagnostic()
 
-        setDiagnostic(result)
+        const huaweiItems =
+          await getHuaweiHealthDiagnostic()
+
+        setDiagnostic({
+          ...result,
+          items: [
+            ...result.items,
+            ...huaweiItems,
+          ],
+        })
+
       } catch (error) {
         console.error(
           'Diagnostic error:',
