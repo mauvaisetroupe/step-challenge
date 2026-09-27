@@ -44,3 +44,4 @@ example
 backend/.env
 apps/mobile/.env.production
 version.json
+apps/mobile/android/app/agconnect-services.json
