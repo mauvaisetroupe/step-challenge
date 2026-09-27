@@ -38,6 +38,11 @@ await app.register(fastifyStatic, {
   prefix: '/download/',
 })
 
+await app.register(fastifyStatic, {
+  root: path.join(process.cwd(), '..', 'privacy'),
+  prefix: '/privacy/',
+})
+
 await app.register(cors, {
   origin: true,
 })
