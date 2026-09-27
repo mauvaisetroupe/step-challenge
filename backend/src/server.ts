@@ -34,13 +34,14 @@ app.addHook('onRequest', async (request, reply) => {
 })
 
 await app.register(fastifyStatic, {
-  root: path.join(process.cwd(), '..', 'download'),
-  prefix: '/download/',
+  root: path.join(process.cwd(), 'public'),
+  prefix: '/',
 })
 
 await app.register(fastifyStatic, {
-  root: path.join(process.cwd(), '..', 'privacy'),
-  prefix: '/privacy/',
+  root: path.join(process.cwd(), '..', 'download'),
+  prefix: '/download/',
+  decorateReply: false,
 })
 
 await app.register(cors, {
