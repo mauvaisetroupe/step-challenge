@@ -30,6 +30,10 @@ import {
   getHuaweiHealthDiagnostic,
 } from '../../services/huaweiHealthDiagnostic'
 
+import {
+  configureHuaweiHealth,
+} from '../../services/huaweiHealth'
+
 type BackgroundSyncStatus = {
   history: BackgroundSyncRun[]
 }
@@ -42,6 +46,12 @@ export default function SettingsScreen() {
 
   const [loading, setLoading] =
     useState(false)
+
+  const [huaweiLoading, setHuaweiLoading] =
+    useState(false)
+
+  const [huaweiMessage, setHuaweiMessage] =
+    useState<string | null>(null)   
 
   const [copied, setCopied] =
     useState(false)
@@ -80,6 +90,34 @@ export default function SettingsScreen() {
         )
       }
     }, [loadBackgroundSyncStatus])
+
+
+  const configureHuawei =
+  useCallback(async () => {
+    setHuaweiLoading(true)
+    setHuaweiMessage(null)
+
+    try {
+      await configureHuaweiHealth()
+
+      setHuaweiMessage(
+        'Huawei Health est configuré.',
+      )
+    } catch (error) {
+      console.error(
+        'Huawei Health configuration failed:',
+        error,
+      )
+
+      setHuaweiMessage(
+        error instanceof Error
+          ? error.message
+          : 'Erreur de configuration Huawei Health',
+      )
+    } finally {
+      setHuaweiLoading(false)
+    }
+  }, [])
 
   const runDiagnostic = useCallback(
     async () => {
@@ -293,6 +331,42 @@ export default function SettingsScreen() {
             Tester la synchronisation
           </Text>
         </Pressable>
+      </View>
+
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>
+          Huawei Health
+        </Text>
+
+        <Text style={styles.description}>
+          Connecte Step Challenge à Huawei Health
+          pour permettre la lecture de tes pas.
+        </Text>
+
+        <Pressable
+          style={[
+            styles.primaryButton,
+            huaweiLoading &&
+              styles.primaryButtonDisabled,
+          ]}
+          onPress={configureHuawei}
+          disabled={huaweiLoading}
+        >
+          {huaweiLoading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text style={styles.primaryButtonText}>
+              Configurer Huawei Health
+            </Text>
+          )}
+        </Pressable>
+
+        {huaweiMessage && (
+          <Text style={styles.description}>
+            {huaweiMessage}
+          </Text>
+        )}
       </View>
 
       <View style={styles.section}>
