@@ -7,12 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "stepchallenge",
     "userInterfaceStyle": "automatic",
-
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "lu.architech.stepchallenge"
     },
-
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -26,12 +24,10 @@
         "android.permission.health.READ_STEPS"
       ]
     },
-
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-
     "plugins": [
       "expo-router",
       "react-native-health-connect",
@@ -51,12 +47,19 @@
           "imageWidth": 76
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      "./plugins/withHuaweiMavenRepo"
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f0bbd859-65d2-4cf7-8590-cfd6e0b7d419"
+      }
+    },
+    "owner": "mauvaisetroupe"
   }
 }
