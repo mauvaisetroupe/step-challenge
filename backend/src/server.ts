@@ -24,13 +24,13 @@ app.addHook('onRequest', async (request, reply) => {
   }
 
   // wait for client migration
-  // const apiKey = request.headers['x-api-key']
+  const apiKey = request.headers['x-api-key']
 
-  // if (apiKey !== API_KEY) {
-  //   return reply.code(401).send({
-  //     error: 'Unauthorized',
-  //   })
-  // }
+  if (apiKey !== API_KEY) {
+    return reply.code(401).send({
+      error: 'Unauthorized',
+    })
+  }
 })
 
 await app.register(fastifyStatic, {
