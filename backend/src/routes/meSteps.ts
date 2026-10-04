@@ -47,6 +47,9 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
    *
    * The server keeps the highest value per day: sending the same or a
    * lower total again has no effect, so the sync is idempotent.
+   *
+   * Returns the dates that were actually recorded (new day or higher
+   * total), so the app can report what a sync changed.
    */
   app.post<{
     Body: { days: DayEntry[] }
@@ -112,22 +115,25 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
         throw error
       }
 
-      await db.query(
+      // Rows skipped by the WHERE clause (same or lower total) are
+      // neither updated nor returned.
+      const result = await db.query<{ date: string }>(
         `
         INSERT INTO daily_steps (user_id, date, steps)
         SELECT $1, d.date, d.steps
         FROM unnest($2::date[], $3::int[]) AS d(date, steps)
         ON CONFLICT (user_id, date) DO UPDATE
-        SET steps = GREATEST(daily_steps.steps, EXCLUDED.steps),
-            updated_at = CASE
-              WHEN EXCLUDED.steps > daily_steps.steps THEN now()
-              ELSE daily_steps.updated_at
-            END
+        SET steps = EXCLUDED.steps,
+            updated_at = now()
+        WHERE daily_steps.steps < EXCLUDED.steps
+        RETURNING to_char(date, 'YYYY-MM-DD') AS date
         `,
         [request.auth!.userId, dates, days.map((day) => day.steps)],
       )
 
-      return reply.code(204).send()
+      return reply.send({
+        updatedDates: result.rows.map((row) => row.date).sort(),
+      })
     },
   )
 

@@ -66,7 +66,7 @@ describe('POST /api/me/steps', { skip: skipWithoutDatabase }, () => {
       { date: today, steps: 1200 },
     ])
 
-    assert.equal(response.statusCode, 204)
+    assert.equal(response.statusCode, 200)
 
     assert.deepEqual((await getSteps(app, token)).json(), [
       { date: today, steps: 1200 },
@@ -87,6 +87,59 @@ describe('POST /api/me/steps', { skip: skipWithoutDatabase }, () => {
     await postSteps(app, token, [{ date: today, steps: 7000 }])
 
     assert.equal((await getSteps(app, token)).json()[0].steps, 7000)
+  })
+
+  it('reports only the days actually recorded', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+    const today = await serverDate()
+    const yesterday = await serverDate(-1)
+    const twoDaysAgo = await serverDate(-2)
+
+    const first = await postSteps(app, token, [
+      { date: twoDaysAgo, steps: 6000 },
+      { date: yesterday, steps: 8000 },
+    ])
+
+    assert.deepEqual(first.json(), {
+      updatedDates: [twoDaysAgo, yesterday],
+    })
+
+    // Same, lower, higher and new values in a single sync.
+    const second = await postSteps(app, token, [
+      { date: twoDaysAgo, steps: 6000 },
+      { date: yesterday, steps: 7000 },
+      { date: today, steps: 1200 },
+    ])
+
+    assert.deepEqual(second.json(), { updatedDates: [today] })
+
+    const third = await postSteps(app, token, [
+      { date: yesterday, steps: 9000 },
+    ])
+
+    assert.deepEqual(third.json(), { updatedDates: [yesterday] })
+  })
+
+  it('keeps updated_at when the value does not increase', async () => {
+    const app = await buildApp()
+    const { token, user } = await signInAs(app, 'alice')
+    const today = await serverDate()
+
+    await postSteps(app, token, [{ date: today, steps: 5000 }])
+    await pool!.query(
+      "UPDATE daily_steps SET updated_at = now() - interval '1 hour' WHERE user_id = $1",
+      [user.id],
+    )
+
+    await postSteps(app, token, [{ date: today, steps: 5000 }])
+
+    const result = await pool!.query(
+      "SELECT updated_at < now() - interval '59 minutes' AS unchanged FROM daily_steps WHERE user_id = $1",
+      [user.id],
+    )
+
+    assert.equal(result.rows[0].unchanged, true)
   })
 
   it('only writes for the signed-in user', async () => {
@@ -117,7 +170,7 @@ describe('POST /api/me/steps', { skip: skipWithoutDatabase }, () => {
       { date: await serverDate(1), steps: 100 },
     ])
 
-    assert.equal(response.statusCode, 204)
+    assert.equal(response.statusCode, 200)
   })
 
   it('rejects dates further in the future', async () => {
@@ -202,7 +255,7 @@ describe('POST /api/me/steps', { skip: skipWithoutDatabase }, () => {
       { date: await serverDate(), steps: MAX_DAILY_STEPS },
     ])
 
-    assert.equal(response.statusCode, 204)
+    assert.equal(response.statusCode, 200)
   })
 
   it('requires a session', async () => {
