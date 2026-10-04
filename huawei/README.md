@@ -623,9 +623,11 @@ Sans fichier de configuration (clone du dépôt public, CI), ou pour un autre pa
 
   ```bash
   cd apps/mobile
-  npx eas-cli env:create --environment production --name AGCONNECT_SERVICES_JSON \
-    --type file --value ./agconnect-services.json --visibility secret
+  npx eas-cli env:set production --name AGCONNECT_SERVICES_JSON \
+    --type file --value ./agconnect-services.json --visibility sensitive
   ```
+
+  Visibilité `sensitive` et non `secret` : une variable `secret` n'est lisible que sur les serveurs de build d'EAS, pas par un build local (`eas build --local`).
 
   À refaire après chaque nouveau téléchargement du fichier (par exemple après l'ajout d'une empreinte).
 
