@@ -67,7 +67,7 @@
         <h1>Privacy Policy — Step Challenge</h1>
 
         <p class="updated">
-            <strong>Last updated: 27 September 2026</strong>
+            <strong>Last updated: 4 October 2026</strong>
         </p>
 
         <p>
@@ -84,19 +84,49 @@
         <h3>Account information</h3>
 
         <p>
-            When creating a Step Challenge profile, the application may collect:
+            Users sign in to Step Challenge with their Google account. When
+            signing in, Google provides the application with a signed
+            identity token. From this token, Step Challenge stores only:
         </p>
 
         <ul>
-            <li>A user identifier;</li>
-            <li>A display name chosen by the user.</li>
+            <li>
+                The stable, technical Google account identifier (the
+                OpenID Connect "subject"), used to recognize the user at
+                their next sign-in;
+            </li>
+            <li>
+                A display name chosen by the user, shown to other
+                participants. The application suggests the first name of the
+                Google account, which the user can change before saving it
+                and at any time afterwards.
+            </li>
         </ul>
+
+        <p>
+            Step Challenge does <strong>not</strong> store the user's email
+            address, profile photo or any other Google account information,
+            and does not access any Google service on the user's behalf.
+        </p>
+
+        <p>
+            After sign-in, the application keeps a session token in the
+            device's secure storage (Android Keystore). The server keeps only
+            a cryptographic hash of this token.
+        </p>
 
         <h3>Step data</h3>
 
         <p>
             When the user gives permission, Step Challenge can read step-count data
             from the health platform available on the user's device.
+        </p>
+
+        <p>
+            On Android, Step Challenge uses <strong>Health Connect</strong> to
+            read step counts recorded by the phone or by compatible devices
+            and applications (for example Garmin, Samsung or Xiaomi). Step
+            Challenge only requests read access to step data.
         </p>
 
         <p>
@@ -218,8 +248,18 @@
         </p>
 
         <p>
-            Users may request deletion of their Step Challenge account and associated
-            server-side data.
+            Users can delete their Step Challenge account at any time from the
+            application: <strong>Settings → Delete my account</strong>. This
+            immediately and permanently deletes, on the server, the account,
+            its display name, its link to the Google account, its sessions
+            and its entire step history. Step data stored in Health Connect or
+            Huawei Health on the device is not affected.
+        </p>
+
+        <p>
+            Users who no longer have access to the application can request
+            the deletion of their account and associated server-side data by
+            email (see the Contact section).
         </p>
 
         <p>
@@ -284,14 +324,30 @@
         </p>
 
         <p>
-            <strong>Step Challenge</strong><br>
+            Step Challenge is developed and operated by
+            <strong>Lionel Coquin</strong>, acting as a private individual,
+            who is the data controller for the personal data processed by
+            the application and its server.
+        </p>
+
+        <p>
+            <strong>Step Challenge — Lionel Coquin</strong><br>
             Email:
-            <strong>lionel.brol@gmail.com</strong>
+            <strong>support@architech.lu</strong>
+        </p>
+
+        <h2>12. Open source</h2>
+
+        <p>
+            The source code of the Step Challenge application and server is
+            public, under the GNU Affero General Public License (AGPL-3.0),
+            so that anyone can verify how data is processed:
+            <a href="https://github.com/mauvaisetroupe/step-challenge">github.com/mauvaisetroupe/step-challenge</a>.
         </p>
 
         <footer>
             Step Challenge — Privacy Policy<br>
-            Last updated: 27 September 2026
+            Last updated: 4 October 2026
         </footer>
 
 
