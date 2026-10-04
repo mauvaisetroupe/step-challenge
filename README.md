@@ -1,56 +1,108 @@
-# Welcome to your Expo app 👋
+# Step Challenge
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application de défi de pas entre amis : chaque téléphone lit ses pas (Health Connect ou Huawei Health), les synchronise vers un serveur, et un classement hebdomadaire / mensuel compare les participants.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+apps/mobile   Expo (SDK 57) / React Native — Android
+   ├─ Health Connect (Android, Garmin…)
+   ├─ Huawei Health Kit (en cours d'intégration, voir huawei/README.md)
+   └─ tâche de fond quotidienne : synchro des 30 derniers jours
+            │  HTTPS + X-API-Key
+            ▼
+backend       Fastify + PostgreSQL — https://step.architech.lu
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Structure
 
-### Other setup steps
+| Dossier | Contenu |
+|---|---|
+| `apps/mobile` | Application Expo (expo-router, onglets Accueil / Stats / Classement / Paramètres) |
+| `backend` | API Fastify (`/api/users`, `/api/steps`, `/api/leaderboard`, `/api/health`) et pages `privacy` / `agreement` |
+| `huawei` | Notes et documents de la demande d'accès Huawei Health Kit |
+| `icons` | Sources des icônes et visuels Google Play |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Backend
 
-## Learn more
+### Configuration
 
-To learn more about developing your project with Expo, look at the following resources:
+Créer `backend/.env` :
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```dotenv
+DATABASE_HOST=
+DATABASE_PORT=
+DATABASE_NAME=
+DATABASE_USER=
+DATABASE_PASSWORD=
+API_KEY=
+```
 
-## Join the community
+`API_KEY` doit correspondre à `EXPO_PUBLIC_API_KEY` côté mobile : toutes les routes `/api/*` exigent le header `X-API-Key`.
 
-Join our community of developers creating universal apps.
+### Lancer en local
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+cd backend
+npm install
+npm run dev      # tsx watch, port 3000
+```
+
+### Déploiement
+
+Sur le serveur (`/opt/step-challenge`, service systemd `step-challenge-api`) :
+
+- `install-step-challenge.sh` : installation initiale (Node.js, service systemd) ;
+- `deploy.sh` : `git pull`, `npm ci`, build, redémarrage et vérification de `/api/health`.
+
+## Application mobile
+
+L'application utilise des modules natifs (Health Connect, Huawei Health) : elle ne fonctionne **pas dans Expo Go**, il faut un development build.
+
+### Configuration
+
+Les variables d'environnement sont stockées sur EAS, par environnement :
+
+| Variable | `development` | `production` | Visibilité |
+|---|---|---|---|
+| `EXPO_PUBLIC_API_URL` | `http://192.168.1.109:3000` | `https://step.architech.lu` | Plain text |
+| `EXPO_PUBLIC_API_KEY` | clé de dev | clé de prod | Sensitive |
+
+Chaque profil de `eas.json` déclare son `environment` : lors d'un build, EAS CLI récupère les variables correspondantes et les injecte dans le bundle.
+
+```bash
+cd apps/mobile
+npx eas-cli env:list --environment development
+npx eas-cli env:pull --environment development   # génère un .env local
+```
+
+### Lancer en local
+
+Prérequis : Android SDK installé, avec dans `~/.zshrc` :
+
+```bash
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+```
+
+```bash
+cd apps/mobile
+npm install
+npx expo run:android
+```
+
+Le dossier `android/` est généré par `expo prebuild` et n'est pas versionné : toute configuration native passe par `app.json` et les config plugins de `apps/mobile/plugins/`.
+
+### Build et publication
+
+Distribution via le Google Play Store (test fermé). Les builds sont faits **en local**, EAS cloud ne sert qu'à stocker :
+
+- les **credentials** Android (keystore de signature, alias, mots de passe) ;
+- les **variables d'environnement** (voir ci-dessus) ;
+- le numéro de version Android (`versionCode`), incrémenté automatiquement (`appVersionSource: remote`, `autoIncrement`).
+
+```bash
+cd apps/mobile
+npx eas-cli build --platform android --profile production --local
+```
+
+Le build produit un `.aab` signé à téléverser dans la Google Play Console. Les credentials se consultent ou se modifient avec `npx eas-cli credentials`.
