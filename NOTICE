@@ -1,0 +1,36 @@
+Step Challenge
+Copyright (C) 2026 mauvaisetroupe
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program (see the LICENSE file).  If not, see
+<https://www.gnu.org/licenses/>.
+
+Versions of this program published before the license change remain
+available under the MIT License under which they were released.
+
+
+Additional permission under GNU AGPL version 3 section 7
+-------------------------------------------------------
+
+If you modify this Program, or any covered work, by linking or combining
+it with Google Play services, Huawei Mobile Services (HMS) libraries, or
+other proprietary platform SDKs required to access health data or
+authentication on Android, the licensors of this Program grant you
+additional permission to convey the resulting work.
+
+
+Trademarks
+----------
+
+The license covers the source code only. The "Step Challenge" name and
+logo are not licensed under the AGPL; see TRADEMARKS.md.
