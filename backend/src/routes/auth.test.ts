@@ -1,68 +1,35 @@
 import assert from 'node:assert/strict'
 import { after, beforeEach, describe, it } from 'node:test'
 
-import Fastify from 'fastify'
-
-import {
-  GOOGLE_ISSUER,
-  InvalidIdTokenError,
-} from '../auth/google.js'
+import { GOOGLE_ISSUER } from '../auth/google.js'
 import { hashSessionToken, SESSION_TTL_DAYS } from '../auth/sessions.js'
+import {
+  bearer,
+  buildTestApp,
+  signIn,
+  signInAs,
+} from '../test/app.js'
 import {
   createTestPool,
   resetDatabase,
   skipWithoutDatabase,
 } from '../test/database.js'
-import authRoutes from './auth.js'
 
 const pool = createTestPool()
 
-/**
- * Fake verifier: "valid:<sub>" is a valid token for subject <sub>,
- * anything else is rejected.
- */
-async function fakeVerifyGoogleIdToken(idToken: string) {
-  if (!idToken.startsWith('valid:')) {
-    throw new InvalidIdTokenError('invalid test token')
+const buildApp = () => buildTestApp(pool!)
+
+beforeEach(async () => {
+  if (pool) {
+    await resetDatabase(pool)
   }
+})
 
-  return {
-    issuer: GOOGLE_ISSUER,
-    subject: idToken.slice('valid:'.length),
-  }
-}
-
-async function buildApp() {
-  const app = Fastify()
-
-  await app.register(authRoutes, {
-    prefix: '/api',
-    db: pool!,
-    verifyGoogleIdToken: fakeVerifyGoogleIdToken,
-  })
-
-  return app
-}
-
-function signIn(
-  app: Awaited<ReturnType<typeof buildApp>>,
-  body: Record<string, unknown>,
-) {
-  return app.inject({
-    method: 'POST',
-    url: '/api/auth/google',
-    payload: body,
-  })
-}
+after(async () => {
+  await pool?.end()
+})
 
 describe('POST /api/auth/google', { skip: skipWithoutDatabase }, () => {
-  beforeEach(async () => {
-    await resetDatabase(pool!)
-  })
-
-  after(async () => {
-    await pool?.end()
-  })
 
   it('creates a user and a session on first sign-in', async () => {
     const app = await buildApp()
@@ -245,5 +212,47 @@ describe('POST /api/auth/google', { skip: skipWithoutDatabase }, () => {
 
     assert.equal(users.rows[0].n, 1)
     assert.equal(sessions.rows[0].n, 5)
+  })
+})
+
+describe('POST /api/auth/logout', { skip: skipWithoutDatabase }, () => {
+  it('revokes the current session only', async () => {
+    const app = await buildApp()
+
+    const phone = await signInAs(app, 'alice')
+    const tablet = await signInAs(app, 'alice')
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+      headers: bearer(phone.token),
+    })
+
+    assert.equal(response.statusCode, 204)
+
+    const afterLogout = await app.inject({
+      method: 'GET',
+      url: '/api/me',
+      headers: bearer(phone.token),
+    })
+    const otherDevice = await app.inject({
+      method: 'GET',
+      url: '/api/me',
+      headers: bearer(tablet.token),
+    })
+
+    assert.equal(afterLogout.statusCode, 401)
+    assert.equal(otherDevice.statusCode, 200)
+  })
+
+  it('requires a session', async () => {
+    const app = await buildApp()
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+    })
+
+    assert.equal(response.statusCode, 401)
   })
 })

@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify'
 import type { Pool } from 'pg'
 
+import type { RequireAuth } from '../auth/authenticate.js'
 import {
   InvalidIdTokenError,
   type OidcIdentity,
@@ -14,12 +15,28 @@ import {
 export type AuthRoutesOptions = {
   db: Pool
   verifyGoogleIdToken: (idToken: string) => Promise<OidcIdentity>
+  requireAuth: RequireAuth
 }
 
 const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
   app,
-  { db, verifyGoogleIdToken },
+  { db, verifyGoogleIdToken, requireAuth },
 ) => {
+  /**
+   * Revokes the current session only; other devices stay signed in.
+   */
+  app.post(
+    '/auth/logout',
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      await db.query('DELETE FROM sessions WHERE id = $1', [
+        request.auth!.sessionId,
+      ])
+
+      return reply.code(204).send()
+    },
+  )
+
   app.post<{
     Body: {
       idToken: string
