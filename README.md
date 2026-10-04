@@ -35,6 +35,8 @@ DATABASE_USER=
 DATABASE_PASSWORD=
 GOOGLE_CLIENT_ID=
 # PORT=3000
+# HOST=0.0.0.0
+# PUBLIC_BASE_URL=https://step.architech.lu
 ```
 
 | Variable | Rôle |
@@ -42,6 +44,8 @@ GOOGLE_CLIENT_ID=
 | `DATABASE_*` | Connexion PostgreSQL |
 | `GOOGLE_CLIENT_ID` | Client ID OAuth **Web** du projet Google Cloud `step-challenge` ; vérifié dans le champ `aud` des ID tokens Google. Pas un secret |
 | `PORT` | Port d'écoute, 3000 par défaut |
+| `HOST` | Interface d'écoute, `0.0.0.0` (toutes) par défaut. En production, `127.0.0.1` : seul `cloudflared`, sur la même machine, joint le backend, ce qui garantit que l'en-tête `CF-Connecting-IP` utilisé par la limite de débit vient bien de Cloudflare |
+| `PUBLIC_BASE_URL` | Base des liens d'invitation (`<base>/i/<code>`) et des App Links, `https://step.architech.lu` par défaut |
 
 Créer les tables avec `psql -d <base> -f backend/schema.sql` (base neuve) ; faire évoluer une base existante avec [`backend/migrations/`](backend/migrations/README.md).
 

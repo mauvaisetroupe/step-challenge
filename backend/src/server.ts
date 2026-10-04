@@ -96,7 +96,7 @@ try {
   app.log.info('Database connection successful')
 
   await app.listen({
-    host: '0.0.0.0',
+    host: process.env.HOST ?? '0.0.0.0',
     port: Number(process.env.PORT ?? 3000),
   })
 } catch (error) {
