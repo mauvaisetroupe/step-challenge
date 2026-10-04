@@ -578,3 +578,44 @@ Cela permettra ensuite de supprimer les modifications manuelles de `android/`.
 La prochaine session doit commencer par le **POC JavaScript HMS Health minimal**, et non par une nouvelle modification Gradle.
 
 Le build Android est désormais une base fonctionnelle validée.
+
+---
+
+# 14. Mise à jour — 2026-10-04
+
+Les sections 1 à 13 décrivent le POC tel qu'il a été mené. Depuis, le projet est passé à `expo prebuild` (`android/` est généré et non versionné) : la section 11 n'est plus d'actualité.
+
+## Statut Huawei
+
+* Demande Health Service Kit : **To be reviewed**. Impossible de tester la lecture des pas tant qu'elle n'est pas validée (`signIn` sur le scope `step.read` échouera).
+* Permission d'accès à l'**historique demandée : 1 mois**. Cohérent avec `HISTORY_DAYS = 30` dans `stepSync.ts`.
+
+## Cas d'usage cible
+
+Une testeuse (Christel) a une **montre Huawei appairée à l'application Huawei Health sur un téléphone Samsung**.
+
+* Huawei Health **ne déverse pas** ses données dans Google Health Connect : la seule voie est Health Kit directement.
+* Health Kit doit fonctionner sur un téléphone non-Huawei à condition que **HMS Core** soit installé (normalement présent avec l'application Huawei Health) — à confirmer sur son téléphone.
+
+Conséquence pour l'étape 4 : le provider ne se choisit **pas selon la marque du téléphone**, mais par l'utilisateur (Health Connect ou Huawei Health), dans les Paramètres.
+
+## Plan d'intégration (reporté, en attente de la validation Huawei)
+
+1. **Abstraction « provider de pas » dans `stepSync.ts`** : une interface commune (`getDailyStats(start, end): DayStat[]`) avec deux implémentations, Health Connect et Huawei. La comparaison avec le serveur, l'upsert et la tâche de fond restent inchangés. Testable dès maintenant côté Health Connect (non-régression).
+2. **Historique Huawei** : `huaweiHealth.ts` ne lit aujourd'hui que le jour courant (`readTodaySummation`). Le package expose `HmsDataController.readDailySummation(dataType, startTime, endTime)` ; le format de `startTime` / `endTime` n'est pas typé (probablement `yyyyMMdd` en nombre — à vérifier au premier test).
+3. **Choix du provider** dans les Paramètres, stocké localement, utilisé par `stepSync` et la tâche de fond.
+4. **Bord de la fenêtre d'historique** : selon la façon dont Huawei compte « 1 mois », le jour le plus ancien peut être refusé. Ne pas faire échouer toute la synchro : observer si Huawei renvoie une erreur ou un tableau vide, et traiter ce cas.
+
+## Point ouvert : configuration native après prebuild
+
+Les config plugins actuels (`apps/mobile/plugins/`) ne couvrent que :
+
+* le dépôt Maven Huawei (`withHuaweiMavenRepo`) ;
+* la suppression des permissions et services inutiles du manifest (`withHuaweiHealthManifest`).
+
+Ne sont **pas** reproduits par prebuild :
+
+* le classpath et l'application du plugin Gradle **AGConnect** ;
+* la copie de **`agconnect-services.json`** dans `android/app/` (fichier ignoré par git).
+
+À traiter avant le premier vrai test Huawei, sinon l'initialisation HMS risque d'échouer après un `prebuild --clean`.
