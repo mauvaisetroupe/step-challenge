@@ -82,16 +82,16 @@ describe('PATCH /api/me', { skip: skipWithoutDatabase }, () => {
     assert.equal(response.statusCode, 422)
   })
 
-  it('rejects a display name used by someone else', async () => {
+  it('accepts a display name used by someone else', async () => {
     const app = await buildApp()
     const { token } = await signInAs(app, 'alice', 'Alice')
 
     await signInAs(app, 'bob', 'Bob')
 
-    const response = await patchMe(app, token, { displayName: 'BOB' })
+    const response = await patchMe(app, token, { displayName: 'Bob' })
 
-    assert.equal(response.statusCode, 409)
-    assert.deepEqual(response.json(), { error: 'display_name_taken' })
+    assert.equal(response.statusCode, 200)
+    assert.equal(response.json().name, 'Bob')
   })
 
   it('cannot change another user', async () => {

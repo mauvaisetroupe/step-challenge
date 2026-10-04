@@ -8,7 +8,6 @@ import {
 } from '../auth/google.js'
 import {
   DisplayNameRequiredError,
-  DisplayNameTakenError,
   signInWithOidc,
 } from '../auth/signIn.js'
 
@@ -86,12 +85,6 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
         if (error instanceof DisplayNameRequiredError) {
           return reply.code(422).send({
             error: 'display_name_required',
-          })
-        }
-
-        if (error instanceof DisplayNameTakenError) {
-          return reply.code(409).send({
-            error: 'display_name_taken',
           })
         }
 

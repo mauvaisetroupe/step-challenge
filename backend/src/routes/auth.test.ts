@@ -139,18 +139,21 @@ describe('POST /api/auth/google', { skip: skipWithoutDatabase }, () => {
     assert.equal(response.statusCode, 422)
   })
 
-  it('rejects an already used display name', async () => {
+  it('allows two users with the same display name', async () => {
     const app = await buildApp()
 
-    await signIn(app, { idToken: 'valid:alice', displayName: 'Marie' })
-
-    const response = await signIn(app, {
+    const first = await signIn(app, {
+      idToken: 'valid:alice',
+      displayName: 'Marie',
+    })
+    const second = await signIn(app, {
       idToken: 'valid:bob',
-      displayName: 'marie',
+      displayName: 'Marie',
     })
 
-    assert.equal(response.statusCode, 409)
-    assert.deepEqual(response.json(), { error: 'display_name_taken' })
+    assert.equal(first.statusCode, 201)
+    assert.equal(second.statusCode, 201)
+    assert.notEqual(first.json().user.id, second.json().user.id)
   })
 
   it('rejects an invalid ID token', async () => {

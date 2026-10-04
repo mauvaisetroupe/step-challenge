@@ -9,8 +9,6 @@ export type MeRoutesOptions = {
   requireAuth: RequireAuth
 }
 
-const UNIQUE_VIOLATION = '23505'
-
 const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (
   app,
   { db, requireAuth },
@@ -53,26 +51,17 @@ const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (
         return reply.code(422).send({ error: 'display_name_required' })
       }
 
-      try {
-        const result = await db.query<User>(
-          `
-          UPDATE users
-          SET name = $2
-          WHERE id = $1
-          RETURNING id, name, created_at
-          `,
-          [request.auth!.userId, name],
-        )
+      const result = await db.query<User>(
+        `
+        UPDATE users
+        SET name = $2
+        WHERE id = $1
+        RETURNING id, name, created_at
+        `,
+        [request.auth!.userId, name],
+      )
 
-        return reply.send(result.rows[0])
-      } catch (error: any) {
-        // Temporary: names stay unique until the cleanup migration.
-        if (error.code === UNIQUE_VIOLATION) {
-          return reply.code(409).send({ error: 'display_name_taken' })
-        }
-
-        throw error
-      }
+      return reply.send(result.rows[0])
     },
   )
 

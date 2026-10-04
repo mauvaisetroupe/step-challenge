@@ -1,18 +1,15 @@
 -- Step Challenge — schéma PostgreSQL complet.
 -- Pour une base neuve. Une base existante évolue via migrations/ (voir migrations/README.md).
--- Dernière migration incluse : 001_auth.
+-- Dernière migration incluse : 002_display_name_not_unique.
 
+-- name est un nom affiché libre et non unique : l'identité repose sur
+-- user_credentials (ADR 0001).
 CREATE TABLE users (
     id         uuid        NOT NULL,
     name       text        NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT users_pkey PRIMARY KEY (id)
 );
-
--- Un prénom ne peut être utilisé qu'une fois, sans tenir compte de la casse
--- ni des espaces (le backend renvoie 409 en cas de doublon).
-CREATE UNIQUE INDEX users_name_unique
-    ON users (LOWER(TRIM(name)));
 
 CREATE TABLE daily_steps (
     user_id    uuid        NOT NULL,

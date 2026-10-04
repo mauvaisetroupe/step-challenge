@@ -25,19 +25,6 @@ export class DisplayNameRequiredError extends Error {
   }
 }
 
-/**
- * The display name is already used.
- *
- * Temporary: names stay unique until the cleanup migration drops
- * users_name_unique, once the previous app version is retired.
- */
-export class DisplayNameTakenError extends Error {
-  constructor() {
-    super('This display name is already used')
-    this.name = 'DisplayNameTakenError'
-  }
-}
-
 const UNIQUE_VIOLATION = '23505'
 
 function isUniqueViolation(error: unknown, constraint: string) {
@@ -120,22 +107,14 @@ export async function signInWithOidc(
   } catch (error) {
     await client.query('ROLLBACK')
 
-    const nameTaken = isUniqueViolation(error, 'users_name_unique')
-    const identityTaken = isUniqueViolation(
-      error,
-      'user_credentials_issuer_subject_key',
-    )
-
     // Two concurrent first sign-ins with the same Google account (double
-    // tap): the other request may have created the user, which surfaces
-    // as a conflict on the name or on the identity. Retry once: the
-    // retry finds the user if it exists.
-    if ((nameTaken || identityTaken) && !isRetry) {
+    // tap): the other request created the user first. Retry once: the
+    // retry finds that user.
+    if (
+      isUniqueViolation(error, 'user_credentials_issuer_subject_key') &&
+      !isRetry
+    ) {
       return signInWithOidc(db, identity, displayName, true)
-    }
-
-    if (nameTaken) {
-      throw new DisplayNameTakenError()
     }
 
     throw error
