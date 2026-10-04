@@ -619,15 +619,17 @@ Sans fichier de configuration (clone du dépôt public, CI), ou pour un autre pa
 ### Où trouver le fichier
 
 * **En local** : `apps/mobile/agconnect-services.json`, téléchargé depuis AppGallery Connect (Project settings → General information) et ignoré par git. Le modèle `apps/mobile/agconnect-services.example.json` montre sa structure, avec des valeurs factices.
-* **Builds EAS** (y compris `--local`) : EAS n'envoie pas les fichiers ignorés par git. Le fichier est fourni par une variable d'environnement EAS de type fichier, `AGCONNECT_SERVICES_JSON`, dont le plugin lit le chemin :
+* **Builds EAS** (y compris `--local`) : EAS n'envoie pas les fichiers ignorés par git. Le **contenu** du fichier est fourni par la variable d'environnement EAS `AGCONNECT_SERVICES_JSON` (type texte), que le plugin écrit dans `android/app/` :
 
   ```bash
   cd apps/mobile
   npx eas-cli env:set production --name AGCONNECT_SERVICES_JSON \
-    --type file --value ./agconnect-services.json --visibility sensitive
+    --type string --visibility sensitive --value "$(cat agconnect-services.json)"
   ```
 
-  Visibilité `sensitive` et non `secret` : une variable `secret` n'est lisible que sur les serveurs de build d'EAS, pas par un build local (`eas build --local`).
+  * Type **texte** et non fichier : les variables de type fichier ne sont pas fournies aux builds locaux (vérifié avec `eas env:exec`).
+  * Visibilité `sensitive` et non `secret` : une variable `secret` n'est lisible que sur les serveurs de build d'EAS.
+  * Vérification : `npx eas-cli env:exec production 'test -n "$AGCONNECT_SERVICES_JSON" && echo présente'`.
 
   À refaire après chaque nouveau téléchargement du fichier (par exemple après l'ajout d'une empreinte).
 

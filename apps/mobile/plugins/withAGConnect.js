@@ -11,12 +11,24 @@ const {
 // agconnect-services.example.json and huawei/README.md.
 const CONFIG_FILE = 'agconnect-services.json';
 
-// EAS builds don't upload git-ignored files: they get the file from an EAS
-// environment variable of type "file", which holds its path.
-const CONFIG_FILE_ENV = 'AGCONNECT_SERVICES_JSON';
+// EAS builds don't upload git-ignored files: they get the configuration
+// from this EAS environment variable, which holds the content of the file.
+// (EAS variables of type "file" are not provided to local builds.)
+const CONFIG_ENV = 'AGCONNECT_SERVICES_JSON';
 
-function configFilePath(projectRoot) {
-  return process.env[CONFIG_FILE_ENV] || path.join(projectRoot, CONFIG_FILE);
+/**
+ * Content of agconnect-services.json: from the EAS variable, else from the
+ * local file. Undefined when neither is available.
+ */
+function readConfig(projectRoot) {
+  const fromEnv = process.env[CONFIG_ENV];
+
+  if (fromEnv) {
+    return fromEnv;
+  }
+
+  const file = path.join(projectRoot, CONFIG_FILE);
+  return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : undefined;
 }
 
 // Same version as com.huawei.agconnect:agconnect-core, pulled by
@@ -99,13 +111,13 @@ function withAppSetup(config) {
   });
 }
 
-function withConfigFile(config) {
+function withConfigFile(config, content) {
   return withDangerousMod(config, [
     'android',
     (config) => {
-      fs.copyFileSync(
-        configFilePath(config.modRequest.projectRoot),
+      fs.writeFileSync(
         path.join(config.modRequest.platformProjectRoot, 'app', CONFIG_FILE),
+        content,
       );
       return config;
     },
@@ -123,11 +135,11 @@ function withConfigFile(config) {
 module.exports = function withAGConnect(config) {
   const projectRoot = config._internal?.projectRoot ?? process.cwd();
 
-  const configPath = configFilePath(projectRoot);
+  const content = readConfig(projectRoot);
 
-  if (!fs.existsSync(configPath)) {
+  if (!content) {
     console.warn(
-      `withAGConnect: ${CONFIG_FILE} not found (nor $${CONFIG_FILE_ENV}), ` +
+      `withAGConnect: ${CONFIG_FILE} not found (nor $${CONFIG_ENV}), ` +
         'Huawei Health will not work (see agconnect-services.example.json).',
     );
     return config;
@@ -136,8 +148,7 @@ module.exports = function withAGConnect(config) {
   // The file is bound to one package. The development variant
   // (lu.architech.stepchallenge.dev) is not registered in AppGallery
   // Connect: it builds without Huawei Health.
-  const registeredPackage = JSON.parse(fs.readFileSync(configPath, 'utf8'))
-    .client?.package_name;
+  const registeredPackage = JSON.parse(content).client?.package_name;
 
   if (registeredPackage !== config.android?.package) {
     console.warn(
@@ -149,6 +160,6 @@ module.exports = function withAGConnect(config) {
 
   config = withProjectSetup(config);
   config = withAppSetup(config);
-  config = withConfigFile(config);
+  config = withConfigFile(config, content);
   return config;
 };
