@@ -14,9 +14,9 @@ const leaderboardRoutes: FastifyPluginAsync<
   app.addHook('onRequest', requireAuth)
 
   /**
-   * Leaderboard for the current week or month; isMe flags the signed-in
-   * user. Global for now: ADR 0002 will restrict it to the user and
-   * their friends.
+   * Leaderboard of the signed-in user and their friends (ADR 0002) for
+   * the current week or month. Each entry carries the name chosen by the
+   * user and the alias I gave them, if any; isMe flags my own entry.
    */
   app.get('/leaderboard', async (request, reply) => {
     const { period = 'week' } = request.query as {
@@ -31,12 +31,23 @@ const leaderboardRoutes: FastifyPluginAsync<
 
     const result = await db.query(
       `
+      WITH visible AS (
+        SELECT $2::uuid AS id
+        UNION
+        SELECT CASE WHEN user_low = $2 THEN user_high ELSE user_low END
+        FROM friendships
+        WHERE user_low = $2 OR user_high = $2
+      )
       SELECT
         u.id,
         u.name,
+        fa.alias,
         COALESCE(SUM(ds.steps), 0)::integer AS steps,
         u.id = $2 AS "isMe"
-      FROM users u
+      FROM visible v
+      JOIN users u ON u.id = v.id
+      LEFT JOIN friend_aliases fa
+        ON fa.owner_id = $2 AND fa.friend_id = u.id
       LEFT JOIN daily_steps ds
         ON ds.user_id = u.id
         AND ds.date >=
@@ -46,8 +57,8 @@ const leaderboardRoutes: FastifyPluginAsync<
             ELSE date_trunc('month', CURRENT_DATE)::date
           END
         AND ds.date <= CURRENT_DATE
-      GROUP BY u.id, u.name
-      ORDER BY steps DESC, u.name ASC
+      GROUP BY u.id, u.name, fa.alias
+      ORDER BY steps DESC, lower(COALESCE(fa.alias, u.name)), u.id
       `,
       [period, request.auth!.userId],
     )
