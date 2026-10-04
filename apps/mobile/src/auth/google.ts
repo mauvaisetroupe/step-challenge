@@ -61,25 +61,24 @@ function toCredential(response: OneTapResponse): GoogleCredential | null {
 /**
  * Asks Google for an ID token.
  *
- * Tries, in order: silent sign-in with a credential already used by this
- * app, the account picker, then the explicit Google sign-in sheet.
- * Returns null when the user dismisses the sheet.
+ * Uses the explicit "Sign in with Google" dialog, which lists every
+ * Google account on the device and offers to add one. The one-tap flow
+ * (signIn) is not used: it only offers accounts already authorized for
+ * the app, so a user could never switch to another account. Signed-in
+ * users keep their session and never see this dialog.
+ *
+ * Returns null when the user dismisses the dialog.
  */
 export async function signInWithGoogle(): Promise<GoogleCredential | null> {
   try {
     await GoogleOneTapSignIn.checkPlayServices()
 
-    let response = await GoogleOneTapSignIn.signIn()
+    const response = await GoogleOneTapSignIn.presentExplicitSignIn()
 
-    if (isNoSavedCredentialFoundResponse(response)) {
-      response = await GoogleOneTapSignIn.createAccount()
-    }
-
-    if (isNoSavedCredentialFoundResponse(response)) {
-      response = await GoogleOneTapSignIn.presentExplicitSignIn()
-    }
-
-    if (isCancelledResponse(response)) {
+    if (
+      isCancelledResponse(response) ||
+      isNoSavedCredentialFoundResponse(response)
+    ) {
       return null
     }
 
