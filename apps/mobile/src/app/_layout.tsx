@@ -1,5 +1,4 @@
 import {
-  DarkTheme,
   DefaultTheme,
   router,
   Stack,
@@ -7,17 +6,15 @@ import {
 } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect } from 'react'
-import { useColorScheme } from 'react-native'
 
 import { onSignedOut } from '@/api/client'
 import { AnimatedSplashOverlay } from '@/components/animated-icon'
+import AppHeaderTitle from '@/components/AppHeaderTitle'
 import { registerBackgroundStepSync } from '@/services/backgroundSync'
 
 SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme()
-
   // The backend rejected the session (expired, revoked, account
   // deleted): go back to the sign-in screen.
   useEffect(
@@ -38,15 +35,27 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <ThemeProvider
-      value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-    >
+    // Light theme only: the screens are designed for a light background
+    // (app.json forces userInterfaceStyle to "light").
+    <ThemeProvider value={DefaultTheme}>
       <AnimatedSplashOverlay />
       {/*
         Stack rather than Slot: screens opened from the tabs (friends,
         invitation) get a header with a back button.
       */}
       <Stack screenOptions={{ headerShown: false }}>
+        {/*
+          Shared header for the tab screens: it keeps their content below
+          the status bar (camera, clock, battery).
+        */}
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: true,
+            headerTitle: () => <AppHeaderTitle />,
+            headerTitleAlign: 'left',
+          }}
+        />
         <Stack.Screen
           name="friends"
           options={{ headerShown: true, title: 'Amis' }}
