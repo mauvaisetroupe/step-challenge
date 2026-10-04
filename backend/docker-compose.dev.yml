@@ -1,0 +1,49 @@
+# Bases PostgreSQL locales pour le développement et les tests.
+# Jamais utilisé en production. Voir README.md, section Backend.
+#
+#   npm run db:up      démarre les deux bases (schéma appliqué à la création)
+#   npm run db:reset   les recrée vides (supprime les données de dev)
+#   npm run db:down    les arrête
+
+name: step-challenge
+
+services:
+  # Base de développement, persistante : utilisée par `npm run dev:local`.
+  dev-db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: step_challenge
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: step_challenge_dev
+    ports:
+      - '127.0.0.1:55433:5432'
+    volumes:
+      - dev-db-data:/var/lib/postgresql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'step_challenge', '-d', 'step_challenge_dev']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  # Base de test, jetable (en mémoire) : utilisée par `npm test`.
+  test-db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: step_challenge_test
+    ports:
+      - '127.0.0.1:55432:5432'
+    tmpfs:
+      - /var/lib/postgresql
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres', '-d', 'step_challenge_test']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  dev-db-data:

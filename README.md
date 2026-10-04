@@ -47,29 +47,32 @@ Créer les tables avec `psql -d <base> -f backend/schema.sql` (base neuve) ; fai
 
 ### Lancer en local
 
+Le développement local utilise des bases PostgreSQL dans Docker ([`docker-compose.dev.yml`](backend/docker-compose.dev.yml)), **jamais la base de production** :
+
 ```bash
 cd backend
 npm install
-npm run dev      # tsx watch, port 3000 (ou $PORT)
+npm run db:up        # bases de dev et de test, schéma appliqué à la création
+npm run dev:local    # backend sur la base de dev, port 3001
 ```
+
+`dev:local` lit [`backend/.env.development`](backend/.env.development) (versionné, sans secret) et non `.env`. Le backend écoute sur toutes les interfaces : un téléphone du même réseau le joint via `http://<IP du Mac>:3001` (variable `EXPO_PUBLIC_API_URL` de l'environnement EAS `development`).
+
+| Commande | Effet |
+|---|---|
+| `npm run db:up` | Démarre les bases de dev (port 55433, persistante) et de test (port 55432, en mémoire) |
+| `npm run db:reset` | Recrée les bases vides : **supprime les données de dev** |
+| `npm run db:down` | Arrête les bases (les données de dev sont conservées) |
 
 ### Tests
 
 ```bash
 cd backend
-npm test
+npm run db:up
+npm run test:local
 ```
 
-Les tests d'intégration (routes + PostgreSQL) ne tournent que si `TEST_DATABASE_URL` est défini ; ils **vident les tables** et n'utilisent jamais les variables `DATABASE_*` du `.env`. Avec Docker :
-
-```bash
-docker run -d --name step-challenge-test-db -e POSTGRES_PASSWORD=test \
-  -e POSTGRES_DB=step_challenge_test -p 55432:5432 postgres:18
-docker exec -i step-challenge-test-db psql -U postgres -d step_challenge_test < backend/schema.sql
-
-cd backend
-TEST_DATABASE_URL=postgres://postgres:test@localhost:55432/step_challenge_test npm test
-```
+`npm test` seul n'exécute que les tests unitaires : les tests d'intégration (routes + PostgreSQL) ne tournent que si `TEST_DATABASE_URL` est défini, ce que fait `test:local`. Ils **vident les tables** et n'utilisent jamais les variables `DATABASE_*`.
 
 ### Déploiement
 
