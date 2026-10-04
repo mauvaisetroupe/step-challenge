@@ -1,18 +1,4 @@
-const API_URL = process.env.EXPO_PUBLIC_API_URL
-const API_KEY = process.env.EXPO_PUBLIC_API_KEY
-
-if (!API_URL) {
-  throw new Error('EXPO_PUBLIC_API_URL is not configured')
-}
-
-if (!API_KEY) {
-  throw new Error('EXPO_PUBLIC_API_KEY is not configured')
-}
-
-const apiHeaders: HeadersInit = {
-  'Content-Type': 'application/json',
-  'X-API-Key': API_KEY,
-}
+import { API_URL, apiHeaders } from './config'
 
 export type User = {
   id: string
