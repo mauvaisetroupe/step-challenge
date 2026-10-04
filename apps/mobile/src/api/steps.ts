@@ -1,71 +1,60 @@
-import { API_URL } from './config'
+import { apiFetch } from './client'
 
-// Legacy routes, removed from the backend (ADR 0001): replaced by the
-// session-based API in the next commits.
-const apiHeaders = { 'Content-Type': 'application/json' }
-
-export async function syncSteps(
-  userId: string,
-  date: string,
-  steps: number,
-) {
-  const response = await fetch(`${API_URL}/api/steps`, {
-    method: 'POST',
-    headers: apiHeaders,
-    body: JSON.stringify({
-      userId,
-      date,
-      steps,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Backend error: ${response.status}`)
-  }
+export type DayStat = {
+  /** Local calendar date, YYYY-MM-DD. */
+  date: string
+  steps: number
 }
 
-export async function getSteps(userId: string) {
-  const response = await fetch(
-    `${API_URL}/api/steps/${userId}`,
-    {
-      headers: apiHeaders,
-    },
-  )
+/** Backend limit per request (MAX_DAYS_PER_REQUEST). */
+const MAX_DAYS_PER_REQUEST = 31
 
-  if (!response.ok) {
-    throw new Error(`Backend error: ${response.status}`)
+/**
+ * Sends daily totals for the signed-in user.
+ *
+ * The backend keeps the highest value per day, so sending a day again
+ * is harmless. Returns the dates it actually recorded (new day or
+ * higher total).
+ */
+export async function postMySteps(days: DayStat[]) {
+  const updatedDates: string[] = []
+
+  for (let i = 0; i < days.length; i += MAX_DAYS_PER_REQUEST) {
+    const response = await apiFetch<{ updatedDates: string[] }>(
+      '/api/me/steps',
+      {
+        method: 'POST',
+        body: { days: days.slice(i, i + MAX_DAYS_PER_REQUEST) },
+      },
+    )
+
+    updatedDates.push(...response.updatedDates)
   }
 
-  return response.json() as Promise<
-    Array<{
-      user_id: string
-      date: string
-      steps: number
-      updated_at: string
-    }>
-  >
+  return updatedDates
 }
 
-export async function getLeaderboard(
-  period: 'week' | 'month',
-) {
-  const response = await fetch(
-    `${API_URL}/api/leaderboard?period=${period}`,
-    {
-      headers: apiHeaders,
-    },
-  )
+/**
+ * Returns the signed-in user's daily totals, most recent first.
+ *
+ * Without `from`, the backend returns about 13 months of history.
+ */
+export async function getMySteps(from?: string) {
+  const query = from ? `?from=${encodeURIComponent(from)}` : ''
 
-  if (!response.ok) {
-    throw new Error(`Leaderboard error: ${response.status}`)
-  }
+  return apiFetch<DayStat[]>(`/api/me/steps${query}`)
+}
 
-  return response.json() as Promise<{
+export type LeaderboardEntry = {
+  id: string
+  name: string
+  steps: number
+  isMe: boolean
+}
+
+export async function getLeaderboard(period: 'week' | 'month') {
+  return apiFetch<{
     period: 'week' | 'month'
-    results: Array<{
-      id: string
-      name: string
-      steps: number
-    }>
-  }>
+    results: LeaderboardEntry[]
+  }>(`/api/leaderboard?period=${period}`)
 }

@@ -1,35 +1,18 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   aggregateGroupByPeriod,
   initialize,
   requestPermission,
 } from 'react-native-health-connect'
 
-import { getSteps, syncSteps } from '../api/steps'
+import {
+  getMySteps,
+  postMySteps,
+  type DayStat,
+} from '../api/steps'
 
-import { USER_ID_KEY } from '@/constants/storage'
+export type { DayStat }
+
 const HISTORY_DAYS = 30
-
-export type DayStat = {
-  date: string
-  steps: number
-}
-
-/**
- * Retrieves the configured user ID from local storage.
- *
- * The user ID is required to associate step data with the
- * corresponding user on the backend.
- */
-async function getUserId() {
-  const userId = await AsyncStorage.getItem(USER_ID_KEY)
-
-  if (!userId) {
-    throw new Error('User profile not configured')
-  }
-
-  return userId
-}
 
 /**
  * Returns a copy of the given date set to the beginning of its day.
@@ -182,84 +165,31 @@ export async function getHealthConnectTodaySteps() {
 }
 
 /**
- * Synchronizes today's step count with the backend.
+ * Sends today's Health Connect step count to the backend.
  *
- * The Health Connect value is compared with the server value.
- * The backend is updated only when Health Connect contains a higher
- * number of steps, preventing an older value from overwriting a newer one.
- *
- * Returns the highest value between Health Connect and the server.
+ * The backend keeps the highest value of the day, so no comparison with
+ * the server value is needed. Returns today's Health Connect count.
  */
 export async function syncTodaySteps() {
-  const userId = await getUserId()
-  const now = new Date()
-  const today = getDateKey(now)
+  const steps = await getHealthConnectTodaySteps()
 
-  const healthConnectSteps =
-    await getHealthConnectTodaySteps()
+  await postMySteps([
+    { date: getDateKey(new Date()), steps },
+  ])
 
-  const data = await getSteps(userId)
-
-  const todayEntry = data.find(
-    (item) => String(item.date).slice(0, 10) === today,
-  )
-
-  const serverSteps = Number(todayEntry?.steps ?? 0)
-
-  if (healthConnectSteps > serverSteps) {
-    await syncSteps(
-      userId,
-      today,
-      healthConnectSteps,
-    )
-  }
-
-  return Math.max(
-    healthConnectSteps,
-    serverSteps,
-  )
+  return steps
 }
 
 /**
- * Synchronizes the supplied Health Connect statistics with the backend.
+ * Sends the supplied daily totals to the backend in one request.
  *
- * The server is only updated when Health Connect contains a higher
- * value than the one already stored.
- *
- * Returns the list of dates that were actually synchronized.
+ * Returns the dates the backend actually recorded (new day or higher
+ * total than the stored one).
  */
 export async function syncStatsToServer(
   healthConnectStats: DayStat[],
 ) {
-  const userId = await getUserId()
-
-  const serverData = await getSteps(userId)
-
-  const serverStepsByDate = new Map(
-    serverData.map((item) => [
-      String(item.date).slice(0, 10),
-      Number(item.steps),
-    ]),
-  )
-
-  const syncedDates: string[] = []
-
-  for (const item of healthConnectStats) {
-    const serverSteps =
-      serverStepsByDate.get(item.date) ?? 0
-
-    if (item.steps > serverSteps) {
-      await syncSteps(
-        userId,
-        item.date,
-        item.steps,
-      )
-
-      syncedDates.push(item.date)
-    }
-  }
-
-  return syncedDates
+  return postMySteps(healthConnectStats)
 }
 
 /**
@@ -284,24 +214,18 @@ export async function syncLast30Days() {
  * than the data currently stored on the backend.
  *
  * Returns true as soon as at least one day has more steps in
- * Health Connect than on the server.
- *
- * This allows the application to decide whether a full refresh
- * of the last 30 days is necessary without performing any writes.
+ * Health Connect than on the server, without performing any writes.
  */
 export async function needsRefreshLast30Days() {
-  const userId = await getUserId()
-
   const healthConnectStats =
     await getHealthConnectLast30Days()
 
-  const serverData = await getSteps(userId)
+  const serverData = await getMySteps(
+    healthConnectStats[0]?.date,
+  )
 
   const serverStepsByDate = new Map(
-    serverData.map((item) => [
-      String(item.date).slice(0, 10),
-      Number(item.steps),
-    ]),
+    serverData.map((item) => [item.date, item.steps]),
   )
 
   return healthConnectStats.some((item) => {

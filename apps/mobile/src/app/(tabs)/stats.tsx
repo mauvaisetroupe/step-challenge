@@ -23,11 +23,9 @@ import {
   requestPermission,
 } from 'react-native-health-connect'
 
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { getSteps } from '../../api/steps'
+import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
 
-import { USER_ID_KEY } from '@/constants/storage'
 const DAILY_GOAL = 10_000
 
 type Period = '1d' | '7d' | '30d' | '1y'
@@ -255,11 +253,10 @@ async function getHealthConnectIntradayStats(
 }
 
 async function getWebDailyStats(
-  userId: string,
   startDate: Date,
   endDate: Date,
 ): Promise<DayStat[]> {
-  const data = await getSteps(userId)
+  const data = await getMySteps(formatDateKey(startDate))
 
   const stats = new Map<string, number>()
 
@@ -288,11 +285,10 @@ async function getWebDailyStats(
 }
 
 async function getWebMonthlyStats(
-  userId: string,
   startDate: Date,
   endDate: Date,
 ): Promise<MonthStat[]> {
-  const data = await getSteps(userId)
+  const data = await getMySteps(formatDateKey(startDate))
 
   const stats = new Map<string, number>()
 
@@ -349,12 +345,6 @@ export default function StatsScreen() {
       const now = new Date()
 
       if (Platform.OS === 'web') {
-        const userId = await AsyncStorage.getItem(USER_ID_KEY)
-
-        if (!userId) {
-          throw new Error('Utilisateur introuvable')
-        }
-
         if (period === '7d' || period === '30d') {
           const days = period === '7d' ? 7 : 30
           const startDate = getStartOfDay(getDaysAgo(now, days - 1))
@@ -363,7 +353,6 @@ export default function StatsScreen() {
           endDate.setHours(0, 0, 0, 0)
 
           const stats = await getWebDailyStats(
-            userId,
             startDate,
             endDate,
           )
@@ -387,7 +376,6 @@ export default function StatsScreen() {
           )
 
           const stats = await getWebMonthlyStats(
-            userId,
             startDate,
             endDate,
           )

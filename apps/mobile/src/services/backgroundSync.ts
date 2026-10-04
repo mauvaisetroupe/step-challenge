@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as BackgroundTask from 'expo-background-task'
 import * as TaskManager from 'expo-task-manager'
 
+import { getSessionToken } from '../auth/session'
 import { syncLast30Days } from './stepSync'
 
 const STEP_SYNC_TASK = 'step-challenge-sync'
@@ -97,6 +98,14 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
     'BACKGROUND TASK TRIGGER:',
     trigger,
   )
+
+  // Not signed in (new install, signed out, account deleted): nothing
+  // to sync. Not recorded as a failure.
+  if (!(await getSessionToken())) {
+    console.log('BACKGROUND TASK SKIPPED: no session')
+
+    return BackgroundTask.BackgroundTaskResult.Success
+  }
 
   try {
     const syncedDates = await syncLast30Days()
