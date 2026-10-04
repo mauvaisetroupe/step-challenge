@@ -133,6 +133,8 @@ Le prénom n'est plus un identifiant : il devient un **nom affiché libre et non
 
 Un pseudo unique (`@handle`) permettrait de rechercher des utilisateurs, mais imposerait de gérer un espace de noms (squat, renommage, modération) et créerait un annuaire consultable, peu souhaitable pour une application de santé. Il n'est pas retenu ; il reste ajoutable plus tard (colonne + index unique) sans remettre en cause cette décision.
 
+Pour distinguer deux homonymes ou repérer un ami qui prend le nom d'un autre, l'ADR 0002 prévoit une pastille de couleur dérivée de l'identifiant et des alias locaux (section « Reconnaître ses amis »), plutôt qu'un nom unique.
+
 ### Modèle de données
 
 ```sql

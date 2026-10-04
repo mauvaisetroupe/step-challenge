@@ -103,6 +103,22 @@ Invitant                         Backend                          Invité
 
 - Supprime l'amitié, des deux côtés, avec effet immédiat. Pas de notification.
 - **Révoque toutes les invitations actives du demandeur**, pour qu'un ami retiré ne puisse pas revenir avec un lien encore valide. L'utilisateur peut en recréer.
+- Supprime les **alias** que les deux anciens amis s'étaient donnés (voir ci-dessous), pour qu'un ami qui revient ne retrouve pas un ancien surnom.
+
+### Reconnaître ses amis
+
+*Ajouté le 2026-10-04.* Le nom affiché n'est ni unique ni figé (ADR 0001). Dans un classement, deux amis peuvent donc porter le même nom, et un ami peut prendre le nom d'un autre, par jeu ou pour semer la confusion.
+
+**Option écartée : l'unicité du nom affiché.** Rendre le nom unique (même modifiable, avec un nom libéré dès qu'il change) règle les homonymes simultanés, mais :
+
+- c'est une contrainte **globale** pour un problème **local** : un inconnu qui s'appelle déjà « Marie » empêche un nouvel utilisateur, qui n'a aucun lien avec lui, de prendre ce nom ;
+- elle se contourne facilement : caractères visuellement identiques (`Lionel` avec un i cyrillique), ou récupération d'un nom abandonné par un autre ;
+- elle n'apporte plus rien une fois les deux mécanismes ci-dessous en place.
+
+**Décision : une pastille de couleur et des alias locaux.**
+
+1. **Pastille de couleur** : chaque utilisateur est représenté par un rond portant l'initiale de son nom, dont la couleur est **dérivée de son identifiant** (et non de son nom). Deux homonymes ont deux couleurs différentes ; changer de nom ne change pas de couleur. Aucune donnée supplémentaire : la couleur est calculée côté application. Indépendante des amis, elle peut être livrée avant le reste de cet ADR.
+2. **Alias locaux** : chacun peut donner **son propre surnom** à chacun de ses amis, comme dans les contacts d'un téléphone. Le classement affiche ce surnom, quel que soit le nom que l'ami se donne ; le nom choisi par l'ami reste visible en petit lorsqu'il diffère. Un alias est **orienté** : celui que je donne à Marion n'est pas celui que Marion me donne. Il n'est visible que par la personne qui l'a créé.
 
 ### Limites
 
@@ -135,9 +151,20 @@ CREATE TABLE friendships (
 );
 
 CREATE INDEX friendships_user_high_idx ON friendships (user_high);
+
+-- Surnom que owner_id donne à friend_id (relation orientée).
+-- Une ligne seulement lorsqu'un alias est défini.
+CREATE TABLE friend_aliases (
+    owner_id   uuid        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    friend_id  uuid        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    alias      text        NOT NULL CHECK (length(trim(alias)) BETWEEN 1 AND 50),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (owner_id, friend_id),
+    CHECK (owner_id <> friend_id)
+);
 ```
 
-La suppression d'un compte (ADR 0001) supprime en cascade ses invitations et ses amitiés.
+La suppression d'un compte (ADR 0001) supprime en cascade ses invitations, ses amitiés et les alias qu'il a donnés ou reçus. Le retrait d'un ami supprime les alias dans les deux sens (dans la même transaction que l'amitié).
 
 ### API
 
@@ -150,15 +177,18 @@ Toutes les routes exigent une session (ADR 0001).
 | `DELETE /api/invitations/:id` | Révoque une invitation |
 | `GET /api/invitations/:code` | Aperçu : nom affiché de l'invitant, validité |
 | `POST /api/invitations/:code/accept` | Crée l'amitié |
-| `GET /api/friends` | Liste de mes amis `{ id, name, since }` |
-| `DELETE /api/friends/:id` | Retire un ami (et révoque mes invitations actives) |
-| `GET /api/leaderboard?period=` | Classement restreint à `{moi} ∪ amis(moi)` |
+| `GET /api/friends` | Liste de mes amis `{ id, name, alias, since }` |
+| `PUT /api/friends/:id/alias` | Définit le surnom que je donne à cet ami `{ alias }` |
+| `DELETE /api/friends/:id/alias` | Revient au nom choisi par l'ami |
+| `DELETE /api/friends/:id` | Retire un ami (révoque mes invitations actives, supprime les alias dans les deux sens) |
+| `GET /api/leaderboard?period=` | Classement restreint à `{moi} ∪ amis(moi)` ; chaque entrée porte `name` (choisi par l'ami) et `alias` (le mien, s'il existe) |
 
 ### Application
 
 - Écran **Amis** : liste des amis, bouton « Inviter » (feuille de partage Android), « J'ai un code d'invitation », retrait d'un ami.
 - Écran de **confirmation** ouvert par l'App Link.
 - Le classement affiche « toi et tes amis » ; avec zéro ami, un état vide invite à partager un lien.
+- Chaque ami est affiché avec sa **pastille de couleur** et son **alias** s'il en a un (le nom qu'il s'est choisi apparaît en petit lorsqu'il diffère) ; « Renommer » depuis l'écran Amis (ou un appui long dans le classement).
 - Le lien d'invitation fonctionne aussi depuis le site web (ADR 0001, client web).
 
 ### Migration des testeurs existants
@@ -193,3 +223,4 @@ Les testeurs actuels voient déjà tous les pas des autres dans le classement gl
 - **Durée de validité** : 7 jours, à ajuster à l'usage.
 - **Plafonds** (10 invitations actives, 200 amis) : à ajuster à l'usage.
 - **Configuration Expo des App Links** : `android.intentFilters` dans `app.json`, à vérifier dans la documentation SDK 57.
+- **Règle Google Play sur le contenu généré par les utilisateurs** : les noms affichés sont visibles par d'autres utilisateurs. La règle demande des conditions d'utilisation interdisant les contenus offensants et un moyen de signaler ou bloquer un utilisateur. Le retrait d'un ami couvre en partie le blocage ; vérifier si un signalement est attendu et mettre à jour les conditions d'utilisation (`agreement.html`).
