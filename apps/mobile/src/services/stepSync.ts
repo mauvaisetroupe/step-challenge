@@ -4,11 +4,7 @@ import {
   requestPermission,
 } from 'react-native-health-connect'
 
-import {
-  getMySteps,
-  postMySteps,
-  type DayStat,
-} from '../api/steps'
+import { postMySteps, type DayStat } from '../api/steps'
 
 export type { DayStat }
 
@@ -209,29 +205,3 @@ export async function syncLast30Days() {
   )
 }
 
-/**
- * Checks whether the last 30 days contain step data that is newer
- * than the data currently stored on the backend.
- *
- * Returns true as soon as at least one day has more steps in
- * Health Connect than on the server, without performing any writes.
- */
-export async function needsRefreshLast30Days() {
-  const healthConnectStats =
-    await getHealthConnectLast30Days()
-
-  const serverData = await getMySteps(
-    healthConnectStats[0]?.date,
-  )
-
-  const serverStepsByDate = new Map(
-    serverData.map((item) => [item.date, item.steps]),
-  )
-
-  return healthConnectStats.some((item) => {
-    const serverSteps =
-      serverStepsByDate.get(item.date) ?? 0
-
-    return item.steps > serverSteps
-  })
-}

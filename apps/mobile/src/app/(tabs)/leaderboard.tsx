@@ -8,27 +8,19 @@ import {
   View,
 } from 'react-native'
 
-import { getLeaderboard } from '../../api/steps'
 import {
-  needsRefreshLast30Days,
-  syncLast30Days,
-} from '../../services/stepSync'
+  getLeaderboard,
+  type LeaderboardEntry,
+} from '../../api/steps'
+import { syncLast30Days } from '../../services/stepSync'
 
 type Period = 'week' | 'month'
-
-type LeaderboardEntry = {
-  id: string
-  name: string
-  steps: number
-}
 
 export default function LeaderboardScreen() {
   const [period, setPeriod] = useState<Period>('week')
   const [results, setResults] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [checkingRefresh, setCheckingRefresh] = useState(true)
-  const [canRefresh, setCanRefresh] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const loadLeaderboard = useCallback(async () => {
@@ -46,35 +38,14 @@ export default function LeaderboardScreen() {
     }
   }, [period])
 
-  const checkRefreshNeeded = useCallback(async () => {
-    setCheckingRefresh(true)
-
-    try {
-      const needed = await needsRefreshLast30Days()
-
-      setCanRefresh(needed)
-    } catch (err) {
-      console.error(
-        'Refresh check error:',
-        err,
-      )
-
-      setCanRefresh(false)
-    } finally {
-      setCheckingRefresh(false)
-    }
-  }, [])
-
   useEffect(() => {
     loadLeaderboard()
   }, [loadLeaderboard])
 
-  useEffect(() => {
-    checkRefreshNeeded()
-  }, [checkRefreshNeeded])
-
+  // Sending the last 30 days is idempotent (the backend keeps the
+  // highest value per day), so the button is always available.
   const handleRefresh = async () => {
-    if (refreshing || !canRefresh) {
+    if (refreshing) {
       return
     }
 
@@ -87,7 +58,6 @@ export default function LeaderboardScreen() {
       const data = await getLeaderboard(period)
 
       setResults(data.results)
-      setCanRefresh(false)
     } catch (err) {
       console.error(
         'Leaderboard refresh error:',
@@ -109,10 +79,7 @@ export default function LeaderboardScreen() {
       ? 'Cette semaine'
       : 'Ce mois-ci'
 
-  const refreshDisabled =
-    checkingRefresh ||
-    refreshing ||
-    !canRefresh
+  const refreshDisabled = refreshing
 
   return (
     <ScrollView
@@ -173,7 +140,7 @@ export default function LeaderboardScreen() {
           onPress={handleRefresh}
           disabled={refreshDisabled}
         >
-          {checkingRefresh || refreshing ? (
+          {refreshing ? (
             <ActivityIndicator
               size="small"
               color="#111827"
@@ -184,13 +151,7 @@ export default function LeaderboardScreen() {
                 ↻
               </Text>
 
-              <Text
-                style={[
-                  styles.refreshText,
-                  !canRefresh &&
-                    styles.refreshTextDisabled,
-                ]}
-              >
+              <Text style={styles.refreshText}>
                 Actualiser
               </Text>
             </>
@@ -226,7 +187,7 @@ export default function LeaderboardScreen() {
           {results.map((user, index) => (
             <View
               key={user.id}
-              style={styles.row}
+              style={[styles.row, user.isMe && styles.rowMe]}
             >
               <View style={styles.rank}>
                 {index < 3 ? (
@@ -249,6 +210,9 @@ export default function LeaderboardScreen() {
                 numberOfLines={1}
               >
                 {user.name}
+                {user.isMe && (
+                  <Text style={styles.me}> · toi</Text>
+                )}
               </Text>
 
               <Text style={styles.steps}>
@@ -335,10 +299,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  refreshTextDisabled: {
-    color: '#9CA3AF',
-  },
-
   periodTitle: {
     fontSize: 20,
     fontWeight: '700',
@@ -356,6 +316,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
     borderRadius: 12,
     paddingHorizontal: 14,
+  },
+
+  rowMe: {
+    backgroundColor: '#E6F4FE',
+    borderWidth: 1,
+    borderColor: '#208AEF',
+  },
+
+  me: {
+    color: '#208AEF',
+    fontWeight: '700',
   },
 
   rank: {
