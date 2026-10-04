@@ -84,6 +84,7 @@ export default function LeaderboardScreen() {
 
   return (
     <ScrollView
+      style={styles.screen}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
@@ -232,6 +233,11 @@ export default function LeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
   container: {
     padding: 20,
     paddingBottom: 32,

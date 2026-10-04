@@ -187,6 +187,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
+      style={styles.screen}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
@@ -495,6 +496,11 @@ function DiagnosticRow({
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
   container: {
     padding: 20,
     paddingBottom: 40,
