@@ -63,7 +63,7 @@ Les variables d'environnement sont stockées sur EAS, par environnement :
 
 | Variable | `development` | `production` | Visibilité |
 |---|---|---|---|
-| `EXPO_PUBLIC_API_URL` | `http://192.168.1.109:3000` | `https://step.architech.lu` | Plain text |
+| `EXPO_PUBLIC_API_URL` | `http://<IP locale>:3000` | `https://step.architech.lu` | Plain text |
 | `EXPO_PUBLIC_API_KEY` | clé de dev | clé de prod | Sensitive |
 
 Chaque profil de `eas.json` déclare son `environment` : lors d'un build, EAS CLI récupère les variables correspondantes et les injecte dans le bundle.
