@@ -47,5 +47,6 @@
     "web": "expo start --web",
     "lint": "expo lint"
   },
-  "private": true
+  "private": true,
+  "license": "AGPL-3.0-or-later"
 }
