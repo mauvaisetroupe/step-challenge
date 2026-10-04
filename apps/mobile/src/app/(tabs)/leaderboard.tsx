@@ -12,6 +12,7 @@ import {
   getLeaderboard,
   type LeaderboardEntry,
 } from '../../api/steps'
+import UserBadge from '../../components/UserBadge'
 import { syncLast30Days } from '../../services/stepSync'
 
 type Period = 'week' | 'month'
@@ -205,6 +206,10 @@ export default function LeaderboardScreen() {
                 )}
               </View>
 
+              <View style={styles.badge}>
+                <UserBadge userId={user.id} name={user.name} />
+              </View>
+
               <Text
                 style={styles.name}
                 numberOfLines={1}
@@ -336,6 +341,10 @@ const styles = StyleSheet.create({
 
   medal: {
     fontSize: 22,
+  },
+
+  badge: {
+    marginRight: 10,
   },
 
   rankNumber: {
