@@ -13,7 +13,7 @@ import {
 
 import { createUser, getUserByName } from '../api/users'
 
-const USER_ID_KEY = '@step-challenge/user-id-v2'
+import { USER_ID_KEY } from '@/constants/storage'
 
 export default function OnboardingScreen() {
   const [name, setName] = useState('')

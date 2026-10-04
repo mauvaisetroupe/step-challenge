@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 
-const USER_ID_KEY = '@step-challenge/user-id-v2'
+import { USER_ID_KEY } from '@/constants/storage'
 
 export default function IndexScreen() {
   const [userId, setUserId] = useState<string | null>(null)

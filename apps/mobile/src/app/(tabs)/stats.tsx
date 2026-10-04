@@ -27,7 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { getSteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
 
-const USER_ID_KEY = '@step-challenge/user-id-v2'
+import { USER_ID_KEY } from '@/constants/storage'
 const DAILY_GOAL = 10_000
 
 type Period = '1d' | '7d' | '30d' | '1y'

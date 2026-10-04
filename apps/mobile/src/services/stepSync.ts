@@ -7,7 +7,7 @@ import {
 
 import { getSteps, syncSteps } from '../api/steps'
 
-const USER_ID_KEY = '@step-challenge/user-id-v2'
+import { USER_ID_KEY } from '@/constants/storage'
 const HISTORY_DAYS = 30
 
 export type DayStat = {
