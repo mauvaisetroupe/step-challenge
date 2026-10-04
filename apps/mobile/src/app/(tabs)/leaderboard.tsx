@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import {
   getLeaderboard,
@@ -16,6 +17,7 @@ import {
 import { displayName } from '../../api/friends'
 import UserBadge from '../../components/UserBadge'
 import { syncLast30Days } from '../../services/stepSync'
+import TabScreenHeader from '../../components/TabScreenHeader'
 
 type Period = 'week' | 'month'
 
@@ -85,182 +87,187 @@ export default function LeaderboardScreen() {
   const refreshDisabled = refreshing
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>🏆 Classement</Text>
+    // Top edge only: keeps the content below the status bar (camera,
+    // clock, battery); the tab bar handles the bottom.
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <TabScreenHeader
+        title="🏆 Classement"
+        right={
+          <Pressable
+            style={styles.friendsButton}
+            onPress={() => router.push('/friends')}
+          >
+            <Text style={styles.friendsButtonText}>👥 Amis</Text>
+          </Pressable>
+        }
+      />
 
-        <Pressable
-          style={styles.friendsButton}
-          onPress={() => router.push('/friends')}
-        >
-          <Text style={styles.friendsButtonText}>👥 Amis</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.periodSelector}>
-        <Pressable
-          style={[
-            styles.periodButton,
-            period === 'week' &&
-              styles.periodButtonActive,
-          ]}
-          onPress={() => setPeriod('week')}
-        >
-          <Text
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.periodSelector}>
+          <Pressable
             style={[
-              styles.periodText,
+              styles.periodButton,
               period === 'week' &&
-                styles.periodTextActive,
+                styles.periodButtonActive,
             ]}
+            onPress={() => setPeriod('week')}
           >
-            Semaine
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={[
-            styles.periodButton,
-            period === 'month' &&
-              styles.periodButtonActive,
-          ]}
-          onPress={() => setPeriod('month')}
-        >
-          <Text
-            style={[
-              styles.periodText,
-              period === 'month' &&
-                styles.periodTextActive,
-            ]}
-          >
-            Mois
-          </Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.refreshRow}>
-        <Pressable
-          style={[
-            styles.refreshButton,
-            refreshDisabled &&
-              styles.refreshButtonDisabled,
-          ]}
-          onPress={handleRefresh}
-          disabled={refreshDisabled}
-        >
-          {refreshing ? (
-            <ActivityIndicator
-              size="small"
-              color="#111827"
-            />
-          ) : (
-            <>
-              <Text style={styles.refreshIcon}>
-                ↻
-              </Text>
-
-              <Text style={styles.refreshText}>
-                Actualiser
-              </Text>
-            </>
-          )}
-        </Pressable>
-      </View>
-
-      <Text style={styles.periodTitle}>
-        {periodLabel}
-      </Text>
-
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator />
-        </View>
-      ) : error ? (
-        <View style={styles.center}>
-          <Text style={styles.error}>
-            {error}
-          </Text>
+            <Text
+              style={[
+                styles.periodText,
+                period === 'week' &&
+                  styles.periodTextActive,
+              ]}
+            >
+              Semaine
+            </Text>
+          </Pressable>
 
           <Pressable
-            style={styles.retryButton}
-            onPress={loadLeaderboard}
+            style={[
+              styles.periodButton,
+              period === 'month' &&
+                styles.periodButtonActive,
+            ]}
+            onPress={() => setPeriod('month')}
           >
-            <Text style={styles.retryText}>
-              Réessayer
+            <Text
+              style={[
+                styles.periodText,
+                period === 'month' &&
+                  styles.periodTextActive,
+              ]}
+            >
+              Mois
             </Text>
           </Pressable>
         </View>
-      ) : (
-        <View style={styles.list}>
-          {results.length === 1 && results[0].isMe && (
-            <Pressable
-              style={styles.emptyCard}
-              onPress={() => router.push('/friends')}
-            >
-              <Text style={styles.emptyTitle}>
-                Le classement se joue entre amis
-              </Text>
-              <Text style={styles.emptyText}>
-                Invite tes amis avec un lien : vous verrez vos pas
-                respectifs ici.
-              </Text>
-              <Text style={styles.emptyAction}>Inviter des amis →</Text>
-            </Pressable>
-          )}
 
-          {results.map((user, index) => (
-            <View
-              key={user.id}
-              style={[styles.row, user.isMe && styles.rowMe]}
-            >
-              <View style={styles.rank}>
-                {index < 3 ? (
-                  <Text style={styles.medal}>
-                    {index === 0
-                      ? '🥇'
-                      : index === 1
-                        ? '🥈'
-                        : '🥉'}
-                  </Text>
-                ) : (
-                  <Text style={styles.rankNumber}>
-                    {index + 1}
-                  </Text>
-                )}
-              </View>
-
-              <View style={styles.badge}>
-                <UserBadge userId={user.id} name={displayName(user)} />
-              </View>
-
-              <View style={styles.names}>
-                <Text
-                  style={styles.name}
-                  numberOfLines={1}
-                >
-                  {displayName(user)}
-                  {user.isMe && (
-                    <Text style={styles.me}> · toi</Text>
-                  )}
+        <View style={styles.refreshRow}>
+          <Pressable
+            style={[
+              styles.refreshButton,
+              refreshDisabled &&
+                styles.refreshButtonDisabled,
+            ]}
+            onPress={handleRefresh}
+            disabled={refreshDisabled}
+          >
+            {refreshing ? (
+              <ActivityIndicator
+                size="small"
+                color="#111827"
+              />
+            ) : (
+              <>
+                <Text style={styles.refreshIcon}>
+                  ↻
                 </Text>
-                {user.alias && user.alias !== user.name && (
-                  <Text style={styles.realName} numberOfLines={1}>
-                    {user.name}
-                  </Text>
-                )}
-              </View>
 
-              <Text style={styles.steps}>
-                {user.steps.toLocaleString('fr-FR')} pas
-              </Text>
-            </View>
-          ))}
+                <Text style={styles.refreshText}>
+                  Actualiser
+                </Text>
+              </>
+            )}
+          </Pressable>
         </View>
-      )}
-    </ScrollView>
+
+        <Text style={styles.periodTitle}>
+          {periodLabel}
+        </Text>
+
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator />
+          </View>
+        ) : error ? (
+          <View style={styles.center}>
+            <Text style={styles.error}>
+              {error}
+            </Text>
+
+            <Pressable
+              style={styles.retryButton}
+              onPress={loadLeaderboard}
+            >
+              <Text style={styles.retryText}>
+                Réessayer
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.list}>
+            {results.length === 1 && results[0].isMe && (
+              <Pressable
+                style={styles.emptyCard}
+                onPress={() => router.push('/friends')}
+              >
+                <Text style={styles.emptyTitle}>
+                  Le classement se joue entre amis
+                </Text>
+                <Text style={styles.emptyText}>
+                  Invite tes amis avec un lien : vous verrez vos pas
+                  respectifs ici.
+                </Text>
+                <Text style={styles.emptyAction}>Inviter des amis →</Text>
+              </Pressable>
+            )}
+
+            {results.map((user, index) => (
+              <View
+                key={user.id}
+                style={[styles.row, user.isMe && styles.rowMe]}
+              >
+                <View style={styles.rank}>
+                  {index < 3 ? (
+                    <Text style={styles.medal}>
+                      {index === 0
+                        ? '🥇'
+                        : index === 1
+                          ? '🥈'
+                          : '🥉'}
+                    </Text>
+                  ) : (
+                    <Text style={styles.rankNumber}>
+                      {index + 1}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.badge}>
+                  <UserBadge userId={user.id} name={displayName(user)} />
+                </View>
+
+                <View style={styles.names}>
+                  <Text
+                    style={styles.name}
+                    numberOfLines={1}
+                  >
+                    {displayName(user)}
+                    {user.isMe && (
+                      <Text style={styles.me}> · toi</Text>
+                    )}
+                  </Text>
+                  {user.alias && user.alias !== user.name && (
+                    <Text style={styles.realName} numberOfLines={1}>
+                      {user.name}
+                    </Text>
+                  )}
+                </View>
+
+                <Text style={styles.steps}>
+                  {user.steps.toLocaleString('fr-FR')} pas
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   )
 }
 
@@ -273,13 +280,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 32,
-  },
-
-  header: {
-    marginBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
 
   friendsButton: {
@@ -331,11 +331,6 @@ const styles = StyleSheet.create({
   realName: {
     fontSize: 12,
     color: '#9CA3AF',
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
   },
 
   periodSelector: {

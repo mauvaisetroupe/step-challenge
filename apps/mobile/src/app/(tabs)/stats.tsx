@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, {
   Circle,
   Line,
@@ -25,6 +26,7 @@ import {
 
 import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
+import TabScreenHeader from '../../components/TabScreenHeader'
 
 const DAILY_GOAL = 10_000
 
@@ -503,99 +505,103 @@ export default function StatsScreen() {
   ])
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-    >
-      <Text style={styles.title}>Statistiques</Text>
+    // Top edge only: keeps the content below the status bar (camera,
+    // clock, battery); the tab bar handles the bottom.
+    <SafeAreaView edges={['top']} style={styles.container}>
+      <TabScreenHeader title="Statistiques" />
 
-      <View style={styles.periodSelector}>
-        {PERIODS.map((item) => (
-          <Pressable
-            key={item.key}
-            style={[
-              styles.periodButton,
-              period === item.key &&
-                styles.periodButtonActive,
-            ]}
-            onPress={() => setPeriod(item.key)}
-          >
-            <Text
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <View style={styles.periodSelector}>
+          {PERIODS.map((item) => (
+            <Pressable
+              key={item.key}
               style={[
-                styles.periodButtonText,
+                styles.periodButton,
                 period === item.key &&
-                  styles.periodButtonTextActive,
+                  styles.periodButtonActive,
               ]}
+              onPress={() => setPeriod(item.key)}
             >
-              {item.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {loading ? (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" />
+              <Text
+                style={[
+                  styles.periodButtonText,
+                  period === item.key &&
+                    styles.periodButtonTextActive,
+                ]}
+              >
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
         </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
 
-          <Pressable
-            style={styles.retryButton}
-            onPress={loadStats}
-          >
-            <Text style={styles.retryText}>
-              Réessayer
-            </Text>
-          </Pressable>
-        </View>
-      ) : (
-        <>
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalValue}>
-              {formatNumber(totalSteps)}
-            </Text>
-
-            <Text style={styles.totalLabel}>
-              pas
-            </Text>
+        {loading ? (
+          <View style={styles.loading}>
+            <ActivityIndicator size="large" />
           </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
 
-          <View style={styles.chartContainer}>
-            {period === '1d' ? (
-              <IntradayChart data={intradayStats} />
-            ) : period === '1y' ? (
-              <BarChart
-                data={monthlyStats.map((item) => ({
-                  label: formatMonth(
-                    parseDateKey(item.date),
-                  ),
-                  value: item.steps,
-                }))}
-              />
-            ) : (
-              <BarChart
-                data={dailyStats.map((item) => ({
-                  label: formatShortDate(
-                    parseDateKey(item.date),
-                  ),
-                  value: item.steps,
-                }))}
-              />
-            )}
+            <Pressable
+              style={styles.retryButton}
+              onPress={loadStats}
+            >
+              <Text style={styles.retryText}>
+                Réessayer
+              </Text>
+            </Pressable>
           </View>
+        ) : (
+          <>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalValue}>
+                {formatNumber(totalSteps)}
+              </Text>
 
-          {period === '7d' || period === '30d' ? (
-            <DailyStatsList stats={dailyStats} />
-          ) : null}
+              <Text style={styles.totalLabel}>
+                pas
+              </Text>
+            </View>
 
-          {period === '1y' ? (
-            <MonthlyStatsList stats={monthlyStats} />
-          ) : null}
-        </>
-      )}
-    </ScrollView>
+            <View style={styles.chartContainer}>
+              {period === '1d' ? (
+                <IntradayChart data={intradayStats} />
+              ) : period === '1y' ? (
+                <BarChart
+                  data={monthlyStats.map((item) => ({
+                    label: formatMonth(
+                      parseDateKey(item.date),
+                    ),
+                    value: item.steps,
+                  }))}
+                />
+              ) : (
+                <BarChart
+                  data={dailyStats.map((item) => ({
+                    label: formatShortDate(
+                      parseDateKey(item.date),
+                    ),
+                    value: item.steps,
+                  }))}
+                />
+              )}
+            </View>
+
+            {period === '7d' || period === '30d' ? (
+              <DailyStatsList stats={dailyStats} />
+            ) : null}
+
+            {period === '1y' ? (
+              <MonthlyStatsList stats={monthlyStats} />
+            ) : null}
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   )
 }
 
@@ -1014,13 +1020,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 40,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 20,
   },
 
   periodSelector: {

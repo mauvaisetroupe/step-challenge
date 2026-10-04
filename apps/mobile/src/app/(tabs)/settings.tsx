@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import AccountSection from '../../components/AccountSection'
 
@@ -35,6 +36,7 @@ import {
 import {
   configureHuaweiHealth,
 } from '../../services/huaweiHealth'
+import TabScreenHeader from '../../components/TabScreenHeader'
 
 type BackgroundSyncStatus = {
   history: BackgroundSyncRun[]
@@ -186,264 +188,266 @@ export default function SettingsScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.title}>
-        Paramètres
-      </Text>
+    // Top edge only: keeps the content below the status bar (camera,
+    // clock, battery); the tab bar handles the bottom.
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <TabScreenHeader title="Paramètres" />
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          Compte
-        </Text>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Compte
+          </Text>
 
-        <AccountSection />
-      </View>
+          <AccountSection />
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          À propos
-        </Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            À propos
+          </Text>
 
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.label}>
-              Application
-            </Text>
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <Text style={styles.label}>
+                Application
+              </Text>
 
-            <Text style={styles.value}>
-              Step Challenge
-            </Text>
-          </View>
+              <Text style={styles.value}>
+                Step Challenge
+              </Text>
+            </View>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>
-              Version
-            </Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>
+                Version
+              </Text>
 
-            <Text style={styles.value}>
-              {Constants.expoConfig?.version ??
-                'Inconnue'}
-            </Text>
+              <Text style={styles.value}>
+                {Constants.expoConfig?.version ??
+                  'Inconnue'}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          Synchronisation en arrière-plan
-        </Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Synchronisation en arrière-plan
+          </Text>
 
-        <Text style={styles.description}>
-          La synchronisation vérifie régulièrement
-          les 30 derniers jours de données.
-        </Text>
+          <Text style={styles.description}>
+            La synchronisation vérifie régulièrement
+            les 30 derniers jours de données.
+          </Text>
 
-        <Text style={styles.historyTitle}>
-          Dernières exécutions
-        </Text>
+          <Text style={styles.historyTitle}>
+            Dernières exécutions
+          </Text>
 
-        {backgroundSync.history.length === 0 ? (
-          <View style={styles.historyEmpty}>
-            <Text style={styles.historyEmptyText}>
-              Aucune exécution enregistrée
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.historyCard}>
-            {backgroundSync.history.map(
-              (run, index) => (
-                <View
-                  key={`${run.timestamp}-${index}`}
-                  style={[
-                    styles.historyRow,
-                    index ===
-                      backgroundSync.history
-                        .length -
-                        1 &&
-                      styles.lastHistoryRow,
-                  ]}
-                >
-                  <Text
+          {backgroundSync.history.length === 0 ? (
+            <View style={styles.historyEmpty}>
+              <Text style={styles.historyEmptyText}>
+                Aucune exécution enregistrée
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.historyCard}>
+              {backgroundSync.history.map(
+                (run, index) => (
+                  <View
+                    key={`${run.timestamp}-${index}`}
                     style={[
-                      styles.historyStatus,
-                      run.status ===
-                        'success' &&
-                        styles.successValue,
-                      run.status ===
-                        'failed' &&
-                        styles.errorValue,
+                      styles.historyRow,
+                      index ===
+                        backgroundSync.history
+                          .length -
+                          1 &&
+                        styles.lastHistoryRow,
                     ]}
                   >
-                    {run.status ===
-                    'success'
-                      ? '✓'
-                      : '✕'}
-                  </Text>
-
-                  <View style={styles.historyMain}>
-                    <Text
-                      style={styles.historyDate}
-                    >
-                      {new Date(
-                        run.timestamp,
-                      ).toLocaleString('fr-FR')}
-                    </Text>
-
                     <Text
                       style={[
-                        styles.historyTrigger,
-                        run.trigger ===
-                          'manual' &&
-                          styles.manualTrigger,
-                        run.trigger ===
-                          'background' &&
-                          styles.backgroundTrigger,
+                        styles.historyStatus,
+                        run.status ===
+                          'success' &&
+                          styles.successValue,
+                        run.status ===
+                          'failed' &&
+                          styles.errorValue,
                       ]}
                     >
-                      {run.trigger ===
-                      'manual'
-                        ? '🔵 MANUEL'
-                        : '🟢 AUTOMATIQUE'}
+                      {run.status ===
+                      'success'
+                        ? '✓'
+                        : '✕'}
+                    </Text>
+
+                    <View style={styles.historyMain}>
+                      <Text
+                        style={styles.historyDate}
+                      >
+                        {new Date(
+                          run.timestamp,
+                        ).toLocaleString('fr-FR')}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.historyTrigger,
+                          run.trigger ===
+                            'manual' &&
+                            styles.manualTrigger,
+                          run.trigger ===
+                            'background' &&
+                            styles.backgroundTrigger,
+                        ]}
+                      >
+                        {run.trigger ===
+                        'manual'
+                          ? '🔵 MANUEL'
+                          : '🟢 AUTOMATIQUE'}
+                      </Text>
+                    </View>
+
+                    <Text
+                      style={styles.historyDays}
+                    >
+                      {run.status ===
+                      'success'
+                        ? `${run.syncedDays ?? 0} j`
+                        : 'Échec'}
                     </Text>
                   </View>
-
-                  <Text
-                    style={styles.historyDays}
-                  >
-                    {run.status ===
-                    'success'
-                      ? `${run.syncedDays ?? 0} j`
-                      : 'Échec'}
-                  </Text>
-                </View>
-              ),
-            )}
-          </View>
-        )}
-
-        <Pressable
-          style={styles.refreshButton}
-          onPress={loadBackgroundSyncStatus}
-        >
-          <Text style={styles.refreshButtonText}>
-            Actualiser
-          </Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.refreshButton}
-          onPress={triggerBackgroundSync}
-        >
-          <Text style={styles.refreshButtonText}>
-            Tester la synchronisation
-          </Text>
-        </Pressable>
-      </View>
-
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          Huawei Health
-        </Text>
-
-        <Text style={styles.description}>
-          Connecte Step Challenge à Huawei Health
-          pour permettre la lecture de tes pas.
-        </Text>
-
-        <Pressable
-          style={[
-            styles.primaryButton,
-            huaweiLoading &&
-              styles.primaryButtonDisabled,
-          ]}
-          onPress={configureHuawei}
-          disabled={huaweiLoading}
-        >
-          {huaweiLoading ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <Text style={styles.primaryButtonText}>
-              Configurer Huawei Health
-            </Text>
+                ),
+              )}
+            </View>
           )}
-        </Pressable>
 
-        {huaweiMessage && (
+          <Pressable
+            style={styles.refreshButton}
+            onPress={loadBackgroundSyncStatus}
+          >
+            <Text style={styles.refreshButtonText}>
+              Actualiser
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.refreshButton}
+            onPress={triggerBackgroundSync}
+          >
+            <Text style={styles.refreshButtonText}>
+              Tester la synchronisation
+            </Text>
+          </Pressable>
+        </View>
+
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Huawei Health
+          </Text>
+
           <Text style={styles.description}>
-            {huaweiMessage}
+            Connecte Step Challenge à Huawei Health
+            pour permettre la lecture de tes pas.
           </Text>
-        )}
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          Diagnostic
-        </Text>
+          <Pressable
+            style={[
+              styles.primaryButton,
+              huaweiLoading &&
+                styles.primaryButtonDisabled,
+            ]}
+            onPress={configureHuawei}
+            disabled={huaweiLoading}
+          >
+            {huaweiLoading ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>
+                Configurer Huawei Health
+              </Text>
+            )}
+          </Pressable>
 
-        <Text style={styles.description}>
-          Vérifie la connexion à Health Connect,
-          les permissions et l'accès au serveur.
-        </Text>
-
-        <Pressable
-          style={[
-            styles.primaryButton,
-            loading &&
-              styles.primaryButtonDisabled,
-          ]}
-          onPress={runDiagnostic}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator
-              color="#ffffff"
-            />
-          ) : (
-            <Text style={styles.primaryButtonText}>
-              Lancer le diagnostic
+          {huaweiMessage && (
+            <Text style={styles.description}>
+              {huaweiMessage}
             </Text>
           )}
-        </Pressable>
+        </View>
 
-        {diagnostic && (
-          <View style={styles.diagnosticCard}>
-            {diagnostic.items.map(
-              (item, index) => (
-                <DiagnosticRow
-                  key={`${item.label}-${index}`}
-                  item={item}
-                />
-              ),
-            )}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Diagnostic
+          </Text>
 
-            <View style={styles.separator} />
+          <Text style={styles.description}>
+            Vérifie la connexion à Health Connect,
+            les permissions et l'accès au serveur.
+          </Text>
 
-            <Text style={styles.generatedAt}>
-              Diagnostic généré le{' '}
-              {new Date(
-                diagnostic.generatedAt,
-              ).toLocaleString('fr-FR')}
-            </Text>
-
-            <Pressable
-              style={styles.copyButton}
-              onPress={copyDiagnostic}
-            >
-              <Text style={styles.copyButtonText}>
-                {copied
-                  ? '✓ Diagnostic copié'
-                  : 'Copier le diagnostic'}
+          <Pressable
+            style={[
+              styles.primaryButton,
+              loading &&
+                styles.primaryButtonDisabled,
+            ]}
+            onPress={runDiagnostic}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator
+                color="#ffffff"
+              />
+            ) : (
+              <Text style={styles.primaryButtonText}>
+                Lancer le diagnostic
               </Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+            )}
+          </Pressable>
+
+          {diagnostic && (
+            <View style={styles.diagnosticCard}>
+              {diagnostic.items.map(
+                (item, index) => (
+                  <DiagnosticRow
+                    key={`${item.label}-${index}`}
+                    item={item}
+                  />
+                ),
+              )}
+
+              <View style={styles.separator} />
+
+              <Text style={styles.generatedAt}>
+                Diagnostic généré le{' '}
+                {new Date(
+                  diagnostic.generatedAt,
+                ).toLocaleString('fr-FR')}
+              </Text>
+
+              <Pressable
+                style={styles.copyButton}
+                onPress={copyDiagnostic}
+              >
+                <Text style={styles.copyButtonText}>
+                  {copied
+                    ? '✓ Diagnostic copié'
+                    : 'Copier le diagnostic'}
+                </Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   )
 }
 
@@ -504,12 +508,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingBottom: 40,
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 28,
   },
 
   section: {

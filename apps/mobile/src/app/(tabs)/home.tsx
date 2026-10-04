@@ -6,11 +6,13 @@ import {
   Text,
   View,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import {
   getHealthConnectLast30Days,
   syncStatsToServer,
 } from '../../services/stepSync'
+import TabScreenHeader from '../../components/TabScreenHeader'
 
 export default function HomeScreen() {
   const [steps, setSteps] = useState<number | null>(null)
@@ -65,49 +67,49 @@ export default function HomeScreen() {
   )
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Step Challenge</Text>
+    <SafeAreaView edges={['top']} style={styles.screen}>
+      <TabScreenHeader title="Step Challenge" />
 
-      <Text style={styles.subtitle}>Aujourd'hui</Text>
+      <View style={styles.container}>
+        <Text style={styles.subtitle}>Aujourd'hui</Text>
 
-      {loading && (
-        <ActivityIndicator
-          size="large"
-          color="#208AEF"
-        />
-      )}
+        {loading && (
+          <ActivityIndicator
+            size="large"
+            color="#208AEF"
+          />
+        )}
 
-      {!loading && error && (
-        <Text style={styles.error}>{error}</Text>
-      )}
+        {!loading && error && (
+          <Text style={styles.error}>{error}</Text>
+        )}
 
-      {!loading && !error && (
-        <View style={styles.stepsContainer}>
-          <Text style={styles.steps}>
-            {steps?.toLocaleString('fr-FR')}
-          </Text>
+        {!loading && !error && (
+          <View style={styles.stepsContainer}>
+            <Text style={styles.steps}>
+              {steps?.toLocaleString('fr-FR')}
+            </Text>
 
-          <Text style={styles.label}>pas</Text>
-        </View>
-      )}
-    </View>
+            <Text style={styles.label}>pas</Text>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
     backgroundColor: '#FFFFFF',
-  },
-
-  title: {
-    color: '#111827',
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 12,
   },
 
   subtitle: {

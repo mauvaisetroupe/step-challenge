@@ -9,7 +9,6 @@ import { useEffect } from 'react'
 
 import { onSignedOut } from '@/api/client'
 import { AnimatedSplashOverlay } from '@/components/animated-icon'
-import AppHeaderTitle from '@/components/AppHeaderTitle'
 import { registerBackgroundStepSync } from '@/services/backgroundSync'
 
 SplashScreen.preventAutoHideAsync()
@@ -44,18 +43,6 @@ export default function RootLayout() {
         invitation) get a header with a back button.
       */}
       <Stack screenOptions={{ headerShown: false }}>
-        {/*
-          Shared header for the tab screens: it keeps their content below
-          the status bar (camera, clock, battery).
-        */}
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: true,
-            headerTitle: () => <AppHeaderTitle />,
-            headerTitleAlign: 'left',
-          }}
-        />
         <Stack.Screen
           name="friends"
           options={{ headerShown: true, title: 'Amis' }}
