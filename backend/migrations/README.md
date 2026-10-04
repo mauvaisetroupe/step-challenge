@@ -21,3 +21,4 @@ Faire une sauvegarde avant (`pg_dump`, ou Adminer → Exporter avec les données
 |---|---|---|
 | `001_auth.sql` | 0001 | `user_credentials`, `sessions`, cascade de `daily_steps` |
 | `002_display_name_not_unique.sql` | 0001 | Suppression de l'unicité du nom affiché |
+| `003_friends.sql` | 0002 | `invitations`, `friendships`, `friend_aliases` |
