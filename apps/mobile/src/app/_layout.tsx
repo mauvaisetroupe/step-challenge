@@ -9,7 +9,6 @@ import { useEffect } from 'react'
 import { useColorScheme } from 'react-native'
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon'
-import AppUpdateChecker from '@/components/AppUpdateChecker'
 import { registerBackgroundStepSync } from '@/services/backgroundSync'
 
 SplashScreen.preventAutoHideAsync()
@@ -31,7 +30,6 @@ export default function RootLayout() {
       value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
     >
       <AnimatedSplashOverlay />
-      <AppUpdateChecker />
       <Slot />
     </ThemeProvider>
   )
