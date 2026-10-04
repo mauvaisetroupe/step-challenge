@@ -1,21 +1,22 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Redirect } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 
-import { USER_ID_KEY } from '@/constants/storage'
+import { getSessionToken } from '../auth/session'
 
 export default function IndexScreen() {
-  const [userId, setUserId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [signedIn, setSignedIn] = useState<boolean | null>(null)
 
   useEffect(() => {
-    AsyncStorage.getItem(USER_ID_KEY)
-      .then(setUserId)
-      .finally(() => setLoading(false))
+    getSessionToken()
+      .then((token) => setSignedIn(token !== null))
+      .catch((error) => {
+        console.error('Session read error:', error)
+        setSignedIn(false)
+      })
   }, [])
 
-  if (loading) {
+  if (signedIn === null) {
     return (
       <View
         style={{
@@ -29,9 +30,5 @@ export default function IndexScreen() {
     )
   }
 
-  if (userId) {
-    return <Redirect href="/home" />
-  }
-
-  return <Redirect href="/onboarding" />
+  return <Redirect href={signedIn ? '/home' : '/sign-in'} />
 }
