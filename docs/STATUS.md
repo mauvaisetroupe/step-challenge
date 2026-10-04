@@ -57,7 +57,8 @@ Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migratio
 - [ ] Remplacer les captures d'écran du Store : elles montrent de vrais prénoms et de vrais pas.
 - [ ] Migrer le dernier testeur encore sur un ancien compte (`backend/scripts/merge-legacy-user.sql`), puis relancer `backend/scripts/seed-tester-friendships.sql`.
 - [ ] Supprimer les exports de base faits pendant les migrations (données de santé), une fois la production stable.
-- [ ] Huawei : en attente de la validation du Health Service Kit par Huawei (voir `huawei/README.md`, section 14).
+- [ ] Huawei : en attente de la validation du Health Service Kit par Huawei (voir `huawei/README.md`, section 14). Une fois la permission de test accordée, ajouter les comptes HUAWEI de test (0/100 aujourd'hui).
+- [ ] Huawei : créer la variable d'environnement EAS `AGCONNECT_SERVICES_JSON` (type fichier) pour que les builds de production embarquent la configuration AppGallery Connect (voir `huawei/README.md`, section 14).
 
 ### Développement possible dans une session
 
@@ -80,6 +81,7 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 - **Routes typées** : après l'ajout d'un écran, lancer brièvement `expo start` pour régénérer les types de routes, sinon `tsc` échoue.
 - **Thème** : l'application est en mode clair uniquement (`userInterfaceStyle: "light"`, `DefaultTheme`). Les écrans sont conçus pour un fond blanc.
 - **Écrans des onglets** : chacun est enveloppé dans un `SafeAreaView` limité au bord haut, avec un titre fixe (`components/TabScreenHeader.tsx`).
+- **Huawei** : `plugins/withAGConnect.js` applique la configuration AppGallery Connect seulement si `agconnect-services.json` (ou la variable EAS `AGCONNECT_SERVICES_JSON`) est présent, et seulement pour le package de production.
 - **Icônes** : la source est `icons/app-icon-foreground.svg` ; tout se régénère avec `python3 icons/export-app-icons.py`, qui nécessite Inkscape.
 - **Codes d'invitation** : en base 32 de Crockford. Les lettres I, L et O sont lues comme 1 et 0 : beaucoup de mots de 8 lettres sont donc des codes valides. Pour un code invalide dans un test, utiliser la lettre U, qui est exclue.
 - **Limites de débit** : stockage en mémoire, donc propres à chaque instance du backend. À revoir si le backend passe à plusieurs instances.

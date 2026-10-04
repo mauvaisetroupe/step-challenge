@@ -606,23 +606,35 @@ Conséquence pour l'étape 4 : le provider ne se choisit **pas selon la marque d
 3. **Choix du provider** dans les Paramètres, stocké localement, utilisé par `stepSync` et la tâche de fond.
 4. **Bord de la fenêtre d'historique** : selon la façon dont Huawei compte « 1 mois », le jour le plus ancien peut être refusé. Ne pas faire échouer toute la synchro : observer si Huawei renvoie une erreur ou un tableau vide, et traiter ce cas.
 
-## Point ouvert : configuration native après prebuild
+## Configuration native après prebuild (résolu le 2026-10-04)
 
-Les config plugins actuels (`apps/mobile/plugins/`) ne couvrent que :
+La configuration AppGallery Connect est maintenant reproduite à chaque `prebuild` par le config plugin `apps/mobile/plugins/withAGConnect.js` :
 
-* le dépôt Maven Huawei (`withHuaweiMavenRepo`) ;
-* la suppression des permissions et services inutiles du manifest (`withHuaweiHealthManifest`).
+* il copie `agconnect-services.json` dans `android/app/` ;
+* il ajoute le dépôt Maven Huawei et le classpath du plugin Gradle AGConnect au `buildscript`, avec la version d'AGP rendue explicite (lue dans `react-native/gradle/libs.versions.toml`, voir la section 7) ;
+* il applique `com.huawei.agconnect` à l'application. C'est ce plugin Gradle qui ajoute `com.huawei.hms.client.appid` au manifeste : sans lui, HMS Core ne reconnaît pas l'application.
 
-Ne sont **pas** reproduits par prebuild :
+Sans fichier de configuration (clone du dépôt public, CI), ou pour un autre package que celui du fichier (variante de développement `.dev`, non déclarée dans AppGallery Connect), le plugin n'applique rien : l'application se construit, sans Huawei Health.
 
-* le classpath et l'application du plugin Gradle **AGConnect** ;
-* la copie de **`agconnect-services.json`** dans `android/app/` (fichier ignoré par git).
+### Où trouver le fichier
 
-À traiter avant le premier vrai test Huawei, sinon l'initialisation HMS risque d'échouer après un `prebuild --clean`.
+* **En local** : `apps/mobile/agconnect-services.json`, téléchargé depuis AppGallery Connect (Project settings → General information) et ignoré par git. Le modèle `apps/mobile/agconnect-services.example.json` montre sa structure, avec des valeurs factices.
+* **Builds EAS** (y compris `--local`) : EAS n'envoie pas les fichiers ignorés par git. Le fichier est fourni par une variable d'environnement EAS de type fichier, `AGCONNECT_SERVICES_JSON`, dont le plugin lit le chemin :
 
-**Constat du 2026-10-04** : `apps/mobile/android/app/agconnect-services.json` n'existe plus en local (perdu lors d'une régénération de `android/`). Il faut :
+  ```bash
+  cd apps/mobile
+  npx eas-cli env:create --environment production --name AGCONNECT_SERVICES_JSON \
+    --type file --value ./agconnect-services.json --visibility secret
+  ```
 
-1. le re-télécharger depuis AppGallery Connect ;
-2. le placer hors de `android/` (par exemple `apps/mobile/agconnect-services.json`, ignoré par git) ;
-3. écrire un config plugin qui le copie dans `android/app/` et applique le plugin Gradle AGConnect ;
-4. publier un modèle `agconnect-services.example.json` aux valeurs factices (ADR 0003), à partir de la structure du vrai fichier.
+  À refaire après chaque nouveau téléchargement du fichier (par exemple après l'ajout d'une empreinte).
+
+### Empreintes déclarées dans AppGallery Connect
+
+Les trois empreintes SHA-256 doivent être déclarées : clé de debug (builds locaux), clé d'envoi, et **clé de signature Google Play**, qui signe l'application installée depuis le Store.
+
+### Constat du 2026-10-04
+
+L'application 1.2.x du Store ne contenait pas `com.huawei.hms.client.appid` (fichier perdu lors d'une régénération de `android/`) : HMS Core proposait alors une mise à jour, qui échouait avec l'erreur 102 sur un téléphone non Huawei. La semaine précédente, avec le fichier, l'erreur était 50011 (demande Health Kit encore en examen).
+
+La demande Health Kit est toujours **To be reviewed** : les comptes de test (0/100) ne peuvent être ajoutés qu'une fois la permission de test accordée.
