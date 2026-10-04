@@ -15,32 +15,11 @@ const app = Fastify({
   logger: true,
 })
 
-const API_KEY = process.env.API_KEY
-
-if (!API_KEY) {
-  throw new Error('API_KEY is not configured')
-}
-
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 
 if (!GOOGLE_CLIENT_ID) {
   throw new Error('GOOGLE_CLIENT_ID is not configured')
 }
-
-app.addHook('onRequest', async (request, reply) => {
-  if (!request.url.startsWith('/api/')) {
-    return
-  }
-
-  // wait for client migration
-  const apiKey = request.headers['x-api-key']
-
-  if (apiKey !== API_KEY) {
-    return reply.code(401).send({
-      error: 'Unauthorized',
-    })
-  }
-})
 
 await app.register(fastifyStatic, {
   root: path.join(process.cwd(), 'public'),

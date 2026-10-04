@@ -7,7 +7,7 @@ apps/mobile   Expo (SDK 57) / React Native — Android
    ├─ Health Connect (Android, Garmin…)
    ├─ Huawei Health Kit (en cours d'intégration, voir huawei/README.md)
    └─ tâche de fond quotidienne : synchro des 30 derniers jours
-            │  HTTPS + X-API-Key
+            │  HTTPS + session (connexion Google, ADR 0001)
             ▼
 backend       Fastify + PostgreSQL — https://step.architech.lu
 ```
@@ -33,7 +33,6 @@ DATABASE_PORT=
 DATABASE_NAME=
 DATABASE_USER=
 DATABASE_PASSWORD=
-API_KEY=
 GOOGLE_CLIENT_ID=
 # PORT=3000
 ```
@@ -41,7 +40,6 @@ GOOGLE_CLIENT_ID=
 | Variable | Rôle |
 |---|---|
 | `DATABASE_*` | Connexion PostgreSQL |
-| `API_KEY` | Doit correspondre à `EXPO_PUBLIC_API_KEY` côté mobile : toutes les routes `/api/*` exigent le header `X-API-Key` (transitoire, voir ADR 0001) |
 | `GOOGLE_CLIENT_ID` | Client ID OAuth **Web** du projet Google Cloud `step-challenge` ; vérifié dans le champ `aud` des ID tokens Google. Pas un secret |
 | `PORT` | Port d'écoute, 3000 par défaut |
 
