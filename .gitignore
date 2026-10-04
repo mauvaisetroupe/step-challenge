@@ -43,6 +43,7 @@ example
 /android
 backend/.env
 apps/mobile/.env.production
+apps/mobile/agconnect-services.json
 apps/mobile/android/app/agconnect-services.json
 
 # IDE
