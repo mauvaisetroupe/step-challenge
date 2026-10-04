@@ -111,4 +111,8 @@ Le build produit un `.aab` signé à téléverser dans la Google Play Console. L
 
 ## Licence
 
-MIT — voir [LICENSE](LICENSE).
+[GNU AGPL-3.0-or-later](LICENSE), avec une permission additionnelle autorisant la liaison avec les SDK propriétaires des plateformes (Google Play services, Huawei HMS) — voir [NOTICE](NOTICE).
+
+Le nom « Step Challenge » et son logo ne sont pas couverts par la licence : voir [TRADEMARKS.md](TRADEMARKS.md).
+
+Les choix de licence sont expliqués dans l'[ADR 0003](docs/adr/0003-open-source-license.md). Les versions publiées avant ce changement restent disponibles sous licence MIT.
