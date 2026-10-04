@@ -106,3 +106,7 @@ npx eas-cli build --platform android --profile production --local
 ```
 
 Le build produit un `.aab` signé à téléverser dans la Google Play Console. Les credentials se consultent ou se modifient avec `npx eas-cli credentials`.
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE).
