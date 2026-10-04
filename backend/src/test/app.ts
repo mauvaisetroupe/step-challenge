@@ -4,6 +4,7 @@ import type { Pool } from 'pg'
 import { createRequireAuth } from '../auth/authenticate.js'
 import { GOOGLE_ISSUER, InvalidIdTokenError } from '../auth/google.js'
 import authRoutes from '../routes/auth.js'
+import friendRoutes from '../routes/friends.js'
 import invitationRoutes from '../routes/invitations.js'
 import leaderboardRoutes from '../routes/leaderboard.js'
 import meRoutes from '../routes/me.js'
@@ -46,6 +47,12 @@ export async function buildTestApp(db: Pool) {
   })
 
   await app.register(meStepsRoutes, {
+    prefix: '/api',
+    db,
+    requireAuth,
+  })
+
+  await app.register(friendRoutes, {
     prefix: '/api',
     db,
     requireAuth,
@@ -105,4 +112,29 @@ export async function signInAs(
 
 export function bearer(token: string) {
   return { authorization: `Bearer ${token}` }
+}
+
+/**
+ * Makes two users friends through the real invitation flow.
+ */
+export async function befriend(
+  app: TestApp,
+  inviterToken: string,
+  inviteeToken: string,
+) {
+  const invitation = await app.inject({
+    method: 'POST',
+    url: '/api/invitations',
+    headers: bearer(inviterToken),
+  })
+
+  const response = await app.inject({
+    method: 'POST',
+    url: `/api/invitations/${invitation.json().code}/accept`,
+    headers: bearer(inviteeToken),
+  })
+
+  if (response.statusCode !== 201) {
+    throw new Error(`befriend failed: ${response.statusCode} ${response.body}`)
+  }
 }

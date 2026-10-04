@@ -6,6 +6,7 @@ import { createRequireAuth } from './auth/authenticate.js'
 import { createGoogleIdTokenVerifier } from './auth/google.js'
 import { checkDatabase, pool } from './db.js'
 import authRoutes from './routes/auth.js'
+import friendRoutes from './routes/friends.js'
 import healthRoutes from './routes/health.js'
 import invitationRoutes from './routes/invitations.js'
 import leaderboardRoutes from './routes/leaderboard.js'
@@ -57,6 +58,12 @@ await app.register(meRoutes, {
 })
 
 await app.register(meStepsRoutes, {
+  prefix: '/api',
+  db: pool,
+  requireAuth,
+})
+
+await app.register(friendRoutes, {
   prefix: '/api',
   db: pool,
   requireAuth,
