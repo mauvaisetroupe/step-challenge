@@ -23,6 +23,8 @@ And, outside the app (icons/):
 - playstore-icon.png           Google Play listing icon (512 x 512, opaque);
                                upload it in the Play Console with the next
                                release that changes the launcher icon
+- feature-graphic.png          Google Play feature graphic (1024 x 500,
+                               opaque), from icons/feature-graphic.svg
 
 Keep BACKGROUND in sync with app.json (android.adaptiveIcon.backgroundColor
 and the expo-splash-screen backgroundColor).
@@ -123,6 +125,13 @@ def main():
         export(inkscape, SOURCE, OUTPUT / 'splash-icon.png', 1024)
         export(inkscape, icon_svg, OUTPUT / 'favicon.png', 48)
         export(inkscape, icon_svg, STORE_OUTPUT / 'playstore-icon.png', 512, opaque=True)
+        export(
+            inkscape,
+            STORE_OUTPUT / 'feature-graphic.svg',
+            STORE_OUTPUT / 'feature-graphic.png',
+            1024,
+            opaque=True,
+        )
 
 
 if __name__ == '__main__':
