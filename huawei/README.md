@@ -619,3 +619,10 @@ Ne sont **pas** reproduits par prebuild :
 * la copie de **`agconnect-services.json`** dans `android/app/` (fichier ignoré par git).
 
 À traiter avant le premier vrai test Huawei, sinon l'initialisation HMS risque d'échouer après un `prebuild --clean`.
+
+**Constat du 2026-10-04** : `apps/mobile/android/app/agconnect-services.json` n'existe plus en local (perdu lors d'une régénération de `android/`). Il faut :
+
+1. le re-télécharger depuis AppGallery Connect ;
+2. le placer hors de `android/` (par exemple `apps/mobile/agconnect-services.json`, ignoré par git) ;
+3. écrire un config plugin qui le copie dans `android/app/` et applique le plugin Gradle AGConnect ;
+4. publier un modèle `agconnect-services.example.json` aux valeurs factices (ADR 0003), à partir de la structure du vrai fichier.
