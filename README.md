@@ -36,6 +36,8 @@ DATABASE_PASSWORD=
 API_KEY=
 ```
 
+Créer les tables avec `psql -d <base> -f backend/schema.sql`.
+
 `API_KEY` doit correspondre à `EXPO_PUBLIC_API_KEY` côté mobile : toutes les routes `/api/*` exigent le header `X-API-Key`.
 
 ### Lancer en local
