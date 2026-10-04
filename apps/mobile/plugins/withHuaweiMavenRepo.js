@@ -4,7 +4,13 @@ module.exports = function withHuaweiMavenRepo(config) {
   return withProjectBuildGradle(config, (config) => {
     let contents = config.modResults.contents;
 
-    if (!contents.includes('https://developer.huawei.com/repo/')) {
+    // Checks the allprojects block itself: withAGConnect also adds the
+    // repository to the buildscript block.
+    if (
+      !/allprojects\s*\{\s*repositories\s*\{[^}]*developer\.huawei\.com/.test(
+        contents,
+      )
+    ) {
       contents = contents.replace(
         `allprojects {
   repositories {`,
