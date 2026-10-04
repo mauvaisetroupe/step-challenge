@@ -24,6 +24,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       ...config.android,
       package: `${config.android?.package}.dev`,
+      // https://step.architech.lu/i/… links belong to the production app
+      // (assetlinks.json); the dev build opens invitations through its
+      // own scheme: stepchallenge-dev://i/<code>
+      intentFilters: [],
     },
     ios: {
       ...config.ios,
