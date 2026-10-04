@@ -13,6 +13,8 @@ import {
   View,
 } from 'react-native'
 
+import AccountSection from '../../components/AccountSection'
+
 import {
   getBackgroundSyncStatus,
   triggerBackgroundStepSyncForTesting,
@@ -191,6 +193,14 @@ export default function SettingsScreen() {
       <Text style={styles.title}>
         Paramètres
       </Text>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>
+          Compte
+        </Text>
+
+        <AccountSection />
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>
