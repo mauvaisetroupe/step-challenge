@@ -5,6 +5,7 @@ import { createRequireAuth } from '../auth/authenticate.js'
 import { GOOGLE_ISSUER, InvalidIdTokenError } from '../auth/google.js'
 import authRoutes from '../routes/auth.js'
 import meRoutes from '../routes/me.js'
+import meStepsRoutes from '../routes/meSteps.js'
 
 /**
  * Fake verifier: "valid:<sub>" is a valid token for subject <sub>,
@@ -37,6 +38,12 @@ export async function buildTestApp(db: Pool) {
   })
 
   await app.register(meRoutes, {
+    prefix: '/api',
+    db,
+    requireAuth,
+  })
+
+  await app.register(meStepsRoutes, {
     prefix: '/api',
     db,
     requireAuth,

@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js'
 import healthRoutes from './routes/health.js'
 import leaderboardRoutes from './routes/leaderboard.js'
 import meRoutes from './routes/me.js'
+import meStepsRoutes from './routes/meSteps.js'
 import stepsRoutes from './routes/steps.js'
 import usersRoutes from './routes/users.js'
 
@@ -68,6 +69,12 @@ await app.register(authRoutes, {
 })
 
 await app.register(meRoutes, {
+  prefix: '/api',
+  db: pool,
+  requireAuth,
+})
+
+await app.register(meStepsRoutes, {
   prefix: '/api',
   db: pool,
   requireAuth,
