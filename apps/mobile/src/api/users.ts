@@ -1,4 +1,8 @@
-import { API_URL, apiHeaders } from './config'
+import { API_URL } from './config'
+
+// Legacy routes, removed from the backend (ADR 0001): replaced by the
+// session-based API in the next commits.
+const apiHeaders = { 'Content-Type': 'application/json' }
 
 export type User = {
   id: string

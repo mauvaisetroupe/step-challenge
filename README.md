@@ -92,7 +92,6 @@ Les variables d'environnement sont stockées sur EAS, par environnement :
 | Variable | `development` | `production` | Visibilité |
 |---|---|---|---|
 | `EXPO_PUBLIC_API_URL` | `http://<IP du Mac>:3001` | `https://step.architech.lu` | Plain text |
-| `EXPO_PUBLIC_API_KEY` | clé de dev | clé de prod | Sensitive |
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | client ID OAuth Web | client ID OAuth Web | Plain text |
 
 `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` est le client ID **Web** du projet Google Cloud `step-challenge`, le même que `GOOGLE_CLIENT_ID` côté backend : l'application le transmet à Google, qui l'inscrit dans le champ `aud` de l'ID token. Ce n'est pas un secret.

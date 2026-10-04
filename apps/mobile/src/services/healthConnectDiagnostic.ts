@@ -6,7 +6,7 @@ import {
   initialize,
 } from 'react-native-health-connect'
 
-import { API_URL, apiHeaders } from '../api/config'
+import { API_URL } from '../api/config'
 
 export type DiagnosticStatus =
   | 'ok'
@@ -40,12 +40,7 @@ function formatSdkStatus(status: number | string) {
 
 async function checkBackend(): Promise<DiagnosticItem> {
   try {
-    const response = await fetch(
-      `${API_URL}/api/health`,
-      {
-        headers: apiHeaders,
-      },
-    )
+    const response = await fetch(`${API_URL}/api/health`)
 
     if (!response.ok) {
       return {
