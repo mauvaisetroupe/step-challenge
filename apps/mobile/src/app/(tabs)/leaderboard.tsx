@@ -1,3 +1,4 @@
+import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
@@ -12,6 +13,7 @@ import {
   getLeaderboard,
   type LeaderboardEntry,
 } from '../../api/steps'
+import { displayName } from '../../api/friends'
 import UserBadge from '../../components/UserBadge'
 import { syncLast30Days } from '../../services/stepSync'
 
@@ -90,6 +92,13 @@ export default function LeaderboardScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.title}>🏆 Classement</Text>
+
+        <Pressable
+          style={styles.friendsButton}
+          onPress={() => router.push('/friends')}
+        >
+          <Text style={styles.friendsButtonText}>👥 Amis</Text>
+        </Pressable>
       </View>
 
       <View style={styles.periodSelector}>
@@ -186,6 +195,22 @@ export default function LeaderboardScreen() {
         </View>
       ) : (
         <View style={styles.list}>
+          {results.length === 1 && results[0].isMe && (
+            <Pressable
+              style={styles.emptyCard}
+              onPress={() => router.push('/friends')}
+            >
+              <Text style={styles.emptyTitle}>
+                Le classement se joue entre amis
+              </Text>
+              <Text style={styles.emptyText}>
+                Invite tes amis avec un lien : vous verrez vos pas
+                respectifs ici.
+              </Text>
+              <Text style={styles.emptyAction}>Inviter des amis →</Text>
+            </Pressable>
+          )}
+
           {results.map((user, index) => (
             <View
               key={user.id}
@@ -208,18 +233,25 @@ export default function LeaderboardScreen() {
               </View>
 
               <View style={styles.badge}>
-                <UserBadge userId={user.id} name={user.name} />
+                <UserBadge userId={user.id} name={displayName(user)} />
               </View>
 
-              <Text
-                style={styles.name}
-                numberOfLines={1}
-              >
-                {user.name}
-                {user.isMe && (
-                  <Text style={styles.me}> · toi</Text>
+              <View style={styles.names}>
+                <Text
+                  style={styles.name}
+                  numberOfLines={1}
+                >
+                  {displayName(user)}
+                  {user.isMe && (
+                    <Text style={styles.me}> · toi</Text>
+                  )}
+                </Text>
+                {user.alias && user.alias !== user.name && (
+                  <Text style={styles.realName} numberOfLines={1}>
+                    {user.name}
+                  </Text>
                 )}
-              </Text>
+              </View>
 
               <Text style={styles.steps}>
                 {user.steps.toLocaleString('fr-FR')} pas
@@ -245,6 +277,60 @@ const styles = StyleSheet.create({
 
   header: {
     marginBottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  friendsButton: {
+    minHeight: 40,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    justifyContent: 'center',
+    backgroundColor: '#F1F1F1',
+  },
+
+  friendsButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
+  },
+
+  emptyCard: {
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#F1F7FE',
+  },
+
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+
+  emptyText: {
+    marginTop: 4,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#4B5563',
+  },
+
+  emptyAction: {
+    marginTop: 10,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#208AEF',
+  },
+
+  names: {
+    flex: 1,
+    marginRight: 8,
+  },
+
+  realName: {
+    fontSize: 12,
+    color: '#9CA3AF',
   },
 
   title: {
@@ -359,10 +445,8 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    marginRight: 8,
   },
 
   steps: {

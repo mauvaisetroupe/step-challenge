@@ -47,7 +47,10 @@ export async function getMySteps(from?: string) {
 
 export type LeaderboardEntry = {
   id: string
+  /** Name chosen by the user. */
   name: string
+  /** Name I gave this friend (ADR 0002), if any. */
+  alias: string | null
   steps: number
   isMe: boolean
 }
