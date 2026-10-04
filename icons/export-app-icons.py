@@ -32,6 +32,9 @@ from pathlib import Path
 
 BACKGROUND = '#1389FC'
 
+# Enlargement of the drawing in icon.png and favicon.png.
+ICON_ZOOM = 1.6
+
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / 'icons' / 'app-icon-foreground.svg'
 OUTPUT = ROOT / 'apps' / 'mobile' / 'assets' / 'images'
@@ -64,14 +67,17 @@ def export(inkscape, svg_path, png_path, width):
     print(f'  {png_path.relative_to(ROOT)}')
 
 
-def with_background(svg):
-    """Returns the SVG with a full-canvas background rectangle."""
-    return re.sub(
-        r'(<svg\b[^>]*>)',
-        rf'\1<rect width="1024" height="1024" fill="{BACKGROUND}"/>',
-        svg,
-        count=1,
+def with_background(svg, zoom=1.0):
+    """
+    Returns the SVG with a full-canvas background rectangle, the drawing
+    enlarged by `zoom` around the centre of the canvas.
+    """
+    opening = (
+        f'<rect width="1024" height="1024" fill="{BACKGROUND}"/>'
+        f'<g transform="translate(512,512) scale({zoom}) translate(-512,-512)">'
     )
+    svg = re.sub(r'(<svg\b[^>]*>)', lambda m: m.group(1) + opening, svg, count=1)
+    return svg.replace('</svg>', '</g></svg>')
 
 
 def main():
@@ -87,8 +93,10 @@ def main():
             f'<rect width="1024" height="1024" fill="{BACKGROUND}"/></svg>'
         )
 
+        # icon.png and favicon.png are never cropped by a launcher: the
+        # drawing does not need the adaptive icon safe zone margin.
         icon_svg = tmp / 'icon.svg'
-        icon_svg.write_text(with_background(source))
+        icon_svg.write_text(with_background(source, zoom=ICON_ZOOM))
 
         print(f'Exporting from {SOURCE.relative_to(ROOT)}:')
 
