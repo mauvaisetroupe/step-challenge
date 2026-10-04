@@ -10,8 +10,6 @@ import healthRoutes from './routes/health.js'
 import leaderboardRoutes from './routes/leaderboard.js'
 import meRoutes from './routes/me.js'
 import meStepsRoutes from './routes/meSteps.js'
-import stepsRoutes from './routes/steps.js'
-import usersRoutes from './routes/users.js'
 
 const app = Fastify({
   logger: true,
@@ -78,14 +76,6 @@ await app.register(meStepsRoutes, {
   prefix: '/api',
   db: pool,
   requireAuth,
-})
-
-await app.register(stepsRoutes, {
-  prefix: '/api',
-})
-
-await app.register(usersRoutes, {
-  prefix: '/api',
 })
 
 await app.register(leaderboardRoutes, {
