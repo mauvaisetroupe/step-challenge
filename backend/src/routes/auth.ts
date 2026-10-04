@@ -10,6 +10,7 @@ import {
   DisplayNameRequiredError,
   signInWithOidc,
 } from '../auth/signIn.js'
+import { RATE_LIMITS } from '../rateLimit.js'
 
 export type AuthRoutesOptions = {
   db: Pool
@@ -44,6 +45,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
   }>(
     '/auth/google',
     {
+      config: { rateLimit: RATE_LIMITS.signIn },
       schema: {
         body: {
           type: 'object',

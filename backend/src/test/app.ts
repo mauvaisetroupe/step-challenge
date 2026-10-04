@@ -9,6 +9,7 @@ import invitationRoutes from '../routes/invitations.js'
 import leaderboardRoutes from '../routes/leaderboard.js'
 import meRoutes from '../routes/me.js'
 import meStepsRoutes from '../routes/meSteps.js'
+import { registerRateLimit } from '../rateLimit.js'
 
 /**
  * Fake verifier: "valid:<sub>" is a valid token for subject <sub>,
@@ -32,6 +33,8 @@ export async function fakeVerifyGoogleIdToken(idToken: string) {
 export async function buildTestApp(db: Pool) {
   const app = Fastify()
   const requireAuth = createRequireAuth(db)
+
+  await registerRateLimit(app)
 
   await app.register(authRoutes, {
     prefix: '/api',

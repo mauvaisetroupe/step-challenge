@@ -16,6 +16,7 @@ import {
   hashInvitationCode,
   normalizeInvitationCode,
 } from '../friends/invitationCode.js'
+import { RATE_LIMITS } from '../rateLimit.js'
 
 export type InvitationRoutesOptions = {
   db: Pool
@@ -57,54 +58,58 @@ const invitationRoutes: FastifyPluginAsync<InvitationRoutesOptions> = async (
    * Creates an invitation link. The code is returned once: only its hash
    * is stored.
    */
-  app.post('/invitations', async (request, reply) => {
-    const inviterId = request.auth!.userId
+  app.post(
+    '/invitations',
+    { config: { rateLimit: RATE_LIMITS.invitationCreate } },
+    async (request, reply) => {
+      const inviterId = request.auth!.userId
 
-    const active = await db.query<{ count: number }>(
-      `
-      SELECT count(*)::int AS count
-      FROM invitations
-      WHERE inviter_id = $1 AND revoked_at IS NULL AND expires_at > now()
-      `,
-      [inviterId],
-    )
+      const active = await db.query<{ count: number }>(
+        `
+        SELECT count(*)::int AS count
+        FROM invitations
+        WHERE inviter_id = $1 AND revoked_at IS NULL AND expires_at > now()
+        `,
+        [inviterId],
+      )
 
-    if (active.rows[0].count >= MAX_ACTIVE_INVITATIONS) {
-      return reply.code(409).send({ error: 'too_many_invitations' })
-    }
+      if (active.rows[0].count >= MAX_ACTIVE_INVITATIONS) {
+        return reply.code(409).send({ error: 'too_many_invitations' })
+      }
 
-    // A collision between two random 40-bit codes is very unlikely;
-    // retry a few times rather than failing.
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const code = generateInvitationCode()
+      // A collision between two random 40-bit codes is very unlikely;
+      // retry a few times rather than failing.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const code = generateInvitationCode()
 
-      try {
-        const result = await db.query<{ id: string; expires_at: string }>(
-          `
-          INSERT INTO invitations (id, inviter_id, code_hash, expires_at)
-          VALUES ($1, $2, $3, now() + make_interval(days => $4))
-          RETURNING id, expires_at
-          `,
-          [randomUUID(), inviterId, hashInvitationCode(code), INVITATION_TTL_DAYS],
-        )
+        try {
+          const result = await db.query<{ id: string; expires_at: string }>(
+            `
+            INSERT INTO invitations (id, inviter_id, code_hash, expires_at)
+            VALUES ($1, $2, $3, now() + make_interval(days => $4))
+            RETURNING id, expires_at
+            `,
+            [randomUUID(), inviterId, hashInvitationCode(code), INVITATION_TTL_DAYS],
+          )
 
-        const formatted = formatInvitationCode(code)
+          const formatted = formatInvitationCode(code)
 
-        return reply.code(201).send({
-          id: result.rows[0].id,
-          code: formatted,
-          url: `${publicBaseUrl}/i/${formatted}`,
-          expiresAt: result.rows[0].expires_at,
-        })
-      } catch (error: any) {
-        if (error.code !== UNIQUE_VIOLATION) {
-          throw error
+          return reply.code(201).send({
+            id: result.rows[0].id,
+            code: formatted,
+            url: `${publicBaseUrl}/i/${formatted}`,
+            expiresAt: result.rows[0].expires_at,
+          })
+        } catch (error: any) {
+          if (error.code !== UNIQUE_VIOLATION) {
+            throw error
+          }
         }
       }
-    }
 
-    throw new Error('Could not generate a unique invitation code')
-  })
+      throw new Error('Could not generate a unique invitation code')
+    },
+  )
 
   /** Lists my active invitations (codes are not stored, so not shown). */
   app.get('/invitations', async (request, reply) => {
@@ -183,7 +188,10 @@ const invitationRoutes: FastifyPluginAsync<InvitationRoutesOptions> = async (
   /** Preview before accepting: who invites me? */
   app.get<{ Params: { code: string } }>(
     '/invitations/:code',
-    { schema: { params: codeParamSchema } },
+    {
+      config: { rateLimit: RATE_LIMITS.invitationLookup },
+      schema: { params: codeParamSchema },
+    },
     async (request, reply) => {
       const invitation = await findValidInvitation(request.params.code)
 
@@ -205,7 +213,10 @@ const invitationRoutes: FastifyPluginAsync<InvitationRoutesOptions> = async (
   /** Accepts an invitation: the inviter and I become friends. */
   app.post<{ Params: { code: string } }>(
     '/invitations/:code/accept',
-    { schema: { params: codeParamSchema } },
+    {
+      config: { rateLimit: RATE_LIMITS.invitationLookup },
+      schema: { params: codeParamSchema },
+    },
     async (request, reply) => {
       const me = request.auth!.userId
       const client = await db.connect()

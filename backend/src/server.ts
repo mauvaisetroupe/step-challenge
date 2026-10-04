@@ -5,6 +5,7 @@ import path from 'node:path'
 import { createRequireAuth } from './auth/authenticate.js'
 import { createGoogleIdTokenVerifier } from './auth/google.js'
 import { checkDatabase, pool } from './db.js'
+import { registerRateLimit } from './rateLimit.js'
 import authRoutes from './routes/auth.js'
 import friendRoutes from './routes/friends.js'
 import healthRoutes from './routes/health.js'
@@ -31,6 +32,8 @@ await app.register(fastifyStatic, {
   root: path.join(process.cwd(), 'public'),
   prefix: '/',
 })
+
+await registerRateLimit(app)
 
 await app.register(cors, {
   origin: true,
