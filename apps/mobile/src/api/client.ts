@@ -64,7 +64,7 @@ async function readErrorCode(response: Response) {
 export async function apiFetch<T = unknown>(
   path: string,
   init: {
-    method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
     body?: unknown
     authenticated?: boolean
   } = {},
