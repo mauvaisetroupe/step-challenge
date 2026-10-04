@@ -6,6 +6,7 @@ import { createRequireAuth } from './auth/authenticate.js'
 import { createGoogleIdTokenVerifier } from './auth/google.js'
 import { checkDatabase, pool } from './db.js'
 import { registerRateLimit } from './rateLimit.js'
+import appLinkRoutes from './routes/appLinks.js'
 import authRoutes from './routes/auth.js'
 import friendRoutes from './routes/friends.js'
 import healthRoutes from './routes/health.js'
@@ -37,6 +38,10 @@ await registerRateLimit(app)
 
 await app.register(cors, {
   origin: true,
+})
+
+await app.register(appLinkRoutes, {
+  host: new URL(PUBLIC_BASE_URL).host,
 })
 
 await app.register(healthRoutes, {
