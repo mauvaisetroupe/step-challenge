@@ -2,7 +2,9 @@ import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import Fastify from 'fastify'
 import path from 'node:path'
-import { checkDatabase } from './db.js'
+import { createGoogleIdTokenVerifier } from './auth/google.js'
+import { checkDatabase, pool } from './db.js'
+import authRoutes from './routes/auth.js'
 import healthRoutes from './routes/health.js'
 import leaderboardRoutes from './routes/leaderboard.js'
 import stepsRoutes from './routes/steps.js'
@@ -16,6 +18,12 @@ const API_KEY = process.env.API_KEY
 
 if (!API_KEY) {
   throw new Error('API_KEY is not configured')
+}
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+
+if (!GOOGLE_CLIENT_ID) {
+  throw new Error('GOOGLE_CLIENT_ID is not configured')
 }
 
 app.addHook('onRequest', async (request, reply) => {
@@ -46,6 +54,14 @@ await app.register(healthRoutes, {
   prefix: '/api',
 })
 
+await app.register(authRoutes, {
+  prefix: '/api',
+  db: pool,
+  verifyGoogleIdToken: createGoogleIdTokenVerifier({
+    clientId: GOOGLE_CLIENT_ID,
+  }),
+})
+
 await app.register(stepsRoutes, {
   prefix: '/api',
 })
@@ -65,7 +81,7 @@ try {
 
   await app.listen({
     host: '0.0.0.0',
-    port: 3000,
+    port: Number(process.env.PORT ?? 3000),
   })
 } catch (error) {
   app.log.error(error)

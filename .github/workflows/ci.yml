@@ -26,6 +26,21 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: step_challenge_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:test@localhost:5432/step_challenge_test
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -35,6 +50,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci --no-audit
       - run: npx tsc --noEmit
+      - run: psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -q -f schema.sql
       - run: npm test
 
   mobile:

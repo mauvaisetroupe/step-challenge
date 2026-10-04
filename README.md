@@ -34,18 +34,43 @@ DATABASE_NAME=
 DATABASE_USER=
 DATABASE_PASSWORD=
 API_KEY=
+GOOGLE_CLIENT_ID=
+# PORT=3000
 ```
 
-Créer les tables avec `psql -d <base> -f backend/schema.sql`.
+| Variable | Rôle |
+|---|---|
+| `DATABASE_*` | Connexion PostgreSQL |
+| `API_KEY` | Doit correspondre à `EXPO_PUBLIC_API_KEY` côté mobile : toutes les routes `/api/*` exigent le header `X-API-Key` (transitoire, voir ADR 0001) |
+| `GOOGLE_CLIENT_ID` | Client ID OAuth **Web** du projet Google Cloud `step-challenge` ; vérifié dans le champ `aud` des ID tokens Google. Pas un secret |
+| `PORT` | Port d'écoute, 3000 par défaut |
 
-`API_KEY` doit correspondre à `EXPO_PUBLIC_API_KEY` côté mobile : toutes les routes `/api/*` exigent le header `X-API-Key`.
+Créer les tables avec `psql -d <base> -f backend/schema.sql` (base neuve) ; faire évoluer une base existante avec [`backend/migrations/`](backend/migrations/README.md).
 
 ### Lancer en local
 
 ```bash
 cd backend
 npm install
-npm run dev      # tsx watch, port 3000
+npm run dev      # tsx watch, port 3000 (ou $PORT)
+```
+
+### Tests
+
+```bash
+cd backend
+npm test
+```
+
+Les tests d'intégration (routes + PostgreSQL) ne tournent que si `TEST_DATABASE_URL` est défini ; ils **vident les tables** et n'utilisent jamais les variables `DATABASE_*` du `.env`. Avec Docker :
+
+```bash
+docker run -d --name step-challenge-test-db -e POSTGRES_PASSWORD=test \
+  -e POSTGRES_DB=step_challenge_test -p 55432:5432 postgres:18
+docker exec -i step-challenge-test-db psql -U postgres -d step_challenge_test < backend/schema.sql
+
+cd backend
+TEST_DATABASE_URL=postgres://postgres:test@localhost:55432/step_challenge_test npm test
 ```
 
 ### Déploiement
