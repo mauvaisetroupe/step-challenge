@@ -17,7 +17,7 @@ git pull
 echo
 echo "▶ Backend : installation des dépendances"
 cd "$APP_DIR/backend"
-npm install --no-audit
+npm ci --no-audit
 
 echo
 echo "▶ Backend : build"
