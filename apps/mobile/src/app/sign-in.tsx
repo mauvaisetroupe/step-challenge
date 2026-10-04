@@ -1,4 +1,4 @@
-import { router } from 'expo-router'
+import { router, useLocalSearchParams, type Href } from 'expo-router'
 import { useState } from 'react'
 import {
   KeyboardAvoidingView,
@@ -41,7 +41,20 @@ function describeError(error: unknown) {
  * 2. For a new account only, the user chooses a display name (prefilled
  *    with the Google given name) and the same ID token is sent again.
  */
+/**
+ * Where to go after signing in. `next` lets an invitation link opened
+ * before signing in resume afterwards; only invitation paths are
+ * accepted, so that a crafted link cannot redirect anywhere else.
+ */
+function destinationAfterSignIn(next: string | undefined): Href {
+  return next && /^\/i\/[0-9A-Za-z -]{1,32}$/.test(next)
+    ? (next as Href)
+    : '/home'
+}
+
 export default function SignInScreen() {
+  const { next } = useLocalSearchParams<{ next?: string }>()
+
   const [step, setStep] = useState<Step>({ name: 'google' })
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -61,7 +74,7 @@ export default function SignInScreen() {
       const result = await signInWithGoogleIdToken(credential.idToken)
 
       if (result.status === 'signed-in') {
-        router.replace('/home')
+        router.replace(destinationAfterSignIn(next))
         return
       }
 
@@ -93,7 +106,7 @@ export default function SignInScreen() {
       const result = await signInWithGoogleIdToken(step.idToken, name)
 
       if (result.status === 'signed-in') {
-        router.replace('/home')
+        router.replace(destinationAfterSignIn(next))
       }
     } catch (err) {
       setError(describeError(err))
