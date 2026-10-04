@@ -48,7 +48,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "start:dev": "APP_VARIANT=development expo start",
+    "android:dev": "APP_VARIANT=development expo run:android"
   },
   "private": true,
   "license": "AGPL-3.0-or-later"
