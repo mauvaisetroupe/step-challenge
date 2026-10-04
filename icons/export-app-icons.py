@@ -18,6 +18,12 @@ Generated files (apps/mobile/assets/images):
 - splash-icon.png              splash screen image (foreground, transparent)
 - favicon.png                  web favicon
 
+And, outside the app (icons/):
+
+- playstore-icon.png           Google Play listing icon (512 x 512, opaque);
+                               upload it in the Play Console with the next
+                               release that changes the launcher icon
+
 Keep BACKGROUND in sync with app.json (android.adaptiveIcon.backgroundColor
 and the expo-splash-screen backgroundColor).
 """
@@ -38,6 +44,7 @@ ICON_ZOOM = 1.6
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / 'icons' / 'app-icon-foreground.svg'
 OUTPUT = ROOT / 'apps' / 'mobile' / 'assets' / 'images'
+STORE_OUTPUT = ROOT / 'icons'
 
 
 def find_inkscape():
@@ -54,7 +61,7 @@ def find_inkscape():
     sys.exit('Inkscape not found: install it or set $INKSCAPE.')
 
 
-def export(inkscape, svg_path, png_path, width):
+def export(inkscape, svg_path, png_path, width, opaque=False):
     command = [
         inkscape,
         str(svg_path),
@@ -62,6 +69,10 @@ def export(inkscape, svg_path, png_path, width):
         f'--export-filename={png_path}',
         f'--export-width={width}',
     ]
+
+    if opaque:
+        # No alpha channel at all (Google Play listing icon).
+        command.append('--export-png-color-mode=RGB_8')
 
     subprocess.run(command, check=True, capture_output=True)
     print(f'  {png_path.relative_to(ROOT)}')
@@ -111,6 +122,7 @@ def main():
         # overlay (components/animated-icon.tsx) rely on it.
         export(inkscape, SOURCE, OUTPUT / 'splash-icon.png', 1024)
         export(inkscape, icon_svg, OUTPUT / 'favicon.png', 48)
+        export(inkscape, icon_svg, STORE_OUTPUT / 'playstore-icon.png', 512, opaque=True)
 
 
 if __name__ == '__main__':
