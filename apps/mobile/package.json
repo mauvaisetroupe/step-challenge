@@ -49,7 +49,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "start:dev": "APP_VARIANT=development expo start",
+    "start:dev": "APP_VARIANT=development expo start --dev-client",
     "android:dev": "APP_VARIANT=development expo run:android"
   },
   "private": true,
