@@ -170,30 +170,38 @@ ALTER TABLE daily_steps
 
 | Route | Changement |
 |---|---|
-| `POST /api/auth/google` | **Nouveau** : `{ idToken }` → `{ sessionToken, user }`. Crée l'utilisateur au premier passage. |
+| `POST /api/auth/google` | **Nouveau** : `{ idToken, displayName? }` → `{ sessionToken, user, isNewUser }`. Crée l'utilisateur au premier passage ; `displayName` est alors obligatoire (`422` sinon), puis ignoré aux connexions suivantes. |
 | `POST /api/auth/logout` | **Nouveau** : révoque la session courante. |
 | `GET /api/me` | **Nouveau** : profil de l'utilisateur connecté. |
 | `PATCH /api/me` | **Nouveau** : modification du nom affiché. |
 | `DELETE /api/me` | **Nouveau** : suppression du compte, de ses sessions et de ses pas. |
-| `POST /api/steps` | Le `userId` disparaît du corps : l'utilisateur est celui de la session. |
-| `GET /api/me/steps` | Remplace `GET /api/steps/:userId`. |
+| `POST /api/me/steps` | **Remplace `POST /api/steps`** : plus de `userId`, l'utilisateur est celui de la session. Envoi groupé (jusqu'à 31 jours) ; le serveur conserve le maximum par jour. |
+| `GET /api/me/steps` | **Remplace `GET /api/steps/:userId`** : historique limité par défaut (environ 13 mois). |
 | `GET /api/leaderboard` | Requiert une session ; ajoute un indicateur `isMe`. Les `id` restent renvoyés : une fois les sessions en place, ils ne permettent plus d'écrire au nom d'autrui. Leur visibilité sera restreinte aux amis par l'ADR 0002. |
-| `POST /api/users`, `GET /api/users/by-name/:name`, `GET /api/users/:id` | **Supprimées.** |
+| `POST /api/users`, `GET /api/users/by-name/:name`, `GET /api/users/:id`, `POST /api/steps`, `GET /api/steps/:userId` | **Supprimées.** |
 
 Les routes `/api/auth/*` sont soumises à une limite de débit (`@fastify/rate-limit`).
 
-La clé API (`X-API-Key`) n'apporte plus rien une fois les sessions en place ; elle est retirée à la fin de la migration.
+La clé API (`X-API-Key`) n'apporte plus rien une fois les sessions en place ; elle est supprimée lors de la bascule.
 
-### Migration des testeurs existants
+### Migration des testeurs existants : bascule franche
 
-Le nombre de testeurs (test fermé) est faible ; la migration est donc manuelle et sûre :
+*Révisé le 2026-10-04 pendant l'implémentation.* La version initiale prévoyait une période de cohabitation entre anciennes et nouvelles routes. Elle est abandonnée :
 
-1. Déployer le backend avec les nouvelles routes, en conservant temporairement les anciennes.
-2. Publier la nouvelle version de l'application : au démarrage, elle exige la connexion Google et ignore l'ancien UUID stocké.
-3. À la première connexion d'un testeur, un nouvel utilisateur est créé. L'administrateur rattache son identifiant Google à l'ancien compte en SQL (déplacement de la ligne `user_credentials`, suppression du doublon).
-4. Une fois tous les testeurs migrés, supprimer les anciennes routes et la clé API.
+- les anciennes routes **sont** les failles que cet ADR corrige : tant qu'elles existent, la nouvelle authentification se contourne simplement en passant par elles ;
+- la cohabitation exige du code jetable (authentification facultative, unicité du prénom conservée, migration de nettoyage) ;
+- l'application est en test fermé avec **4 testeurs**, joignables directement : une courte interruption de service est acceptable.
+
+Déroulement :
+
+1. Préparer la nouvelle version de l'application (connexion Google, nouvelles routes) et la publier en test fermé.
+2. Le même jour, déployer le backend : migrations, suppression des anciennes routes et de la clé API.
+3. Prévenir les testeurs : mettre à jour l'application, puis se connecter avec Google. Entre le déploiement et leur mise à jour, l'ancienne version affiche des erreurs.
+4. À la première connexion d'un testeur, un nouvel utilisateur est créé. L'administrateur rattache ensuite en SQL l'historique de l'ancien compte au nouveau (déplacement des lignes `daily_steps`, suppression de l'ancien compte).
 
 **Pas de rattachement automatique par UUID** : les UUID sont exposés par le classement actuel, ce serait réintroduire la faille.
+
+Cette approche n'est valable que tant que les utilisateurs sont peu nombreux et joignables. Une évolution cassante future de l'API, avec des utilisateurs en production, nécessitera une période de compatibilité.
 
 ## Conséquences
 
@@ -218,9 +226,8 @@ Le nombre de testeurs (test fermé) est faible ; la migration est donc manuelle 
 
 À traiter dans des décisions ou travaux séparés :
 
-- Borne de plausibilité sur les pas et limite de débit sur les écritures (anti-triche).
+- Anti-triche au-delà de la borne simple de `POST /api/me/steps` (100 000 pas par jour, pas de date future) : limite de débit sur les écritures, détection d'anomalies.
 - **Système d'amis (ADR 0002)** : invitations, visibilité des pas limitée à soi et à ses amis, classement entre amis. Il repose sur l'identité établie par cet ADR. Les groupes de défi pourront venir ensuite, au-dessus du graphe d'amis.
-- Envoi groupé des pas (`POST /api/steps` avec un tableau) et limitation de l'historique renvoyé à 30 jours.
 - Hébergement hors du home lab.
 
 ## Points ouverts
