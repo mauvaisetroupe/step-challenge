@@ -83,7 +83,7 @@ Sur le serveur (`/opt/step-challenge`, service systemd `step-challenge-api`) :
 
 ## Application mobile
 
-L'application utilise des modules natifs (Health Connect, Huawei Health) : elle ne fonctionne **pas dans Expo Go**, il faut un development build.
+L'application utilise des modules natifs (Health Connect, Huawei Health, connexion Google) : elle ne fonctionne **pas dans Expo Go**, il faut un development build.
 
 ### Configuration
 
@@ -91,8 +91,11 @@ Les variables d'environnement sont stockées sur EAS, par environnement :
 
 | Variable | `development` | `production` | Visibilité |
 |---|---|---|---|
-| `EXPO_PUBLIC_API_URL` | `http://<IP locale>:3000` | `https://step.architech.lu` | Plain text |
+| `EXPO_PUBLIC_API_URL` | `http://<IP du Mac>:3001` | `https://step.architech.lu` | Plain text |
 | `EXPO_PUBLIC_API_KEY` | clé de dev | clé de prod | Sensitive |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | client ID OAuth Web | client ID OAuth Web | Plain text |
+
+`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` est le client ID **Web** du projet Google Cloud `step-challenge`, le même que `GOOGLE_CLIENT_ID` côté backend : l'application le transmet à Google, qui l'inscrit dans le champ `aud` de l'ID token. Ce n'est pas un secret.
 
 Chaque profil de `eas.json` déclare son `environment` : lors d'un build, EAS CLI récupère les variables correspondantes et les injecte dans le bundle.
 
@@ -119,6 +122,8 @@ npx expo run:android
 ```
 
 Le dossier `android/` est généré par `expo prebuild` et n'est pas versionné : toute configuration native passe par `app.json` et les config plugins de `apps/mobile/plugins/`.
+
+La connexion Google (`react-native-nitro-google-signin`, Android Credential Manager) n'a **pas** son config plugin dans `app.json` : sans Firebase, ce plugin ne configure que iOS et échoue s'il ne reçoit pas `iosUrlScheme`. Sur Android, l'autolinking suffit et le client ID Web est passé dans le code. Une future version iOS devra l'ajouter avec l'option `iosUrlScheme`.
 
 ### Build et publication
 
