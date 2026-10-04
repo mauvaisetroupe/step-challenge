@@ -1,7 +1,23 @@
 import type { FastifyPluginAsync } from 'fastify'
-import { pool } from '../db.js'
+import type { Pool } from 'pg'
 
-const leaderboardRoutes: FastifyPluginAsync = async (app) => {
+import type { RequireAuth } from '../auth/authenticate.js'
+
+export type LeaderboardRoutesOptions = {
+  db: Pool
+  requireAuth: RequireAuth
+}
+
+const leaderboardRoutes: FastifyPluginAsync<
+  LeaderboardRoutesOptions
+> = async (app, { db, requireAuth }) => {
+  app.addHook('onRequest', requireAuth)
+
+  /**
+   * Leaderboard for the current week or month; isMe flags the signed-in
+   * user. Global for now: ADR 0002 will restrict it to the user and
+   * their friends.
+   */
   app.get('/leaderboard', async (request, reply) => {
     const { period = 'week' } = request.query as {
       period?: 'week' | 'month'
@@ -13,12 +29,13 @@ const leaderboardRoutes: FastifyPluginAsync = async (app) => {
       })
     }
 
-    const result = await pool.query(
+    const result = await db.query(
       `
       SELECT
         u.id,
         u.name,
-        COALESCE(SUM(ds.steps), 0)::integer AS steps
+        COALESCE(SUM(ds.steps), 0)::integer AS steps,
+        u.id = $2 AS "isMe"
       FROM users u
       LEFT JOIN daily_steps ds
         ON ds.user_id = u.id
@@ -32,7 +49,7 @@ const leaderboardRoutes: FastifyPluginAsync = async (app) => {
       GROUP BY u.id, u.name
       ORDER BY steps DESC, u.name ASC
       `,
-      [period]
+      [period, request.auth!.userId],
     )
 
     return reply.send({

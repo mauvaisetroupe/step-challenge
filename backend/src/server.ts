@@ -90,6 +90,8 @@ await app.register(usersRoutes, {
 
 await app.register(leaderboardRoutes, {
   prefix: '/api',
+  db: pool,
+  requireAuth,
 })
 
 try {

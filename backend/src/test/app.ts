@@ -4,6 +4,7 @@ import type { Pool } from 'pg'
 import { createRequireAuth } from '../auth/authenticate.js'
 import { GOOGLE_ISSUER, InvalidIdTokenError } from '../auth/google.js'
 import authRoutes from '../routes/auth.js'
+import leaderboardRoutes from '../routes/leaderboard.js'
 import meRoutes from '../routes/me.js'
 import meStepsRoutes from '../routes/meSteps.js'
 
@@ -44,6 +45,12 @@ export async function buildTestApp(db: Pool) {
   })
 
   await app.register(meStepsRoutes, {
+    prefix: '/api',
+    db,
+    requireAuth,
+  })
+
+  await app.register(leaderboardRoutes, {
     prefix: '/api',
     db,
     requireAuth,
