@@ -122,7 +122,7 @@ Invitant                         Backend                          Invité
 
 ### Limites
 
-- Limite de débit sur la création et sur l'acceptation d'invitations (protection contre l'énumération des codes).
+- Limite de débit sur la création, l'aperçu et l'acceptation d'invitations (protection contre l'énumération des codes), par adresse IP du client, selon le même mécanisme que l'ADR 0001 (clé `CF-Connecting-IP`, stockage en mémoire, valeurs dans `backend/src/rateLimit.ts`). L'aperçu et l'acceptation ont chacun leur compteur : le nombre d'essais possibles reste très loin de ce que demanderait la découverte d'un code parmi ~10¹² en 7 jours.
 - Au plus **10 invitations actives** par utilisateur.
 - Au plus **200 amis** par utilisateur (garde-fou, ajustable).
 

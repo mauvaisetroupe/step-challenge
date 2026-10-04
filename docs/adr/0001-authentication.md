@@ -182,7 +182,13 @@ ALTER TABLE daily_steps
 | `GET /api/leaderboard` | Requiert une session ; ajoute un indicateur `isMe`. Les `id` restent renvoyés : une fois les sessions en place, ils ne permettent plus d'écrire au nom d'autrui. Leur visibilité sera restreinte aux amis par l'ADR 0002. |
 | `POST /api/users`, `GET /api/users/by-name/:name`, `GET /api/users/:id`, `POST /api/steps`, `GET /api/steps/:userId` | **Supprimées.** |
 
-Les routes `/api/auth/*` sont soumises à une limite de débit (`@fastify/rate-limit`).
+Les routes `/api/auth/*` sont soumises à une limite de débit (`@fastify/rate-limit`), par adresse IP du client.
+
+*Précisé le 2026-10-04 à l'implémentation :*
+
+- **Clé** : l'API est atteinte à travers Cloudflare ; l'adresse vue par le serveur est celle de Cloudflare, commune à tous les clients. La clé est donc l'en-tête `CF-Connecting-IP`, posé par Cloudflare avec l'adresse réelle du client. Cet en-tête peut être forgé par un client qui atteint le serveur directement : **le serveur ne doit être joignable qu'à travers Cloudflare**.
+- **Stockage en mémoire** : une seule instance du backend, pas de Redis. Les compteurs sont remis à zéro à chaque redémarrage, et chaque route a son propre compteur (pas de budget partagé entre routes). Une architecture à plusieurs instances imposerait un stockage partagé.
+- **Valeurs** : définies dans `backend/src/rateLimit.ts`, seule source de référence ; elles ne sont pas recopiées ici pour éviter qu'elles divergent.
 
 La clé API (`X-API-Key`) n'apporte plus rien une fois les sessions en place ; elle est supprimée lors de la bascule.
 
