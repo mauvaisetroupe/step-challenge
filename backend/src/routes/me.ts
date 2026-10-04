@@ -13,7 +13,7 @@ const meRoutes: FastifyPluginAsync<MeRoutesOptions> = async (
   app,
   { db, requireAuth },
 ) => {
-  app.addHook('preHandler', requireAuth)
+  app.addHook('onRequest', requireAuth)
 
   app.get('/me', async (request, reply) => {
     const result = await db.query<User>(

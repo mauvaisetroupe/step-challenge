@@ -53,8 +53,12 @@ export async function resolveSession(
 }
 
 /**
- * Creates a preHandler that rejects unauthenticated requests and sets
+ * Creates a hook that rejects unauthenticated requests and sets
  * request.auth from the session token.
+ *
+ * Register it as an `onRequest` hook: it only needs the headers, so
+ * unauthenticated requests are rejected before their body is parsed
+ * and validated, without revealing validation details.
  *
  * The user identity always comes from the session, never from the
  * request body or parameters (ADR 0001).

@@ -65,6 +65,31 @@ describe('requireAuth', { skip: skipWithoutDatabase }, () => {
     assert.deepEqual(response.json(), { error: 'unauthenticated' })
   })
 
+  it('authenticates before validating the body', async () => {
+    const app = await buildApp()
+
+    // Invalid bodies: without a session, the answer must be 401, not a
+    // validation error describing the expected payload.
+    const requests = [
+      { method: 'PATCH', url: '/api/me', payload: { displayName: 42 } },
+      { method: 'POST', url: '/api/me/steps', payload: { days: [] } },
+      { method: 'POST', url: '/api/auth/logout', payload: 'not json' },
+    ] as const
+
+    for (const request of requests) {
+      const response = await app.inject({
+        ...request,
+        headers: { 'content-type': 'application/json' },
+      })
+
+      assert.equal(
+        response.statusCode,
+        401,
+        `${request.method} ${request.url}: ${response.body}`,
+      )
+    }
+  })
+
   it('rejects an unknown token', async () => {
     const app = await buildApp()
 

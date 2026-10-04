@@ -40,7 +40,7 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
   app,
   { db, requireAuth },
 ) => {
-  app.addHook('preHandler', requireAuth)
+  app.addHook('onRequest', requireAuth)
 
   /**
    * Records daily step totals for the signed-in user.

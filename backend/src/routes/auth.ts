@@ -26,7 +26,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
    */
   app.post(
     '/auth/logout',
-    { preHandler: requireAuth },
+    { onRequest: requireAuth },
     async (request, reply) => {
       await db.query('DELETE FROM sessions WHERE id = $1', [
         request.auth!.sessionId,
