@@ -1,0 +1,18 @@
+{{- /*
+  Link to the same page in the other language. Every page exists in both
+  languages; if a translation is missing, link to the other home page.
+*/ -}}
+{{- $current := site.Language.Lang -}}
+{{- range site.Home.AllTranslations -}}
+  {{- $lang := .Language.Lang -}}
+  {{- if ne $lang $current -}}
+    {{- $target := . -}}
+    {{- range $.Translations -}}
+      {{- if eq .Language.Lang $lang }}{{ $target = . }}{{ end -}}
+    {{- end -}}
+    <a class="lang" href="{{ $target.RelPermalink }}" hreflang="{{ $lang }}" lang="{{ $lang }}" title="{{ .Language.Label }}">
+      {{- partial "flag.html" $lang -}}
+      <span>{{ .Language.Label }}</span>
+    </a>
+  {{- end -}}
+{{- end -}}

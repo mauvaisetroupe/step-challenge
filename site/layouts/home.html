@@ -1,0 +1,12 @@
+{{ define "main" }}
+<section class="hero">
+  <img src="{{ "images/logo.svg" | relURL }}" alt="" width="96" height="96">
+  <h1>{{ site.Title }}</h1>
+  <p class="tagline">{{ T "tagline" }}</p>
+  {{ partial "play-store-button.html" . }}
+  <p class="hint">{{ T "closedTesting" }}</p>
+</section>
+<article class="content">
+  {{ .Content }}
+</article>
+{{ end }}

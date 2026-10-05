@@ -1,0 +1,12 @@
+<footer class="site-footer">
+  <nav aria-label="{{ T "legalLabel" }}">
+    {{- range slice "/privacy" "/agreement" "/delete-account" }}
+      {{- with site.GetPage . }}
+      <a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>
+      {{- end }}
+    {{- end }}
+    <a href="{{ site.Params.sourceUrl }}">{{ T "sourceCode" }}</a>
+    <a href="mailto:{{ site.Params.email }}">{{ site.Params.email }}</a>
+  </nav>
+  <p>{{ T "footerNote" }}</p>
+</footer>
