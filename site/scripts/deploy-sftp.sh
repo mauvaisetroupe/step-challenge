@@ -59,8 +59,14 @@ run_lftp() {
   "
 }
 
-# Safety check on the remote folder.
-listing=$(run_lftp "mkdir -p -f '$REMOTE_DIR'; cls -1a '$REMOTE_DIR/'" | xargs -r -n1 basename | grep -v -x -e '\.' -e '\.\.' || true)
+# Safety check on the remote folder. A failed listing stops the upload:
+# it must not be mistaken for an empty folder.
+if ! raw_listing=$(run_lftp "mkdir -p -f '$REMOTE_DIR'; cls -1a '$REMOTE_DIR/'"); then
+  echo "error: cannot list remote folder '$REMOTE_DIR'; nothing uploaded." >&2
+  exit 1
+fi
+
+listing=$(printf '%s\n' "$raw_listing" | xargs -r -n1 basename | grep -v -x -e '\.' -e '\.\.' || true)
 
 if [ -n "$listing" ] && ! printf '%s\n' "$listing" | grep -q -x -F "$MARKER"; then
   echo "error: remote folder '$REMOTE_DIR' is not empty and has no $MARKER file." >&2
