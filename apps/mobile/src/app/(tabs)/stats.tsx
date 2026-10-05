@@ -10,9 +10,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, {
-  Circle,
   Line,
-  Polyline,
   Rect,
   Text as SvgText,
 } from 'react-native-svg'
@@ -27,6 +25,8 @@ import {
 import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import DayProgressRing from '@/components/stats/DayProgressRing'
+import DayTimeline from '@/components/stats/DayTimeline'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const DAILY_GOAL = 10_000
@@ -175,10 +175,14 @@ async function getHealthConnectDailyStats(
   return days
 }
 
-async function getHealthConnectIntradayStats(
+/**
+ * Steps per hour since midnight, from Health Connect: one entry per hour
+ * up to the current one, 0 when nothing was recorded.
+ */
+async function getHealthConnectHourlySteps(
   startDate: Date,
   endDate: Date,
-): Promise<ChartPoint[]> {
+): Promise<number[]> {
   const result = await aggregateGroupByDuration({
     recordType: 'Steps',
     timeRangeFilter: {
@@ -192,16 +196,17 @@ async function getHealthConnectIntradayStats(
     },
   })
 
-  return result.map((bucket) => {
-    const date = new Date(bucket.startTime)
+  const hours = Array.from({ length: endDate.getHours() + 1 }, () => 0)
 
-    return {
-      label: date.toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-      }),
-      value: Number(bucket.result?.COUNT_TOTAL ?? 0),
+  for (const bucket of result) {
+    const hour = new Date(bucket.startTime).getHours()
+
+    if (hour < hours.length) {
+      hours[hour] += Number(bucket.result?.COUNT_TOTAL ?? 0)
     }
-  })
+  }
+
+  return hours
 }
 
 async function getDatabaseDailyStats(
@@ -287,7 +292,9 @@ export default function StatsScreen() {
   const [period, setPeriod] = useState<Period>('7d')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
-  const [intradayStats, setIntradayStats] = useState<ChartPoint[]>([])
+  // 1-day view: steps per hour (Android) and the day's total.
+  const [hourlySteps, setHourlySteps] = useState<number[]>([])
+  const [dayTotal, setDayTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -310,7 +317,7 @@ export default function StatsScreen() {
       //   the watch's own history: this is the only view that reads the
       //   database.
       // - On the web (no Health Connect), the views read the database;
-      //   the 1-day view stays empty.
+      //   the 1-day view shows the day's total, without hourly detail.
 
       if (Platform.OS !== 'web') {
         try {
@@ -357,7 +364,7 @@ export default function StatsScreen() {
 
         setMonthlyStats(stats)
         setDailyStats([])
-        setIntradayStats([])
+        setHourlySteps([])
 
         return
       }
@@ -377,27 +384,32 @@ export default function StatsScreen() {
 
           setDailyStats(stats)
           setMonthlyStats([])
-          setIntradayStats([])
+          setHourlySteps([])
 
           return
         }
 
+        // 1 day: today's total only.
+        const startDate = getStartOfDay(now)
+        const endDate = getStartOfDay(getDaysAgo(now, -1))
+        const [today] = await getDatabaseDailyStats(startDate, endDate)
+
+        setDayTotal(today?.steps ?? 0)
+        setHourlySteps([])
         setDailyStats([])
         setMonthlyStats([])
-        setIntradayStats([])
 
         return
       }
 
       if (period === '1d') {
-        const startDate = getStartOfDay(now)
-
-        const stats = await getHealthConnectIntradayStats(
-          startDate,
+        const hours = await getHealthConnectHourlySteps(
+          getStartOfDay(now),
           now,
         )
 
-        setIntradayStats(stats)
+        setHourlySteps(hours)
+        setDayTotal(hours.reduce((total, steps) => total + steps, 0))
         setDailyStats([])
         setMonthlyStats([])
 
@@ -417,7 +429,7 @@ export default function StatsScreen() {
 
       setDailyStats(stats)
       setMonthlyStats([])
-      setIntradayStats([])
+      setHourlySteps([])
     } catch (err) {
       console.error(err)
 
@@ -437,10 +449,7 @@ export default function StatsScreen() {
 
   const totalSteps = useMemo(() => {
     if (period === '1d') {
-      return intradayStats.reduce(
-        (total, item) => total + item.value,
-        0,
-      )
+      return dayTotal
     }
 
     if (period === '1y') {
@@ -458,7 +467,7 @@ export default function StatsScreen() {
     period,
     dailyStats,
     monthlyStats,
-    intradayStats,
+    dayTotal,
   ])
 
   return (
@@ -512,6 +521,23 @@ export default function StatsScreen() {
               </Text>
             </Pressable>
           </View>
+        ) : period === '1d' ? (
+          <>
+            <DayProgressRing steps={dayTotal} goal={DAILY_GOAL} />
+
+            <Text style={styles.sectionTitle}>Au fil de la journée</Text>
+
+            <DayTimeline
+              hourlySteps={hourlySteps}
+              goal={DAILY_GOAL}
+              now={new Date()}
+              emptyMessage={
+                Platform.OS === 'web'
+                  ? "Le détail heure par heure n'est disponible que sur Android."
+                  : "Aucun pas enregistré aujourd'hui."
+              }
+            />
+          </>
         ) : (
           <>
             <View style={styles.totalContainer}>
@@ -525,9 +551,7 @@ export default function StatsScreen() {
             </View>
 
             <View style={styles.chartContainer}>
-              {period === '1d' ? (
-                <IntradayChart data={intradayStats} />
-              ) : period === '1y' ? (
+              {period === '1y' ? (
                 <BarChart
                   data={monthlyStats.map((item) => ({
                     label: formatMonth(
@@ -789,7 +813,7 @@ function BarChart({
               width={barWidth}
               height={barHeight}
               rx={3}
-              fill={colors.text}
+              fill={colors.primary}
             />
 
             {(data.length <= 7 ||
@@ -811,172 +835,6 @@ function BarChart({
     </Svg>
   )
 }
-
-function IntradayChart({
-  data,
-}: {
-  data: ChartPoint[]
-}) {
-  const styles = useThemedStyles(createStyles)
-  const { colors } = useTheme()
-
-  if (data.length === 0) {
-    return (
-      <View style={styles.emptyChart}>
-        <Text style={styles.emptyText}>
-          Aucune donnée aujourd'hui
-        </Text>
-      </View>
-    )
-  }
-
-  // Transforme les pas horaires en cumul sur la journée
-  let cumulative = 0
-
-  const cumulativeData = data.map((item) => {
-    cumulative += item.value
-
-    return {
-      label: item.label,
-      value: cumulative,
-    }
-  })
-
-  const width = 340
-  const height = 220
-  const paddingLeft = 40
-  const paddingRight = 10
-  const paddingTop = 20
-  const paddingBottom = 35
-
-  const chartWidth =
-    width - paddingLeft - paddingRight
-
-  const chartHeight =
-    height - paddingTop - paddingBottom
-
-  const maxValue = Math.max(
-    DAILY_GOAL,
-    ...cumulativeData.map((item) => item.value),
-  )
-
-  const points = cumulativeData
-    .map((item, index) => {
-      const x =
-        paddingLeft +
-        (index / Math.max(cumulativeData.length - 1, 1)) *
-          chartWidth
-
-      const y =
-        paddingTop +
-        chartHeight -
-        (item.value / maxValue) * chartHeight
-
-      return `${x},${y}`
-    })
-    .join(' ')
-
-  return (
-    <Svg
-      width="100%"
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-    >
-      {/* Ligne objectif 10 000 */}
-      <Line
-        x1={paddingLeft}
-        y1={
-          paddingTop +
-          chartHeight -
-          (DAILY_GOAL / maxValue) * chartHeight
-        }
-        x2={width - paddingRight}
-        y2={
-          paddingTop +
-          chartHeight -
-          (DAILY_GOAL / maxValue) * chartHeight
-        }
-        stroke={colors.borderStrong}
-        strokeWidth={1}
-        strokeDasharray="4 4"
-      />
-
-      {/* Axe horizontal */}
-      <Line
-        x1={paddingLeft}
-        y1={paddingTop + chartHeight}
-        x2={width - paddingRight}
-        y2={paddingTop + chartHeight}
-        stroke={colors.borderStrong}
-        strokeWidth={1}
-      />
-
-      {/* Courbe cumulative */}
-      <Polyline
-        points={points}
-        fill="none"
-        stroke={colors.text}
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Points */}
-      {cumulativeData.map((item, index) => {
-        const x =
-          paddingLeft +
-          (index / Math.max(cumulativeData.length - 1, 1)) *
-            chartWidth
-
-        const y =
-          paddingTop +
-          chartHeight -
-          (item.value / maxValue) * chartHeight
-
-        return (
-          <Circle
-            key={`${item.label}-${index}`}
-            cx={x}
-            cy={y}
-            r={2.5}
-            fill={colors.text}
-          />
-        )
-      })}
-
-      {/* Heures */}
-      {cumulativeData.map((item, index) => {
-        if (
-          index !== 0 &&
-          index !== cumulativeData.length - 1 &&
-          index % 4 !== 0
-        ) {
-          return null
-        }
-
-        const x =
-          paddingLeft +
-          (index / Math.max(cumulativeData.length - 1, 1)) *
-            chartWidth
-
-        return (
-          <SvgText
-            key={`label-${item.label}-${index}`}
-            x={x}
-            y={height - 10}
-            fontSize={9}
-            fill={colors.textSecondary}
-            textAnchor="middle"
-          >
-            {item.label}
-          </SvgText>
-        )
-      })}
-    </Svg>
-  )
-}
-
-
 
 const createStyles = (c: Colors) =>
   StyleSheet.create({
@@ -1027,6 +885,13 @@ const createStyles = (c: Colors) =>
     periodButtonTextActive: {
       color: c.text,
       fontWeight: '700',
+    },
+
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: c.text,
+      marginBottom: 8,
     },
 
     totalContainer: {
