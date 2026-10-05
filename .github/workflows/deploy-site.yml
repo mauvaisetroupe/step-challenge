@@ -1,5 +1,5 @@
 # Public site (ADR 0005): builds site/ with Hugo and uploads it to the OVH
-# web hosting. See site/README.md for the secrets and variables to set.
+# web hosting over SFTP. See site/README.md for the secrets and variables to set.
 #
 # - Pull request touching site/: build only, as a check.
 # - Push to main touching site/: build, then upload. The upload is skipped
@@ -52,6 +52,7 @@ jobs:
           test -f public/.htaccess
           test -f public/.well-known/assetlinks.json
           test -f public/i/index.html
+          test -f public/.step-challenge-site
           python3 -m json.tool public/.well-known/assetlinks.json > /dev/null
 
       - name: Check deployment configuration
@@ -62,29 +63,27 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           SITE_REMOTE_DIR: ${{ vars.SITE_REMOTE_DIR }}
+          SFTP_KNOWN_HOSTS: ${{ vars.SFTP_KNOWN_HOSTS }}
         run: |
-          if [ -n "$FTP_SERVER" ] && [ -n "$FTP_USERNAME" ] && [ -n "$FTP_PASSWORD" ] && [ -n "$SITE_REMOTE_DIR" ]; then
+          if [ -n "$FTP_SERVER" ] && [ -n "$FTP_USERNAME" ] && [ -n "$FTP_PASSWORD" ] && [ -n "$SITE_REMOTE_DIR" ] && [ -n "$SFTP_KNOWN_HOSTS" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::Upload skipped: set the FTP_SERVER, FTP_USERNAME and FTP_PASSWORD secrets and the SITE_REMOTE_DIR variable (see site/README.md)."
+            echo "::notice::Upload skipped: set the FTP_SERVER, FTP_USERNAME and FTP_PASSWORD secrets and the SITE_REMOTE_DIR and SFTP_KNOWN_HOSTS variables (see site/README.md)."
           fi
 
-      - name: Upload to OVH
+      - name: Install lftp
         if: steps.config.outputs.ready == 'true'
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          # FTP over TLS: the password never travels in clear text.
-          protocol: ftps
-          local-dir: site/public/
-          server-dir: ${{ vars.SITE_REMOTE_DIR }}
-          # Only uploads what changed. The sync state is kept on the server
-          # (.ftp-deploy-sync-state.json), never committed to the repository.
-          # Explicit list, same as the action's defaults: hidden files such
-          # as .htaccess and .well-known/ are uploaded.
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
+        run: sudo apt-get update -q && sudo apt-get install -y -q lftp
+
+      - name: Upload to OVH (SFTP)
+        if: steps.config.outputs.ready == 'true'
+        # SFTP: encrypted, and the server is authenticated by its host key.
+        # The remote folder is mirrored (removed pages are deleted); the
+        # script refuses a folder that is not empty and not marked as ours.
+        env:
+          SFTP_HOST: ${{ secrets.FTP_SERVER }}
+          SFTP_USER: ${{ secrets.FTP_USERNAME }}
+          LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          SFTP_KNOWN_HOSTS: ${{ vars.SFTP_KNOWN_HOSTS }}
+          REMOTE_DIR: ${{ vars.SITE_REMOTE_DIR }}
+        run: scripts/deploy-sftp.sh
