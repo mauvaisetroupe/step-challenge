@@ -17,6 +17,7 @@ import {
   signInWithGoogle,
 } from '../auth/google'
 import { openPublicPage, TERMS_URL } from '../constants/links'
+import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const MAX_DISPLAY_NAME_LENGTH = 50
 
@@ -65,6 +66,9 @@ function destinationAfterSignIn(next: string | undefined): Href {
 }
 
 export default function SignInScreen() {
+  const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
+
   const { next } = useLocalSearchParams<{ next?: string }>()
 
   const [step, setStep] = useState<Step>({ name: 'google' })
@@ -210,7 +214,7 @@ export default function SignInScreen() {
                 setError(null)
               }}
               placeholder="Code d'accès"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus
@@ -259,7 +263,7 @@ export default function SignInScreen() {
                 setError(null)
               }}
               placeholder="Ton prénom"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="words"
               autoCorrect={false}
               autoFocus
@@ -314,127 +318,128 @@ export default function SignInScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
 
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
+    content: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingHorizontal: 24,
+    },
 
-  eyebrow: {
-    color: '#6B7280',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
+    eyebrow: {
+      color: c.textSecondary,
+      fontSize: 13,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textAlign: 'center',
+      marginBottom: 12,
+    },
 
-  title: {
-    color: '#111827',
-    fontSize: 32,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 56,
-  },
+    title: {
+      color: c.text,
+      fontSize: 32,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: 56,
+    },
 
-  explanation: {
-    color: '#4B5563',
-    fontSize: 16,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
+    explanation: {
+      color: c.textSecondary,
+      fontSize: 16,
+      lineHeight: 22,
+      textAlign: 'center',
+    },
 
-  question: {
-    color: '#111827',
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
+    question: {
+      color: c.text,
+      fontSize: 20,
+      fontWeight: '600',
+      marginBottom: 8,
+    },
 
-  hint: {
-    color: '#6B7280',
-    fontSize: 14,
-    marginBottom: 12,
-  },
+    hint: {
+      color: c.textSecondary,
+      fontSize: 14,
+      marginBottom: 12,
+    },
 
-  terms: {
-    marginTop: 14,
-    color: '#6B7280',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
+    terms: {
+      marginTop: 14,
+      color: c.textSecondary,
+      fontSize: 13,
+      lineHeight: 18,
+      textAlign: 'center',
+    },
 
-  termsLink: {
-    color: '#208AEF',
-    textDecorationLine: 'underline',
-  },
+    termsLink: {
+      color: c.primary,
+      textDecorationLine: 'underline',
+    },
 
-  input: {
-    height: 52,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    color: '#111827',
-    fontSize: 18,
-  },
+    input: {
+      height: 52,
+      backgroundColor: c.background,
+      borderWidth: 1,
+      borderColor: c.borderStrong,
+      borderRadius: 10,
+      paddingHorizontal: 16,
+      color: c.text,
+      fontSize: 18,
+    },
 
-  error: {
-    color: '#DC2626',
-    fontSize: 14,
-    marginTop: 16,
-    textAlign: 'center',
-  },
+    error: {
+      color: c.danger,
+      fontSize: 14,
+      marginTop: 16,
+      textAlign: 'center',
+    },
 
-  button: {
-    marginTop: 24,
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
-    backgroundColor: '#208AEF',
-  },
+    button: {
+      marginTop: 24,
+      height: 52,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 10,
+      backgroundColor: c.primary,
+    },
 
-  buttonDisabled: {
-    opacity: 0.45,
-  },
+    buttonDisabled: {
+      opacity: 0.45,
+    },
 
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
+    buttonText: {
+      color: c.onPrimary,
+      fontSize: 18,
+      fontWeight: '600',
+    },
 
-  secondaryLink: {
-    marginTop: 16,
-    alignSelf: 'center',
-    padding: 8,
-  },
+    secondaryLink: {
+      marginTop: 16,
+      alignSelf: 'center',
+      padding: 8,
+    },
 
-  secondaryLinkText: {
-    color: '#6B7280',
-    fontSize: 15,
-  },
+    secondaryLinkText: {
+      color: c.textSecondary,
+      fontSize: 15,
+    },
 
-  // Discreet on purpose (ADR 0006): reviewers are guided to it by the
-  // review instructions, other users have no reason to notice it.
-  demoLink: {
-    alignSelf: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
+    // Discreet on purpose (ADR 0006): reviewers are guided to it by the
+    // review instructions, other users have no reason to notice it.
+    demoLink: {
+      alignSelf: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      marginBottom: 24,
+    },
 
-  demoLinkText: {
-    color: '#9CA3AF',
-    fontSize: 13,
-  },
-})
+    demoLinkText: {
+      color: c.textMuted,
+      fontSize: 13,
+    },
+  })

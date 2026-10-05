@@ -16,6 +16,7 @@ import {
   reportUser,
   type ReportReason,
 } from '../api/moderation'
+import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const MAX_COMMENT_LENGTH = 500
 
@@ -46,6 +47,9 @@ export default function ReportUserModal({
   onClose,
   onBlock,
 }: ReportUserModalProps) {
+  const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
+
   const [reason, setReason] = useState<ReportReason | null>(null)
   const [comment, setComment] = useState('')
   const [sending, setSending] = useState(false)
@@ -177,7 +181,7 @@ export default function ReportUserModal({
                 value={comment}
                 onChangeText={setComment}
                 placeholder="Précisions (facultatif)"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.textMuted}
                 multiline
                 maxLength={MAX_COMMENT_LENGTH}
                 editable={!sending}
@@ -209,124 +213,125 @@ export default function ReportUserModal({
   )
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: 24,
+      backgroundColor: c.overlay,
+    },
 
-  card: {
-    maxHeight: '90%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 20,
-  },
+    card: {
+      maxHeight: '90%',
+      backgroundColor: c.card,
+      borderRadius: 14,
+      padding: 20,
+    },
 
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-  },
+    title: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: c.text,
+    },
 
-  hint: {
-    marginTop: 4,
-    marginBottom: 10,
-    fontSize: 14,
-    color: '#6B7280',
-  },
+    hint: {
+      marginTop: 4,
+      marginBottom: 10,
+      fontSize: 14,
+      color: c.textSecondary,
+    },
 
-  body: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: '#111827',
-  },
+    body: {
+      fontSize: 15,
+      lineHeight: 21,
+      color: c.text,
+    },
 
-  destructiveButton: {
-    marginTop: 16,
-    minHeight: 46,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#DC2626',
-  },
+    destructiveButton: {
+      marginTop: 16,
+      minHeight: 46,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.danger,
+    },
 
-  reason: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 44,
-  },
+    reason: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      minHeight: 44,
+    },
 
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#9CA3AF',
-  },
+    radio: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: c.borderStrong,
+    },
 
-  radioSelected: {
-    borderWidth: 6,
-    borderColor: '#208AEF',
-  },
+    radioSelected: {
+      borderWidth: 6,
+      borderColor: c.primary,
+    },
 
-  reasonText: {
-    flexShrink: 1,
-    fontSize: 15,
-    color: '#111827',
-  },
+    reasonText: {
+      flexShrink: 1,
+      fontSize: 15,
+      color: c.text,
+    },
 
-  input: {
-    marginTop: 8,
-    minHeight: 80,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: '#111827',
-    textAlignVertical: 'top',
-  },
+    input: {
+      marginTop: 8,
+      minHeight: 80,
+      borderWidth: 1,
+      borderColor: c.borderStrong,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      fontSize: 15,
+      color: c.text,
+      textAlignVertical: 'top',
+    },
 
-  error: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#DC2626',
-  },
+    error: {
+      marginTop: 10,
+      fontSize: 14,
+      color: c.danger,
+    },
 
-  primaryButton: {
-    marginTop: 16,
-    minHeight: 46,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#208AEF',
-  },
+    primaryButton: {
+      marginTop: 16,
+      minHeight: 46,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+    },
 
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    primaryButtonText: {
+      color: c.onPrimary,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  secondaryButton: {
-    marginTop: 8,
-    minHeight: 44,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    secondaryButton: {
+      marginTop: 8,
+      minHeight: 44,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  secondaryButtonText: {
-    color: '#111827',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    secondaryButtonText: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  disabled: {
-    opacity: 0.5,
-  },
-})
+    disabled: {
+      opacity: 0.5,
+    },
+  })

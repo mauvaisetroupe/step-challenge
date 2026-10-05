@@ -10,9 +10,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, {
-  Circle,
   Line,
-  Polyline,
   Rect,
   Text as SvgText,
 } from 'react-native-svg'
@@ -27,6 +25,9 @@ import {
 import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import DayProgressRing from '@/components/stats/DayProgressRing'
+import DayTimeline from '@/components/stats/DayTimeline'
+import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const DAILY_GOAL = 10_000
 
@@ -174,10 +175,14 @@ async function getHealthConnectDailyStats(
   return days
 }
 
-async function getHealthConnectIntradayStats(
+/**
+ * Steps per hour since midnight, from Health Connect: one entry per hour
+ * up to the current one, 0 when nothing was recorded.
+ */
+async function getHealthConnectHourlySteps(
   startDate: Date,
   endDate: Date,
-): Promise<ChartPoint[]> {
+): Promise<number[]> {
   const result = await aggregateGroupByDuration({
     recordType: 'Steps',
     timeRangeFilter: {
@@ -191,16 +196,17 @@ async function getHealthConnectIntradayStats(
     },
   })
 
-  return result.map((bucket) => {
-    const date = new Date(bucket.startTime)
+  const hours = Array.from({ length: endDate.getHours() + 1 }, () => 0)
 
-    return {
-      label: date.toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-      }),
-      value: Number(bucket.result?.COUNT_TOTAL ?? 0),
+  for (const bucket of result) {
+    const hour = new Date(bucket.startTime).getHours()
+
+    if (hour < hours.length) {
+      hours[hour] += Number(bucket.result?.COUNT_TOTAL ?? 0)
     }
-  })
+  }
+
+  return hours
 }
 
 async function getDatabaseDailyStats(
@@ -281,10 +287,14 @@ async function getDatabaseMonthlyStats(
 }
 
 export default function StatsScreen() {
+  const styles = useThemedStyles(createStyles)
+
   const [period, setPeriod] = useState<Period>('7d')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
-  const [intradayStats, setIntradayStats] = useState<ChartPoint[]>([])
+  // 1-day view: steps per hour (Android) and the day's total.
+  const [hourlySteps, setHourlySteps] = useState<number[]>([])
+  const [dayTotal, setDayTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -307,7 +317,7 @@ export default function StatsScreen() {
       //   the watch's own history: this is the only view that reads the
       //   database.
       // - On the web (no Health Connect), the views read the database;
-      //   the 1-day view stays empty.
+      //   the 1-day view shows the day's total, without hourly detail.
 
       if (Platform.OS !== 'web') {
         try {
@@ -354,7 +364,7 @@ export default function StatsScreen() {
 
         setMonthlyStats(stats)
         setDailyStats([])
-        setIntradayStats([])
+        setHourlySteps([])
 
         return
       }
@@ -374,27 +384,32 @@ export default function StatsScreen() {
 
           setDailyStats(stats)
           setMonthlyStats([])
-          setIntradayStats([])
+          setHourlySteps([])
 
           return
         }
 
+        // 1 day: today's total only.
+        const startDate = getStartOfDay(now)
+        const endDate = getStartOfDay(getDaysAgo(now, -1))
+        const [today] = await getDatabaseDailyStats(startDate, endDate)
+
+        setDayTotal(today?.steps ?? 0)
+        setHourlySteps([])
         setDailyStats([])
         setMonthlyStats([])
-        setIntradayStats([])
 
         return
       }
 
       if (period === '1d') {
-        const startDate = getStartOfDay(now)
-
-        const stats = await getHealthConnectIntradayStats(
-          startDate,
+        const hours = await getHealthConnectHourlySteps(
+          getStartOfDay(now),
           now,
         )
 
-        setIntradayStats(stats)
+        setHourlySteps(hours)
+        setDayTotal(hours.reduce((total, steps) => total + steps, 0))
         setDailyStats([])
         setMonthlyStats([])
 
@@ -414,7 +429,7 @@ export default function StatsScreen() {
 
       setDailyStats(stats)
       setMonthlyStats([])
-      setIntradayStats([])
+      setHourlySteps([])
     } catch (err) {
       console.error(err)
 
@@ -434,10 +449,7 @@ export default function StatsScreen() {
 
   const totalSteps = useMemo(() => {
     if (period === '1d') {
-      return intradayStats.reduce(
-        (total, item) => total + item.value,
-        0,
-      )
+      return dayTotal
     }
 
     if (period === '1y') {
@@ -455,7 +467,7 @@ export default function StatsScreen() {
     period,
     dailyStats,
     monthlyStats,
-    intradayStats,
+    dayTotal,
   ])
 
   return (
@@ -509,6 +521,23 @@ export default function StatsScreen() {
               </Text>
             </Pressable>
           </View>
+        ) : period === '1d' ? (
+          <>
+            <DayProgressRing steps={dayTotal} goal={DAILY_GOAL} />
+
+            <Text style={styles.sectionTitle}>Au fil de la journée</Text>
+
+            <DayTimeline
+              hourlySteps={hourlySteps}
+              goal={DAILY_GOAL}
+              now={new Date()}
+              emptyMessage={
+                Platform.OS === 'web'
+                  ? "Le détail heure par heure n'est disponible que sur Android."
+                  : "Aucun pas enregistré aujourd'hui."
+              }
+            />
+          </>
         ) : (
           <>
             <View style={styles.totalContainer}>
@@ -522,9 +551,7 @@ export default function StatsScreen() {
             </View>
 
             <View style={styles.chartContainer}>
-              {period === '1d' ? (
-                <IntradayChart data={intradayStats} />
-              ) : period === '1y' ? (
+              {period === '1y' ? (
                 <BarChart
                   data={monthlyStats.map((item) => ({
                     label: formatMonth(
@@ -564,6 +591,8 @@ function DailyStatsList({
 }: {
   stats: DayStat[]
 }) {
+  const styles = useThemedStyles(createStyles)
+
   return (
     <View style={styles.statsList}>
       {stats
@@ -632,6 +661,8 @@ function MonthlyStatsList({
 }: {
   stats: MonthStat[]
 }) {
+  const styles = useThemedStyles(createStyles)
+
   return (
     <View style={styles.statsList}>
       {stats
@@ -706,6 +737,9 @@ function BarChart({
 }: {
   data: ChartPoint[]
 }) {
+  const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
+
   if (data.length === 0) {
     return (
       <View style={styles.emptyChart}>
@@ -753,7 +787,7 @@ function BarChart({
         y1={paddingTop + chartHeight}
         x2={width - paddingRight}
         y2={paddingTop + chartHeight}
-        stroke="#d1d5db"
+        stroke={colors.borderStrong}
         strokeWidth={1}
       />
 
@@ -779,7 +813,7 @@ function BarChart({
               width={barWidth}
               height={barHeight}
               rx={3}
-              fill="#111827"
+              fill={colors.primary}
             />
 
             {(data.length <= 7 ||
@@ -789,7 +823,7 @@ function BarChart({
                 x={x + barWidth / 2}
                 y={height - 10}
                 fontSize={9}
-                fill="#6b7280"
+                fill={colors.textSecondary}
                 textAnchor="middle"
               >
                 {item.label}
@@ -802,366 +836,211 @@ function BarChart({
   )
 }
 
-function IntradayChart({
-  data,
-}: {
-  data: ChartPoint[]
-}) {
-  if (data.length === 0) {
-    return (
-      <View style={styles.emptyChart}>
-        <Text style={styles.emptyText}>
-          Aucune donnée aujourd'hui
-        </Text>
-      </View>
-    )
-  }
-
-  // Transforme les pas horaires en cumul sur la journée
-  let cumulative = 0
-
-  const cumulativeData = data.map((item) => {
-    cumulative += item.value
-
-    return {
-      label: item.label,
-      value: cumulative,
-    }
-  })
-
-  const width = 340
-  const height = 220
-  const paddingLeft = 40
-  const paddingRight = 10
-  const paddingTop = 20
-  const paddingBottom = 35
-
-  const chartWidth =
-    width - paddingLeft - paddingRight
-
-  const chartHeight =
-    height - paddingTop - paddingBottom
-
-  const maxValue = Math.max(
-    DAILY_GOAL,
-    ...cumulativeData.map((item) => item.value),
-  )
-
-  const points = cumulativeData
-    .map((item, index) => {
-      const x =
-        paddingLeft +
-        (index / Math.max(cumulativeData.length - 1, 1)) *
-          chartWidth
-
-      const y =
-        paddingTop +
-        chartHeight -
-        (item.value / maxValue) * chartHeight
-
-      return `${x},${y}`
-    })
-    .join(' ')
-
-  return (
-    <Svg
-      width="100%"
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-    >
-      {/* Ligne objectif 10 000 */}
-      <Line
-        x1={paddingLeft}
-        y1={
-          paddingTop +
-          chartHeight -
-          (DAILY_GOAL / maxValue) * chartHeight
-        }
-        x2={width - paddingRight}
-        y2={
-          paddingTop +
-          chartHeight -
-          (DAILY_GOAL / maxValue) * chartHeight
-        }
-        stroke="#d1d5db"
-        strokeWidth={1}
-        strokeDasharray="4 4"
-      />
-
-      {/* Axe horizontal */}
-      <Line
-        x1={paddingLeft}
-        y1={paddingTop + chartHeight}
-        x2={width - paddingRight}
-        y2={paddingTop + chartHeight}
-        stroke="#d1d5db"
-        strokeWidth={1}
-      />
-
-      {/* Courbe cumulative */}
-      <Polyline
-        points={points}
-        fill="none"
-        stroke="#111827"
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Points */}
-      {cumulativeData.map((item, index) => {
-        const x =
-          paddingLeft +
-          (index / Math.max(cumulativeData.length - 1, 1)) *
-            chartWidth
-
-        const y =
-          paddingTop +
-          chartHeight -
-          (item.value / maxValue) * chartHeight
-
-        return (
-          <Circle
-            key={`${item.label}-${index}`}
-            cx={x}
-            cy={y}
-            r={2.5}
-            fill="#111827"
-          />
-        )
-      })}
-
-      {/* Heures */}
-      {cumulativeData.map((item, index) => {
-        if (
-          index !== 0 &&
-          index !== cumulativeData.length - 1 &&
-          index % 4 !== 0
-        ) {
-          return null
-        }
-
-        const x =
-          paddingLeft +
-          (index / Math.max(cumulativeData.length - 1, 1)) *
-            chartWidth
-
-        return (
-          <SvgText
-            key={`label-${item.label}-${index}`}
-            x={x}
-            y={height - 10}
-            fontSize={9}
-            fill="#6b7280"
-            textAnchor="middle"
-          >
-            {item.label}
-          </SvgText>
-        )
-      })}
-    </Svg>
-  )
-}
-
-
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-
-  periodSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 10,
-    padding: 3,
-    marginBottom: 24,
-  },
-
-  periodButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: 8,
-  },
-
-  periodButtonActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    shadowOffset: {
-      width: 0,
-      height: 1,
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
     },
-    elevation: 2,
-  },
 
-  periodButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
+    content: {
+      padding: 20,
+      paddingBottom: 40,
+    },
 
-  periodButtonTextActive: {
-    color: '#111827',
-    fontWeight: '700',
-  },
+    periodSelector: {
+      flexDirection: 'row',
+      backgroundColor: c.surface,
+      borderRadius: 10,
+      padding: 3,
+      marginBottom: 24,
+    },
 
-  totalContainer: {
-    alignItems: 'center',
-    marginBottom: 10,
-  },
+    periodButton: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 9,
+      borderRadius: 8,
+    },
 
-  totalValue: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#111827',
-  },
+    periodButtonActive: {
+      backgroundColor: c.card,
+      shadowColor: c.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 3,
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      elevation: 2,
+    },
 
-  totalLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 2,
-  },
+    periodButtonText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: c.textSecondary,
+    },
 
-  chartContainer: {
-    width: '100%',
-    marginBottom: 18,
-  },
+    periodButtonTextActive: {
+      color: c.text,
+      fontWeight: '700',
+    },
 
-  loading: {
-    height: 250,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: c.text,
+      marginBottom: 8,
+    },
 
-  errorContainer: {
-    alignItems: 'center',
-    paddingVertical: 50,
-  },
+    totalContainer: {
+      alignItems: 'center',
+      marginBottom: 10,
+    },
 
-  errorText: {
-    color: '#dc2626',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
+    totalValue: {
+      fontSize: 32,
+      fontWeight: '700',
+      color: c.text,
+    },
 
-  retryButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#111827',
-  },
+    totalLabel: {
+      fontSize: 14,
+      color: c.textSecondary,
+      marginTop: 2,
+    },
 
-  retryText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+    chartContainer: {
+      width: '100%',
+      marginBottom: 18,
+    },
 
-  emptyChart: {
-    height: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    loading: {
+      height: 250,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  emptyText: {
-    color: '#9ca3af',
-  },
+    errorContainer: {
+      alignItems: 'center',
+      paddingVertical: 50,
+    },
 
-  statsList: {
-    marginTop: 4,
-  },
+    errorText: {
+      color: c.danger,
+      textAlign: 'center',
+      marginBottom: 15,
+    },
 
-  statItem: {
-    paddingVertical: 11,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e5e7eb',
-  },
+    retryButton: {
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 8,
+      backgroundColor: c.primary,
+    },
 
-  statMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
+    retryText: {
+      color: c.onPrimary,
+      fontWeight: '600',
+    },
 
-  dayName: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-    textTransform: 'capitalize',
-  },
+    emptyChart: {
+      height: 220,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  stepsStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
+    emptyText: {
+      color: c.textMuted,
+    },
 
-  stepsValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    minWidth: 70,
-    textAlign: 'right',
-  },
+    statsList: {
+      marginTop: 4,
+    },
 
-  statusCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-  },
+    statItem: {
+      paddingVertical: 11,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
 
-  statusCircleSuccess: {
-    borderColor: '#16a34a',
-    backgroundColor: '#dcfce7',
-  },
+    statMainRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
 
-  statusCircleFailure: {
-    borderColor: '#dc2626',
-    backgroundColor: '#fee2e2',
-  },
+    dayName: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '500',
+      color: c.text,
+      textTransform: 'capitalize',
+    },
 
-  statusIcon: {
-    fontSize: 13,
-    fontWeight: '800',
-    lineHeight: 16,
-  },
+    stepsStatus: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
 
-  statusIconSuccess: {
-    color: '#16a34a',
-  },
+    stepsValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: c.text,
+      minWidth: 70,
+      textAlign: 'right',
+    },
 
-  statusIconFailure: {
-    color: '#dc2626',
-  },
+    statusCircle: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+    },
 
-  statSubRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 2,
-  },
+    statusCircleSuccess: {
+      borderColor: c.success,
+      backgroundColor: c.successSoft,
+    },
 
-  dateText: {
-    fontSize: 12,
-    color: '#9ca3af',
-    textTransform: 'capitalize',
-  },
+    statusCircleFailure: {
+      borderColor: c.danger,
+      backgroundColor: c.dangerSoft,
+    },
 
-  percentText: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-})
+    statusIcon: {
+      fontSize: 13,
+      fontWeight: '800',
+      lineHeight: 16,
+    },
+
+    statusIconSuccess: {
+      color: c.success,
+    },
+
+    statusIconFailure: {
+      color: c.danger,
+    },
+
+    statSubRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 2,
+    },
+
+    dateText: {
+      fontSize: 12,
+      color: c.textMuted,
+      textTransform: 'capitalize',
+    },
+
+    percentText: {
+      fontSize: 12,
+      color: c.textMuted,
+    },
+  })

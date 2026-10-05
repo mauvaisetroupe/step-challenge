@@ -20,6 +20,7 @@ import ReportUserModal, {
   type ReportTarget,
 } from '../../components/ReportUserModal'
 import UserBadge from '../../components/UserBadge'
+import { useThemedStyles, type Colors } from '@/theme'
 
 type State =
   | { name: 'loading' }
@@ -55,6 +56,8 @@ function errorMessage(error: unknown) {
  * blocked without accepting (ADR 0004).
  */
 export default function InvitationScreen() {
+  const styles = useThemedStyles(createStyles)
+
   const { code } = useLocalSearchParams<{ code: string }>()
   const [state, setState] = useState<State>({ name: 'loading' })
   const [reporting, setReporting] = useState<ReportTarget | null>(null)
@@ -257,96 +260,97 @@ export default function InvitationScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.background,
+    },
 
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-  },
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: 24,
+      backgroundColor: c.background,
+    },
 
-  inviter: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
+    inviter: {
+      alignItems: 'center',
+      marginBottom: 24,
+    },
 
-  inviterName: {
-    marginTop: 12,
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-  },
+    inviterName: {
+      marginTop: 12,
+      fontSize: 24,
+      fontWeight: '700',
+      color: c.text,
+    },
 
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
+    title: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: c.text,
+      marginBottom: 12,
+      textAlign: 'center',
+    },
 
-  text: {
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#4B5563',
-    textAlign: 'center',
-  },
+    text: {
+      fontSize: 16,
+      lineHeight: 22,
+      color: c.textSecondary,
+      textAlign: 'center',
+    },
 
-  error: {
-    fontSize: 15,
-    color: '#DC2626',
-    textAlign: 'center',
-  },
+    error: {
+      fontSize: 15,
+      color: c.danger,
+      textAlign: 'center',
+    },
 
-  primaryButton: {
-    marginTop: 24,
-    minHeight: 52,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#208AEF',
-  },
+    primaryButton: {
+      marginTop: 24,
+      minHeight: 52,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+    },
 
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
-  },
+    primaryButtonText: {
+      color: c.onPrimary,
+      fontSize: 17,
+      fontWeight: '600',
+    },
 
-  secondaryButton: {
-    marginTop: 12,
-    minHeight: 48,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F1F1',
-  },
+    secondaryButton: {
+      marginTop: 12,
+      minHeight: 48,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.surfaceAlt,
+    },
 
-  secondaryButtonText: {
-    color: '#111827',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    secondaryButtonText: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  reportLink: {
-    marginTop: 24,
-    alignSelf: 'center',
-  },
+    reportLink: {
+      marginTop: 24,
+      alignSelf: 'center',
+    },
 
-  reportLinkText: {
-    fontSize: 14,
-    color: '#6B7280',
-    textDecorationLine: 'underline',
-  },
+    reportLinkText: {
+      fontSize: 14,
+      color: c.textSecondary,
+      textDecorationLine: 'underline',
+    },
 
-  disabled: {
-    opacity: 0.5,
-  },
-})
+    disabled: {
+      opacity: 0.5,
+    },
+  })

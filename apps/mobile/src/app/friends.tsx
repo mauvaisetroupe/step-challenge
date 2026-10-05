@@ -37,6 +37,7 @@ import ReportUserModal, {
   type ReportTarget,
 } from '../components/ReportUserModal'
 import UserBadge from '../components/UserBadge'
+import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 /**
  * Friends screen (ADR 0002): invite friends with a link, accept a code,
@@ -45,6 +46,9 @@ import UserBadge from '../components/UserBadge'
  * the leaderboard.
  */
 export default function FriendsScreen() {
+  const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
+
   const [friends, setFriends] = useState<Friend[]>([])
   const [invitations, setInvitations] = useState<ActiveInvitation[]>([])
   const [revokingId, setRevokingId] = useState<string | null>(null)
@@ -325,7 +329,7 @@ export default function FriendsScreen() {
             value={code}
             onChangeText={setCode}
             placeholder="K7F3-M9QX"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textMuted}
             autoCapitalize="characters"
             autoCorrect={false}
             autoFocus
@@ -505,168 +509,169 @@ function formatUseCount(count: number) {
     : `accepté par ${count} personnes`
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
 
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
 
-  intro: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: '#6B7280',
-    marginBottom: 16,
-  },
+    intro: {
+      fontSize: 15,
+      lineHeight: 21,
+      color: c.textSecondary,
+      marginBottom: 16,
+    },
 
-  primaryButton: {
-    minHeight: 50,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#208AEF',
-  },
+    primaryButton: {
+      minHeight: 50,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+    },
 
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+    primaryButtonText: {
+      color: c.onPrimary,
+      fontSize: 16,
+      fontWeight: '600',
+    },
 
-  secondaryButton: {
-    marginTop: 10,
-    minHeight: 46,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F1F1',
-  },
+    secondaryButton: {
+      marginTop: 10,
+      minHeight: 46,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.surfaceAlt,
+    },
 
-  secondaryButtonText: {
-    color: '#111827',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    secondaryButtonText: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  codeRow: {
-    marginTop: 10,
-    flexDirection: 'row',
-    gap: 8,
-  },
+    codeRow: {
+      marginTop: 10,
+      flexDirection: 'row',
+      gap: 8,
+    },
 
-  codeInput: {
-    flex: 1,
-    height: 46,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 17,
-    letterSpacing: 2,
-    color: '#111827',
-  },
+    codeInput: {
+      flex: 1,
+      height: 46,
+      borderWidth: 1,
+      borderColor: c.borderStrong,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      fontSize: 17,
+      letterSpacing: 2,
+      color: c.text,
+    },
 
-  codeButton: {
-    width: 64,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#208AEF',
-  },
+    codeButton: {
+      width: 64,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+    },
 
-  error: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#DC2626',
-  },
+    error: {
+      marginTop: 12,
+      fontSize: 14,
+      color: c.danger,
+    },
 
-  sectionTitle: {
-    marginTop: 28,
-    marginBottom: 10,
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
+    sectionTitle: {
+      marginTop: 28,
+      marginBottom: 10,
+      fontSize: 18,
+      fontWeight: '700',
+      color: c.text,
+    },
 
-  loader: {
-    marginTop: 20,
-  },
+    loader: {
+      marginTop: 20,
+    },
 
-  empty: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: '#6B7280',
-  },
+    empty: {
+      fontSize: 15,
+      lineHeight: 21,
+      color: c.textSecondary,
+    },
 
-  list: {
-    gap: 8,
-  },
+    list: {
+      gap: 8,
+    },
 
-  row: {
-    minHeight: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    backgroundColor: '#F8F8F8',
-  },
+    row: {
+      minHeight: 60,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 14,
+      borderRadius: 12,
+      backgroundColor: c.surface,
+    },
 
-  names: {
-    flex: 1,
-  },
+    names: {
+      flex: 1,
+    },
 
-  name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-  },
+    name: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: c.text,
+    },
 
-  realName: {
-    fontSize: 13,
-    color: '#9CA3AF',
-  },
+    realName: {
+      fontSize: 13,
+      color: c.textMuted,
+    },
 
-  hint: {
-    marginTop: -4,
-    marginBottom: 10,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#9CA3AF',
-  },
+    hint: {
+      marginTop: -4,
+      marginBottom: 10,
+      fontSize: 13,
+      lineHeight: 18,
+      color: c.textMuted,
+    },
 
-  revokeButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
+    revokeButton: {
+      paddingVertical: 6,
+      paddingHorizontal: 4,
+    },
 
-  unblockButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
+    unblockButton: {
+      paddingVertical: 6,
+      paddingHorizontal: 4,
+    },
 
-  unblockButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#208AEF',
-  },
+    unblockButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: c.primary,
+    },
 
-  revokeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#DC2626',
-  },
+    revokeButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: c.danger,
+    },
 
-  chevron: {
-    fontSize: 20,
-    color: '#9CA3AF',
-  },
+    chevron: {
+      fontSize: 20,
+      color: c.textMuted,
+    },
 
-  disabled: {
-    opacity: 0.5,
-  },
-})
+    disabled: {
+      opacity: 0.5,
+    },
+  })

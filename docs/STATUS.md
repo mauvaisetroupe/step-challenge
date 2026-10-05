@@ -92,8 +92,13 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
   - les vues 1j, 7j et 30j n'ont pas changé ;
   - sans réseau, la vue 1a affiche une erreur (elle lisait Santé Connect hors ligne) : vérifier que le message est compréhensible ;
   - autorisation Santé Connect refusée : la vue 1a s'affiche quand même depuis la base (la synchronisation du jour n'est plus bloquante pour cette vue).
+- [x] **Refonte de l'apparence** (2026-10-05) : mode sombre et choix de l'apparence (Paramètres → Apparence : système, clair, sombre), Paramètres en menu avec un écran par section, titres d'onglets sans icône, barres des histogrammes en bleu, vue « 1j » avec anneau de progression et courbe de la journée. Vérifié sur le web, en clair et en sombre. **À tester sur téléphone** (nouveau build nécessaire : `userInterfaceStyle` passe à `automatic` dans `app.json`, donc `prebuild` pour la variante de développement) :
+  - le mode Système suit le réglage du téléphone, y compris la barre d'onglets, la barre d'état et les en-têtes ; Clair et Sombre l'emportent sur lui, et le choix reste après redémarrage ;
+  - tous les écrans en sombre, en particulier ceux que le web ne permet pas de vérifier : Amis (et ses fenêtres Renommer, Signaler, le menu d'actions), invitation `/i/<code>`, Accueil ;
+  - Paramètres : chaque entrée ouvre son écran, le bouton retour revient au menu ;
+  - vue 1j : l'anneau reste gris sous 10 000 pas et devient bleu au-delà ; la courbe heure par heure (Santé Connect) et le repère d'objectif sont justes.
 - [ ] **Ménage des restes du modèle Expo**, à vérifier un par un avant suppression :
-  - dépendances apparemment inutilisées : `expo-device`, `expo-status-bar`, `react-native-gesture-handler` ;
+  - dépendances apparemment inutilisées : `expo-device`, `react-native-gesture-handler` (`expo-status-bar` sert désormais à la barre d'état claire ou sombre) ;
   - `AnimatedIcon` dans `components/animated-icon.tsx` (seul `AnimatedSplashOverlay` est utilisé), `expo-logo.png`, `logo-glow.png` ;
   - `themed-text`, `themed-view`, `hint-row`, `external-link`, `web-badge`, `ui/collapsible`, `hooks/use-theme`, `constants/theme.ts`, `scripts/reset-project.js`.
 - [ ] **Plus tard** : sauvegardes automatiques de la base ou base managée. Mettre à jour `backend/public/delete-account.html`, qui indique aujourd'hui qu'il n'y a pas de sauvegarde.
@@ -105,7 +110,8 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 - **Dossier `android/` périmé** : il est généré et ignoré par git. Après une modification native d'`app.json` (icônes, écran de démarrage, permissions, App Links, plugins), le régénérer avant de reconstruire l'application de dev : `APP_VARIANT=development npx expo prebuild --clean --platform android`. Les builds de production (EAS) le régénèrent eux-mêmes.
 - **Routes typées** : après l'ajout d'un écran, lancer brièvement `expo start` pour régénérer les types de routes, sinon `tsc` échoue.
 - **Sources de l'écran Statistiques** : 1j, 7j et 30j lisent Santé Connect ; 1a lit la base, car Santé Connect ne donne que 30 jours avant la première autorisation et ne suit pas l'utilisateur sur un nouveau téléphone. C'est la seule vue qui lit la base : Step Challenge ne remplace pas l'historique de la montre (commentaire dans `stats.tsx`).
-- **Thème** : l'application est en mode clair uniquement (`userInterfaceStyle: "light"`, `DefaultTheme`). Les écrans sont conçus pour un fond blanc.
+- **Thème clair et sombre** : aucune couleur en dur dans les écrans. Les couleurs sont des jetons (`src/theme/colors.ts`) lus par `useTheme()` ou `useThemedStyles(createStyles)`, où `createStyles` est une fonction des couleurs. Un texte sans couleur explicite reste noir et devient illisible en sombre : toujours donner une couleur aux styles de texte. Le choix de l'apparence est appliqué avec `Appearance.setColorScheme`, gardé dans AsyncStorage.
+- **Paramètres** : un menu (`(tabs)/settings/index.tsx`) et un écran par section dans `(tabs)/settings/`, éléments communs dans `components/settings/ui.tsx`.
 - **Écrans des onglets** : chacun est enveloppé dans un `SafeAreaView` limité au bord haut, avec un titre fixe (`components/TabScreenHeader.tsx`).
 - **Clés de signature** : une fonction qui marche en local mais pas avec l'application du Store (ou l'inverse) vient presque toujours d'une empreinte non déclarée. Voir [`signing.md`](signing.md).
 - **Compte de démonstration Google Play** : Google bloque les connexions des examinateurs (« appareil inconnu ») au compte Gmail de démonstration ; au 2026-10-05, aucun examinateur n'a réussi à se connecter. Remplacé par l'accès de démonstration de l'[ADR 0006](adr/0006-review-demo-access.md) (code d'accès, compte fictif) : développé, à mettre en production. D'ici là, répondre « c'était moi » aux alertes de sécurité du compte Gmail.

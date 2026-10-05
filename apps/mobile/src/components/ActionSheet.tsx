@@ -1,5 +1,6 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useThemedStyles, type Colors } from '@/theme'
 
 // Android: an Alert opened while a Modal is closing is attached to the
 // closing window and disappears with it (Modal onDismiss is iOS only).
@@ -28,6 +29,8 @@ export default function ActionSheet({
   actions,
   onClose,
 }: ActionSheetProps) {
+  const styles = useThemedStyles(createStyles)
+
   const insets = useSafeAreaInsets()
 
   return (
@@ -78,51 +81,52 @@ export default function ActionSheet({
   )
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: c.overlay,
+    },
 
-  sheet: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingTop: 16,
-    paddingHorizontal: 20,
-  },
+    sheet: {
+      backgroundColor: c.card,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingTop: 16,
+      paddingHorizontal: 20,
+    },
 
-  title: {
-    marginBottom: 8,
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#111827',
-  },
+    title: {
+      marginBottom: 8,
+      fontSize: 17,
+      fontWeight: '700',
+      color: c.text,
+    },
 
-  action: {
-    minHeight: 50,
-    justifyContent: 'center',
-  },
+    action: {
+      minHeight: 50,
+      justifyContent: 'center',
+    },
 
-  actionText: {
-    fontSize: 16,
-    color: '#111827',
-  },
+    actionText: {
+      fontSize: 16,
+      color: c.text,
+    },
 
-  destructive: {
-    color: '#DC2626',
-  },
+    destructive: {
+      color: c.danger,
+    },
 
-  separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 4,
-  },
+    separator: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: c.surfaceAlt,
+      marginVertical: 4,
+    },
 
-  cancelText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-})
+    cancelText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: c.textSecondary,
+    },
+  })

@@ -13,8 +13,12 @@ import {
   syncStatsToServer,
 } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 export default function HomeScreen() {
+  const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
+
   const [steps, setSteps] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -76,7 +80,7 @@ export default function HomeScreen() {
         {loading && (
           <ActivityIndicator
             size="large"
-            color="#208AEF"
+            color={colors.primary}
           />
         )}
 
@@ -98,46 +102,47 @@ export default function HomeScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
 
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#FFFFFF',
-  },
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+      backgroundColor: c.background,
+    },
 
-  subtitle: {
-    color: '#6B7280',
-    fontSize: 20,
-    marginBottom: 28,
-  },
+    subtitle: {
+      color: c.textSecondary,
+      fontSize: 20,
+      marginBottom: 28,
+    },
 
-  stepsContainer: {
-    alignItems: 'center',
-  },
+    stepsContainer: {
+      alignItems: 'center',
+    },
 
-  steps: {
-    color: '#111827',
-    fontSize: 56,
-    fontWeight: '700',
-  },
+    steps: {
+      color: c.text,
+      fontSize: 56,
+      fontWeight: '700',
+    },
 
-  label: {
-    color: '#6B7280',
-    fontSize: 18,
-    marginTop: 4,
-  },
+    label: {
+      color: c.textSecondary,
+      fontSize: 18,
+      marginTop: 4,
+    },
 
-  error: {
-    color: '#DC2626',
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
-  },
-})
+    error: {
+      color: c.danger,
+      fontSize: 16,
+      textAlign: 'center',
+      marginTop: 20,
+    },
+  })
