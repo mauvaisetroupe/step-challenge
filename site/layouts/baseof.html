@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .IsHome }}{{ site.Title }} — {{ T "tagline" }}{{ else }}{{ .Title }} — {{ site.Title }}{{ end }}</title>
   <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ T "tagline" }}{{ end }}">
-  <link rel="canonical" href="{{ .Permalink }}">
+  <link rel="canonical" href="{{ partial "url.html" .Permalink }}">
   {{- range .AllTranslations }}
-  <link rel="alternate" hreflang="{{ .Language.Lang }}" href="{{ .Permalink }}">
+  <link rel="alternate" hreflang="{{ .Language.Lang }}" href="{{ partial "url.html" .Permalink }}">
   {{- end }}
   <link rel="icon" href="{{ "images/logo.svg" | absURL }}" type="image/svg+xml">
   {{- with resources.Get "css/site.css" | minify | fingerprint }}

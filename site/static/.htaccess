@@ -3,10 +3,6 @@ RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^i/[^/]+/?$ /i/index.html [L]
 
-Redirect 301 /privacy.html /en/privacy/
-Redirect 301 /agreement.html /en/agreement/
-Redirect 301 /delete-account.html /en/delete-account/
-
 <Files "assetlinks.json">
   ForceType application/json
 </Files>

@@ -10,7 +10,7 @@
     {{- range $.Translations -}}
       {{- if eq .Language.Lang $lang }}{{ $target = . }}{{ end -}}
     {{- end -}}
-    <a class="lang" href="{{ $target.RelPermalink }}" hreflang="{{ $lang }}" lang="{{ $lang }}" title="{{ .Language.Label }}">
+    <a class="lang" href="{{ partial "url.html" $target.RelPermalink }}" hreflang="{{ $lang }}" lang="{{ $lang }}" title="{{ .Language.Label }}">
       {{- partial "flag.html" $lang -}}
       <span>{{ .Language.Label }}</span>
     </a>
