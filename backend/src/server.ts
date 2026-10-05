@@ -8,12 +8,14 @@ import { checkDatabase, pool } from './db.js'
 import { registerRateLimit } from './rateLimit.js'
 import appLinkRoutes from './routes/appLinks.js'
 import authRoutes from './routes/auth.js'
+import blockRoutes from './routes/blocks.js'
 import friendRoutes from './routes/friends.js'
 import healthRoutes from './routes/health.js'
 import invitationRoutes from './routes/invitations.js'
 import leaderboardRoutes from './routes/leaderboard.js'
 import meRoutes from './routes/me.js'
 import meStepsRoutes from './routes/meSteps.js'
+import reportRoutes from './routes/reports.js'
 
 const app = Fastify({
   logger: true,
@@ -66,6 +68,18 @@ await app.register(meRoutes, {
 })
 
 await app.register(meStepsRoutes, {
+  prefix: '/api',
+  db: pool,
+  requireAuth,
+})
+
+await app.register(blockRoutes, {
+  prefix: '/api',
+  db: pool,
+  requireAuth,
+})
+
+await app.register(reportRoutes, {
   prefix: '/api',
   db: pool,
   requireAuth,

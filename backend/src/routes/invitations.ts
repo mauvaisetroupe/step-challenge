@@ -8,6 +8,7 @@ import {
   areFriends,
   countFriends,
   createFriendship,
+  isBlockedEitherWay,
   MAX_FRIENDS,
 } from '../friends/friendships.js'
 import {
@@ -194,12 +195,16 @@ const invitationRoutes: FastifyPluginAsync<InvitationRoutesOptions> = async (
     },
     async (request, reply) => {
       const invitation = await findValidInvitation(request.params.code)
+      const me = request.auth!.userId
 
-      if (!invitation) {
+      // A block (either way) looks like an invalid link: the blocked
+      // person must not learn that they were blocked (ADR 0004).
+      if (
+        !invitation ||
+        (await isBlockedEitherWay(db, me, invitation.inviter_id))
+      ) {
         return reply.code(404).send({ error: 'invitation_not_found' })
       }
-
-      const me = request.auth!.userId
 
       return reply.send({
         inviter: { id: invitation.inviter_id, name: invitation.inviter_name },
@@ -230,7 +235,10 @@ const invitationRoutes: FastifyPluginAsync<InvitationRoutesOptions> = async (
           client,
         )
 
-        if (!invitation) {
+        if (
+          !invitation ||
+          (await isBlockedEitherWay(client, me, invitation.inviter_id))
+        ) {
           await client.query('ROLLBACK')
           return reply.code(404).send({ error: 'invitation_not_found' })
         }

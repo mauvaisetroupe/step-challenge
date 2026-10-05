@@ -2,8 +2,8 @@ import rateLimit from '@fastify/rate-limit'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
 /**
- * Rate limits (ADR 0001 for sign-in, ADR 0002 for invitations), applied
- * per client IP address.
+ * Rate limits (ADR 0001 for sign-in, ADR 0002 for invitations, ADR 0004
+ * for reports), applied per client IP address.
  *
  * Generous for a person, tight enough to slow down scripts: account
  * creation in bulk, guessing invitation codes.
@@ -16,6 +16,9 @@ export const RATE_LIMITS = {
   // shared store such as Redis). 2 × 30 guesses per minute remain far
   // below what guessing a code among ~10^12 within 7 days would need.
   invitationLookup: { max: 30, timeWindow: '1 minute' },
+  // Reports are read by a person: enough for a real need, not for
+  // flooding the moderation queue.
+  report: { max: 10, timeWindow: '1 hour' },
 } as const
 
 /**

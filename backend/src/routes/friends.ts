@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import type { Pool } from 'pg'
 
 import type { RequireAuth } from '../auth/authenticate.js'
-import { areFriends, canonicalPair } from '../friends/friendships.js'
+import { areFriends, endFriendship } from '../friends/friendships.js'
 
 export type FriendRoutesOptions = {
   db: Pool
@@ -54,39 +54,15 @@ const friendRoutes: FastifyPluginAsync<FriendRoutesOptions> = async (
     async (request, reply) => {
       const me = request.auth!.userId
       const friendId = request.params.id
-      const [low, high] = canonicalPair(me, friendId)
       const client = await db.connect()
 
       try {
         await client.query('BEGIN')
 
-        const deleted = await client.query(
-          'DELETE FROM friendships WHERE user_low = $1 AND user_high = $2',
-          [low, high],
-        )
-
-        if (deleted.rowCount === 0) {
+        if (!(await endFriendship(client, me, friendId))) {
           await client.query('ROLLBACK')
           return reply.code(404).send({ error: 'friend_not_found' })
         }
-
-        await client.query(
-          `
-          DELETE FROM friend_aliases
-          WHERE (owner_id = $1 AND friend_id = $2)
-             OR (owner_id = $2 AND friend_id = $1)
-          `,
-          [me, friendId],
-        )
-
-        await client.query(
-          `
-          UPDATE invitations
-          SET revoked_at = now()
-          WHERE inviter_id = $1 AND revoked_at IS NULL AND expires_at > now()
-          `,
-          [me],
-        )
 
         await client.query('COMMIT')
 

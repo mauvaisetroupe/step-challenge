@@ -4,11 +4,13 @@ import type { Pool } from 'pg'
 import { createRequireAuth } from '../auth/authenticate.js'
 import { GOOGLE_ISSUER, InvalidIdTokenError } from '../auth/google.js'
 import authRoutes from '../routes/auth.js'
+import blockRoutes from '../routes/blocks.js'
 import friendRoutes from '../routes/friends.js'
 import invitationRoutes from '../routes/invitations.js'
 import leaderboardRoutes from '../routes/leaderboard.js'
 import meRoutes from '../routes/me.js'
 import meStepsRoutes from '../routes/meSteps.js'
+import reportRoutes from '../routes/reports.js'
 import { registerRateLimit } from '../rateLimit.js'
 
 /**
@@ -50,6 +52,18 @@ export async function buildTestApp(db: Pool) {
   })
 
   await app.register(meStepsRoutes, {
+    prefix: '/api',
+    db,
+    requireAuth,
+  })
+
+  await app.register(blockRoutes, {
+    prefix: '/api',
+    db,
+    requireAuth,
+  })
+
+  await app.register(reportRoutes, {
     prefix: '/api',
     db,
     requireAuth,
