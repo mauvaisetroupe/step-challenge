@@ -17,9 +17,12 @@ import {
   createInvitation,
   displayName,
   listFriends,
+  listInvitations,
   removeFriend,
   removeFriendAlias,
+  revokeInvitation,
   setFriendAlias,
+  type ActiveInvitation,
   type Friend,
 } from '../api/friends'
 import RenameFriendModal from '../components/RenameFriendModal'
@@ -27,10 +30,12 @@ import UserBadge from '../components/UserBadge'
 
 /**
  * Friends screen (ADR 0002): invite friends with a link, accept a code,
- * rename (alias) or remove a friend. Opened from the leaderboard.
+ * rename (alias) or remove a friend, list and revoke my active
+ * invitation links. Opened from the leaderboard.
  */
 export default function FriendsScreen() {
   const [friends, setFriends] = useState<Friend[]>([])
+  const [invitations, setInvitations] = useState<ActiveInvitation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [inviting, setInviting] = useState(false)
@@ -45,7 +50,13 @@ export default function FriendsScreen() {
     setError(null)
 
     try {
-      setFriends(await listFriends())
+      const [loadedFriends, loadedInvitations] = await Promise.all([
+        listFriends(),
+        listInvitations(),
+      ])
+
+      setFriends(loadedFriends)
+      setInvitations(loadedInvitations)
     } catch (err) {
       console.error('Friends load error:', err)
       setError('Impossible de charger tes amis.')
@@ -60,6 +71,14 @@ export default function FriendsScreen() {
       load()
     }, [load]),
   )
+
+  const loadInvitations = async () => {
+    try {
+      setInvitations(await listInvitations())
+    } catch (err) {
+      console.error('Invitations load error:', err)
+    }
+  }
 
   const handleInvite = async () => {
     setInviting(true)
@@ -76,7 +95,7 @@ export default function FriendsScreen() {
     } catch (err) {
       if (err instanceof ApiError && err.code === 'too_many_invitations') {
         setError(
-          "Tu as déjà trop de liens d'invitation actifs. Réessaie quand certains auront expiré.",
+          "Tu as déjà trop de liens d'invitation actifs. Désactives-en un ci-dessous, ou attends qu'il expire.",
         )
       } else {
         console.error('Invitation error:', err)
@@ -84,7 +103,32 @@ export default function FriendsScreen() {
       }
     } finally {
       setInviting(false)
+      // The new link appears in the list, even if sharing was cancelled.
+      loadInvitations()
     }
+  }
+
+  const confirmRevoke = (invitation: ActiveInvitation) => {
+    Alert.alert(
+      'Désactiver ce lien ?',
+      "Plus personne ne pourra l'utiliser pour devenir ton ami. Les amis qui l'ont déjà accepté restent tes amis.",
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Désactiver',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await revokeInvitation(invitation.id)
+              await loadInvitations()
+            } catch (err) {
+              console.error('Revoke invitation error:', err)
+              setError('Impossible de désactiver ce lien.')
+            }
+          },
+        },
+      ],
+    )
   }
 
   const handleCode = () => {
@@ -246,6 +290,40 @@ export default function FriendsScreen() {
         </View>
       )}
 
+      {!loading && invitations.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>
+            {`Liens d'invitation actifs (${invitations.length})`}
+          </Text>
+          <Text style={styles.hint}>
+            Par sécurité, l'appli ne garde pas les liens : pour inviter
+            quelqu'un d'autre, crée un nouveau lien.
+          </Text>
+
+          <View style={styles.list}>
+            {invitations.map((invitation) => (
+              <View key={invitation.id} style={styles.row}>
+                <View style={styles.names}>
+                  <Text style={styles.name} numberOfLines={1}>
+                    {`Créé le ${formatDate(invitation.createdAt)}`}
+                  </Text>
+                  <Text style={styles.realName} numberOfLines={1}>
+                    {`Expire le ${formatDate(invitation.expiresAt)} · ${formatUseCount(invitation.useCount)}`}
+                  </Text>
+                </View>
+                <Pressable
+                  style={styles.revokeButton}
+                  onPress={() => confirmRevoke(invitation)}
+                  hitSlop={8}
+                >
+                  <Text style={styles.revokeButtonText}>Désactiver</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+
       <RenameFriendModal
         friend={renaming}
         saving={renameSaving}
@@ -256,6 +334,23 @@ export default function FriendsScreen() {
       />
     </ScrollView>
   )
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
+function formatUseCount(count: number) {
+  if (count === 0) {
+    return 'pas encore utilisé'
+  }
+
+  return count === 1
+    ? 'accepté par 1 personne'
+    : `accepté par ${count} personnes`
 }
 
 const styles = StyleSheet.create({
@@ -382,6 +477,25 @@ const styles = StyleSheet.create({
   realName: {
     fontSize: 13,
     color: '#9CA3AF',
+  },
+
+  hint: {
+    marginTop: -4,
+    marginBottom: 10,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#9CA3AF',
+  },
+
+  revokeButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+
+  revokeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#DC2626',
   },
 
   chevron: {

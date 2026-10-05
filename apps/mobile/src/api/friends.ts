@@ -19,6 +19,15 @@ export type Invitation = {
   expiresAt: string
 }
 
+/** One of my active invitations. The code is not stored, so not listed. */
+export type ActiveInvitation = {
+  id: string
+  createdAt: string
+  expiresAt: string
+  /** Number of people who accepted it. */
+  useCount: number
+}
+
 export type InvitationPreview = {
   inviter: { id: string; name: string }
   expiresAt: string
@@ -42,6 +51,14 @@ export function listFriends() {
 
 export function createInvitation() {
   return apiFetch<Invitation>('/api/invitations', { method: 'POST' })
+}
+
+export function listInvitations() {
+  return apiFetch<ActiveInvitation[]>('/api/invitations')
+}
+
+export function revokeInvitation(invitationId: string) {
+  return apiFetch(`/api/invitations/${invitationId}`, { method: 'DELETE' })
 }
 
 function codePath(code: string) {
