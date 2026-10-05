@@ -36,6 +36,7 @@ import UserBadge from '../components/UserBadge'
 export default function FriendsScreen() {
   const [friends, setFriends] = useState<Friend[]>([])
   const [invitations, setInvitations] = useState<ActiveInvitation[]>([])
+  const [revokingId, setRevokingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [inviting, setInviting] = useState(false)
@@ -45,25 +46,32 @@ export default function FriendsScreen() {
   const [renameSaving, setRenameSaving] = useState(false)
   const [renameError, setRenameError] = useState<string | null>(null)
 
+  // A failure only hides the list: the rest of the screen still works.
+  const loadInvitations = useCallback(async () => {
+    try {
+      setInvitations(await listInvitations())
+    } catch (err) {
+      console.error('Invitations load error:', err)
+    }
+  }, [])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
 
-    try {
-      const [loadedFriends, loadedInvitations] = await Promise.all([
-        listFriends(),
-        listInvitations(),
-      ])
+    // Loaded independently: an invitations error must not be reported
+    // as a friends error.
+    loadInvitations()
 
-      setFriends(loadedFriends)
-      setInvitations(loadedInvitations)
+    try {
+      setFriends(await listFriends())
     } catch (err) {
       console.error('Friends load error:', err)
       setError('Impossible de charger tes amis.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [loadInvitations])
 
   // Reload when coming back, e.g. after accepting an invitation.
   useFocusEffect(
@@ -71,14 +79,6 @@ export default function FriendsScreen() {
       load()
     }, [load]),
   )
-
-  const loadInvitations = async () => {
-    try {
-      setInvitations(await listInvitations())
-    } catch (err) {
-      console.error('Invitations load error:', err)
-    }
-  }
 
   const handleInvite = async () => {
     setInviting(true)
@@ -118,12 +118,20 @@ export default function FriendsScreen() {
           text: 'Désactiver',
           style: 'destructive',
           onPress: async () => {
+            setRevokingId(invitation.id)
+
             try {
               await revokeInvitation(invitation.id)
-              await loadInvitations()
             } catch (err) {
-              console.error('Revoke invitation error:', err)
-              setError('Impossible de désactiver ce lien.')
+              // Already revoked (double tap) or expired meanwhile: the
+              // link is inactive anyway, the reload removes it.
+              if (!(err instanceof ApiError && err.status === 404)) {
+                console.error('Revoke invitation error:', err)
+                setError('Impossible de désactiver ce lien.')
+              }
+            } finally {
+              await loadInvitations()
+              setRevokingId(null)
             }
           },
         },
@@ -312,8 +320,12 @@ export default function FriendsScreen() {
                   </Text>
                 </View>
                 <Pressable
-                  style={styles.revokeButton}
+                  style={[
+                    styles.revokeButton,
+                    revokingId === invitation.id && styles.disabled,
+                  ]}
                   onPress={() => confirmRevoke(invitation)}
+                  disabled={revokingId === invitation.id}
                   hitSlop={8}
                 >
                   <Text style={styles.revokeButtonText}>Désactiver</Text>
