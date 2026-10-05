@@ -2,7 +2,7 @@
 title: Step Challenge — User Agreement
 linkTitle: Terms of use
 description: The terms of use of the Step Challenge application.
-updated: 27 September 2026
+updated: 5 October 2026
 ---
 
 This User Agreement governs your use of the Step Challenge application
@@ -70,6 +70,11 @@ required to operate the challenge, such as your display name and step
 totals, may be visible to other participants according to the
 application's functionality.
 
+Your display name and your step totals are visible only to your friends:
+the people who accepted one of your invitations, or whose invitation you
+accepted. Your display name is also shown to anyone who opens one of
+your invitation links.
+
 Challenge results are intended for recreational and fitness purposes.
 They are not intended to provide medical, professional, or health
 advice.
@@ -91,7 +96,28 @@ You must not:
   of the application or service, except where permitted by applicable
   law.
 
-## 7. Service Availability
+## 7. Display Names and Conduct
+
+Your display name is visible to your friends and to anyone who opens one
+of your invitation links. It must not:
+
+- be insulting, hateful, threatening, sexual or discriminatory;
+- impersonate another person.
+
+You must not use Step Challenge, including its invitation links, to
+harass, intimidate or threaten other users.
+
+You can report a user, from your friends list or from an invitation you
+received, and block them. Blocking someone ends your friendship and
+prevents them from becoming your friend again, even with an invitation
+link. Reported or blocked users are not notified.
+
+Reports are reviewed by the Step Challenge team. When a display name or
+a behavior violates these terms, we may reset the display name, or
+suspend or delete the account. To contest a decision, contact us (see
+the Contact section).
+
+## 8. Service Availability
 
 Step Challenge is provided on an availability basis. We may temporarily
 suspend or modify the service for maintenance, updates, security
@@ -104,14 +130,14 @@ Step counts may also depend on the availability and accuracy of data
 provided by external health platforms and devices. Step Challenge cannot
 guarantee the accuracy of data originating from those platforms.
 
-## 8. Changes to the Service
+## 9. Changes to the Service
 
 We may modify, add, or remove features of Step Challenge over time. Such
 changes may be necessary to improve the application, maintain
 compatibility with supported platforms, or comply with technical or
 legal requirements.
 
-## 9. Changes to This Agreement
+## 10. Changes to This Agreement
 
 This Agreement may be updated from time to time.
 
@@ -121,7 +147,7 @@ available through the application or the Step Challenge website.
 The date shown at the top of this page indicates when this Agreement was
 last updated.
 
-## 10. Privacy
+## 11. Privacy
 
 Your use of Step Challenge is also subject to the
 [Step Challenge Privacy Policy]({{< relref "privacy" >}}).
@@ -130,7 +156,7 @@ The Privacy Policy explains what personal and step-related data may be
 collected, why it is used, how it is stored, and what choices and rights
 are available to you.
 
-## 11. Termination
+## 12. Termination
 
 You may stop using Step Challenge at any time.
 
@@ -138,7 +164,7 @@ We may suspend or terminate access to the service when necessary,
 including in cases of abuse, security incidents, unlawful use, or
 serious violation of this Agreement.
 
-## 12. Contact
+## 13. Contact
 
 If you have questions about this Agreement or Step Challenge, please
 contact:

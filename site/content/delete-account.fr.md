@@ -36,13 +36,19 @@ Step Challenge :
 - ton compte et ton nom affiché ;
 - le lien entre ton compte et ton compte Google ;
 - tes sessions (tu es déconnecté sur tous tes appareils) ;
-- tout ton historique de pas.
+- tout ton historique de pas ;
+- tes amitiés, les surnoms que tu as donnés et reçus, tes liens
+  d'invitation et tes blocages.
 
 ## Ce qui est conservé
 
-- **Rien n'est conservé sur le serveur de Step Challenge.** Aucune copie
-  de sauvegarde de la base de données n'est gardée : la suppression est
-  immédiate, définitive et irréversible.
+- **Rien de lié à ton compte n'est conservé sur le serveur de Step
+  Challenge.** Aucune copie de sauvegarde de la base de données n'est
+  gardée : la suppression est immédiate, définitive et irréversible.
+- Les **signalements** (si tu as signalé quelqu'un, ou si tu as été
+  signalé) sont conservés, sans lien avec ton compte, jusqu'à 12 mois
+  après leur traitement, puis supprimés. Ils contiennent le nom affiché
+  signalé et le commentaire facultatif de l'auteur du signalement.
 - Les données de pas enregistrées sur ton téléphone par Santé Connect ou
   Huawei Santé ne sont **pas** concernées : elles appartiennent à ces
   applications, pas à Step Challenge.

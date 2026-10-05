@@ -2,7 +2,7 @@
 title: Privacy Policy — Step Challenge
 linkTitle: Privacy policy
 description: What data Step Challenge collects, why, and how to delete it.
-updated: 4 October 2026
+updated: 5 October 2026
 ---
 
 Step Challenge is a step-counting and challenge application that allows
@@ -54,6 +54,27 @@ Step Challenge does not request access to unrelated health information
 such as heart rate, sleep, blood pressure, body measurements or medical
 information unless such access is explicitly described in a future
 version of the application.
+
+### Friends, invitations and blocks
+
+To show each user the steps of their friends only, the server stores:
+
+- Friendships between two accounts, and the date they were created;
+- Invitations: their author, creation and expiry dates (7 days) and
+  number of uses. Only a cryptographic hash of the invitation code is
+  stored, never the code itself;
+- Nicknames a user gives to their friends, visible only to that user;
+- Blocks: the blocked account and its display name at the time of
+  blocking.
+
+### Reports
+
+When a user reports another user, the server stores the reporting and
+reported accounts, the reported display name at the time of the report,
+the reason, an optional comment written by the reporting user and, if
+any, the invitation through which the reported user was seen. Reports
+are used only to moderate the service. The reported user is not told,
+and never sees who reported them.
 
 ## 2. How we use step data
 
@@ -108,6 +129,10 @@ application.
 
 Step Challenge does not sell personal data.
 
+Within the application, a user's display name and daily step counts are
+visible only to their friends. The display name is also shown to anyone
+who opens one of the user's invitation links.
+
 Step Challenge does not share step data with advertisers, data brokers
 or other third parties for advertising or profiling.
 
@@ -127,6 +152,14 @@ permanently deletes, on the server, the account, its display name, its
 link to the Google account, its sessions and its entire step history.
 Step data stored in Health Connect or Huawei Health on the device is not
 affected.
+
+Deleting the account also deletes its friendships, the nicknames given
+to and by it, its invitations and its blocks.
+
+Processed reports are deleted 12 months after they were processed.
+Reports made by or about a deleted account are kept until then, without
+any link to the deleted account; they still contain the reported display
+name and the comment.
 
 Users who no longer have access to the application can request the
 deletion of their account and associated server-side data by email (see

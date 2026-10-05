@@ -37,13 +37,19 @@ server:
 - your account and your display name;
 - the link between your account and your Google account;
 - your sessions (you are signed out on all devices);
-- your entire step history.
+- your entire step history;
+- your friendships, the nicknames you gave and received, your invitation
+  links and your blocks.
 
 ## What is kept
 
-- **Nothing is kept on the Step Challenge server.** No backup copies of
-  the database are retained: deletion is immediate and permanent, and
-  cannot be undone.
+- **Nothing linked to your account is kept on the Step Challenge
+  server.** No backup copies of the database are retained: deletion is
+  immediate and permanent, and cannot be undone.
+- **Reports** (if you reported someone, or were reported) are kept,
+  without any link to your account, until 12 months after they were
+  processed, then deleted. They contain the reported display name and
+  the reporter's optional comment.
 - Step data stored on your phone by Health Connect or Huawei Health is
   **not** affected: it belongs to those applications, not to Step
   Challenge.

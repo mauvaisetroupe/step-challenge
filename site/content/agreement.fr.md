@@ -2,7 +2,7 @@
 title: Step Challenge — Conditions d'utilisation
 linkTitle: Conditions d'utilisation
 description: Les conditions d'utilisation de l'application Step Challenge.
-updated: 27 septembre 2026
+updated: 5 octobre 2026
 ---
 
 *Traduction de la version anglaise, qui fait foi en cas de divergence.*
@@ -75,6 +75,11 @@ En participant à un défi, tu comprends que les informations nécessaires
 peuvent être visibles des autres participants, selon les fonctionnalités
 de l'application.
 
+Ton nom affiché et tes totaux de pas ne sont visibles que de tes amis :
+les personnes qui ont accepté une de tes invitations, ou dont tu as
+accepté l'invitation. Ton nom affiché est aussi visible de toute
+personne qui ouvre un de tes liens d'invitation.
+
 Les résultats des défis ont une vocation récréative et sportive. Ils ne
 constituent pas un avis médical, professionnel ou de santé.
 
@@ -95,7 +100,31 @@ Tu ne dois pas :
   sécurité de l'application ou du service, sauf dans la mesure permise
   par la loi applicable.
 
-## 7. Disponibilité du service
+## 7. Nom affiché et comportement
+
+Ton nom affiché est visible de tes amis et de toute personne qui ouvre
+un de tes liens d'invitation. Il ne doit pas :
+
+- être injurieux, haineux, menaçant, sexuel ou discriminatoire ;
+- usurper l'identité d'une autre personne.
+
+Tu ne dois pas utiliser Step Challenge, y compris ses liens
+d'invitation, pour harceler, intimider ou menacer d'autres
+utilisateurs.
+
+Tu peux signaler un utilisateur, depuis ta liste d'amis ou depuis une
+invitation reçue, et le bloquer. Bloquer quelqu'un met fin à votre
+amitié et l'empêche de redevenir ton ami, même avec un lien
+d'invitation. Les utilisateurs signalés ou bloqués n'en sont pas
+informés.
+
+Les signalements sont examinés par l'équipe de Step Challenge. Lorsqu'un
+nom affiché ou un comportement enfreint les présentes conditions, nous
+pouvons réinitialiser le nom affiché, ou suspendre ou supprimer le
+compte. Pour contester une décision, contacte-nous (voir la section
+Contact).
+
+## 8. Disponibilité du service
 
 Step Challenge est fourni en fonction de sa disponibilité. Nous pouvons
 suspendre ou modifier temporairement le service pour des raisons de
@@ -109,14 +138,14 @@ l'exactitude des données fournies par des plateformes de santé et des
 appareils externes. Step Challenge ne peut pas garantir l'exactitude des
 données issues de ces plateformes.
 
-## 8. Évolution du service
+## 9. Évolution du service
 
 Nous pouvons modifier, ajouter ou retirer des fonctionnalités de Step
 Challenge au fil du temps. Ces changements peuvent être nécessaires pour
 améliorer l'application, rester compatible avec les plateformes prises
 en charge, ou respecter des exigences techniques ou légales.
 
-## 9. Modification des présentes conditions
+## 10. Modification des présentes conditions
 
 Les présentes conditions peuvent être mises à jour de temps à autre.
 
@@ -126,7 +155,7 @@ disponible dans l'application ou sur le site de Step Challenge.
 La date indiquée en haut de cette page est celle de la dernière mise à
 jour des présentes conditions.
 
-## 10. Confidentialité
+## 11. Confidentialité
 
 Ton utilisation de Step Challenge est également soumise à la
 [politique de confidentialité de Step Challenge]({{< relref "privacy" >}}).
@@ -136,7 +165,7 @@ de pas peuvent être collectées, pourquoi elles sont utilisées, comment
 elles sont conservées, ainsi que les choix et les droits dont tu
 disposes.
 
-## 11. Résiliation
+## 12. Résiliation
 
 Tu peux cesser d'utiliser Step Challenge à tout moment.
 
@@ -144,7 +173,7 @@ Nous pouvons suspendre ou résilier l'accès au service lorsque c'est
 nécessaire, notamment en cas d'abus, d'incident de sécurité,
 d'utilisation illicite ou de manquement grave aux présentes conditions.
 
-## 12. Contact
+## 13. Contact
 
 Pour toute question sur les présentes conditions ou sur Step Challenge,
 contacte :

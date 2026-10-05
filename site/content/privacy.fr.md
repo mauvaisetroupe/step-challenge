@@ -2,7 +2,7 @@
 title: Politique de confidentialité — Step Challenge
 linkTitle: Confidentialité
 description: Les données collectées par Step Challenge, pourquoi, et comment les supprimer.
-updated: 4 octobre 2026
+updated: 5 octobre 2026
 ---
 
 *Traduction de la version anglaise, qui fait foi en cas de divergence.*
@@ -63,6 +63,30 @@ comme la fréquence cardiaque, le sommeil, la tension artérielle, les
 mesures corporelles ou des informations médicales, sauf si un tel accès
 est explicitement décrit dans une version future de l'application.
 
+### Amis, invitations et blocages
+
+Pour que chaque utilisateur ne voie que les pas de ses amis, le serveur
+conserve :
+
+- les amitiés entre deux comptes, et leur date de création ;
+- les invitations : leur auteur, leurs dates de création et d'expiration
+  (7 jours) et leur nombre d'utilisations. Seule une empreinte
+  cryptographique du code d'invitation est conservée, jamais le code
+  lui-même ;
+- les surnoms qu'un utilisateur donne à ses amis, visibles de lui seul ;
+- les blocages : le compte bloqué et son nom affiché au moment du
+  blocage.
+
+### Signalements
+
+Lorsqu'un utilisateur en signale un autre, le serveur conserve les
+comptes de l'auteur du signalement et de la personne signalée, le nom
+affiché signalé au moment du signalement, le motif, un commentaire
+facultatif rédigé par l'auteur et, le cas échéant, l'invitation par
+laquelle la personne signalée a été vue. Les signalements servent
+uniquement à la modération du service. La personne signalée n'est pas
+prévenue, et ne sait jamais qui l'a signalée.
+
 ## 2. Utilisation des données de pas
 
 Les données de pas servent uniquement au fonctionnement de Step
@@ -117,6 +141,10 @@ nécessaires à l'application.
 
 Step Challenge ne vend pas de données personnelles.
 
+Dans l'application, le nom affiché et les nombres de pas quotidiens d'un
+utilisateur ne sont visibles que de ses amis. Le nom affiché est aussi
+visible de toute personne qui ouvre un de ses liens d'invitation.
+
 Step Challenge ne partage pas les données de pas avec des annonceurs,
 des courtiers en données ou d'autres tiers à des fins de publicité ou de
 profilage.
@@ -138,6 +166,14 @@ action supprime immédiatement et définitivement, sur le serveur, le
 compte, son nom affiché, son lien avec le compte Google, ses sessions et
 tout son historique de pas. Les données de pas enregistrées dans Santé
 Connect ou Huawei Santé sur l'appareil ne sont pas concernées.
+
+La suppression du compte supprime aussi ses amitiés, les surnoms qu'il a
+donnés et reçus, ses invitations et ses blocages.
+
+Les signalements traités sont supprimés 12 mois après leur traitement.
+Les signalements faits par un compte supprimé, ou le concernant, sont
+conservés jusque-là sans lien avec ce compte ; ils contiennent toujours
+le nom affiché signalé et le commentaire.
 
 L'utilisateur qui n'a plus accès à l'application peut demander la
 suppression de son compte et des données associées sur le serveur par
