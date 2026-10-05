@@ -28,11 +28,18 @@ export async function fakeVerifyGoogleIdToken(idToken: string) {
   }
 }
 
+/** Demo access code to pass to buildTestApp (ADR 0006). */
+export const TEST_DEMO_ACCESS_CODE = 'test-demo-access-code-0123456789'
+
 /**
  * Builds the application routes on the test database, with the fake
- * Google verifier and without the transitional API key.
+ * Google verifier and without the transitional API key. Demo access is
+ * disabled unless a code is given.
  */
-export async function buildTestApp(db: Pool) {
+export async function buildTestApp(
+  db: Pool,
+  { demoAccessCode }: { demoAccessCode?: string } = {},
+) {
   const app = Fastify()
   const requireAuth = createRequireAuth(db)
 
@@ -43,6 +50,7 @@ export async function buildTestApp(db: Pool) {
     db,
     verifyGoogleIdToken: fakeVerifyGoogleIdToken,
     requireAuth,
+    demoAccessCode,
   })
 
   await app.register(meRoutes, {

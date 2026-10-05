@@ -5,6 +5,7 @@ import path from 'node:path'
 import { createRequireAuth } from './auth/authenticate.js'
 import { createGoogleIdTokenVerifier } from './auth/google.js'
 import { checkDatabase, pool } from './db.js'
+import { parseDemoAccessCode } from './demo/demoAccount.js'
 import { registerRateLimit } from './rateLimit.js'
 import appLinkRoutes from './routes/appLinks.js'
 import authRoutes from './routes/auth.js'
@@ -26,6 +27,9 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 if (!GOOGLE_CLIENT_ID) {
   throw new Error('GOOGLE_CLIENT_ID is not configured')
 }
+
+// Demo access for store reviewers (ADR 0006): disabled when absent.
+const DEMO_ACCESS_CODE = parseDemoAccessCode(process.env.DEMO_ACCESS_CODE)
 
 // Base of the invitation links shared by users (ADR 0002).
 const PUBLIC_BASE_URL =
@@ -59,6 +63,7 @@ await app.register(authRoutes, {
     clientId: GOOGLE_CLIENT_ID,
   }),
   requireAuth,
+  demoAccessCode: DEMO_ACCESS_CODE,
 })
 
 await app.register(meRoutes, {
@@ -108,6 +113,7 @@ try {
   await checkDatabase()
 
   app.log.info('Database connection successful')
+  app.log.info(`Demo access ${DEMO_ACCESS_CODE ? 'enabled' : 'disabled'}`)
 
   await app.listen({
     host: process.env.HOST ?? '0.0.0.0',

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 
 import type { Pool } from 'pg'
 
+import { ensureDemoAccount } from '../demo/demoAccount.js'
 import type { OidcIdentity } from './google.js'
 import { createSession } from './sessions.js'
 
@@ -115,6 +116,45 @@ export async function signInWithOidc(
       !isRetry
     ) {
       return signInWithOidc(db, identity, displayName, true)
+    }
+
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+/**
+ * Opens a session on the demo account (ADR 0006), recreating it and
+ * refreshing its fictitious friends if needed. The caller has checked
+ * the demo access code.
+ */
+export async function signInDemo(
+  db: Pool,
+  isRetry = false,
+): Promise<SignInResult> {
+  const client = await db.connect()
+
+  try {
+    await client.query('BEGIN')
+
+    const user = await ensureDemoAccount(client)
+    const sessionToken = await createSession(client, user.id)
+
+    await client.query('COMMIT')
+
+    // The account exists: no display name to choose.
+    return { sessionToken, user, isNewUser: false }
+  } catch (error) {
+    await client.query('ROLLBACK')
+
+    // Two reviewers signing in at once while the account does not exist:
+    // the other request created it first. The retry finds it.
+    if (
+      isUniqueViolation(error, 'user_credentials_issuer_subject_key') &&
+      !isRetry
+    ) {
+      return signInDemo(db, true)
     }
 
     throw error
