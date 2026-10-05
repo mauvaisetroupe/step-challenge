@@ -128,14 +128,14 @@ scripts/deploy-sftp.sh
 Il a été testé avec Apache 2.4 (`AllowOverride All`, `mod_rewrite`). Sur l'hébergement, vérifier :
 
 ```bash
-HOST=https://step.architech.lu   # ou le nom temporaire de la préversion
-curl -sI $HOST/                              # 200, accueil anglais
-curl -sI $HOST/privacy.html                  # 200, sans redirection
-curl -sI $HOST/agreement.html                # 200, sans redirection
-curl -sI $HOST/delete-account.html           # 200, sans redirection
-curl -sI $HOST/fr/privacy.html               # 200
-curl -sI $HOST/i/K7F3-M9QX                   # 200, page d'invitation
-curl -sI $HOST/.well-known/assetlinks.json   # 200, Content-Type: application/json, sans redirection
+SITE=https://step.architech.lu   # ou le nom temporaire de la préversion
+curl -sI $SITE/                              # 200, accueil anglais
+curl -sI $SITE/privacy.html                  # 200, sans redirection
+curl -sI $SITE/agreement.html                # 200, sans redirection
+curl -sI $SITE/delete-account.html           # 200, sans redirection
+curl -sI $SITE/fr/privacy.html               # 200
+curl -sI $SITE/i/K7F3-M9QX                   # 200, page d'invitation
+curl -sI $SITE/.well-known/assetlinks.json   # 200, Content-Type: application/json, sans redirection
 ```
 
 Puis, pour les App Links : [Statement List Tester](https://developers.google.com/digital-asset-links/tools/generator) de Google, ou `adb shell pm get-app-links lu.architech.stepchallenge` après réinstallation de l'application.
