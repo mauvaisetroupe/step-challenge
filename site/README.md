@@ -37,7 +37,8 @@ hugo --minify      # construction complète dans site/public/ (ignoré par git)
 | `layouts/_partials/` | En-tête, pied de page, sélecteur de langue et drapeaux (SVG intégrés) |
 | `assets/css/site.css` | Feuille de style, minifiée et empreinte à la construction |
 | `i18n/` | Textes des gabarits (`en.toml`, `fr.toml`) |
-| `static/` | Copié tel quel : logo, `.htaccess`, `.well-known/assetlinks.json`, page `i/index.html` |
+| `static/` | Copié tel quel : logo, `.htaccess`, `.well-known/assetlinks.json`, page `i/index.html`, marqueur `.step-challenge-site` |
+| `scripts/deploy-sftp.sh` | Envoi du site chez OVH en SFTP (voir « Déploiement ») |
 
 ### Langues
 
@@ -77,25 +78,48 @@ Le HTML brut est désactivé dans le Markdown (`unsafe = false`) : un besoin de 
 La GitHub Action [`deploy-site.yml`](../.github/workflows/deploy-site.yml) :
 
 - sur une **pull request** qui touche `site/` : construit le site et vérifie la présence des fichiers cachés (contrôle seulement) ;
-- sur un **push sur `main`** qui touche `site/` (ou lancement manuel) : construit, puis envoie `site/public/` vers OVH en FTPS, en différentiel ([FTP-Deploy-Action](https://github.com/SamKirkland/FTP-Deploy-Action)). L'état de synchronisation (`.ftp-deploy-sync-state.json`) reste sur le serveur ; il n'est jamais commité.
+- sur un **push sur `main`** qui touche `site/` (ou lancement manuel) : construit, puis envoie `site/public/` chez OVH en **SFTP** avec [`scripts/deploy-sftp.sh`](scripts/deploy-sftp.sh) (lftp).
 
 Tant que la configuration ci-dessous n'est pas complète, l'envoi est **sauté** (avec un avertissement) : la construction tourne, rien n'est envoyé.
 
-### Secrets et variable à créer
+### Comment se passe l'envoi
+
+- **Chiffré et authentifié** : SFTP (port 22), et le serveur est reconnu par sa clé d'hôte (`SFTP_KNOWN_HOSTS`) ; une clé différente fait échouer l'envoi.
+- **Miroir** : le dossier distant devient identique à `site/public/`. Les fichiers qui ne sont plus dans le site sont **supprimés** côté serveur. Tout est renvoyé à chaque fois (quelques centaines de kilo-octets) : Hugo réécrit tous les fichiers à chaque construction.
+- **Garde-fou** : le site contient un fichier `.step-challenge-site`. Le script refuse d'envoyer dans un dossier distant qui n'est ni vide ni marqué par ce fichier : une erreur de `SITE_REMOTE_DIR` ne peut pas effacer un autre site.
+- **Rien n'est commité** par l'action.
+
+Testé contre un serveur SFTP local (authentification par mot de passe) : premier envoi, suppression d'un fichier retiré, refus d'un dossier étranger, refus d'une mauvaise clé d'hôte et d'un mauvais mot de passe.
+
+### Secrets et variables à créer
 
 GitHub → dépôt → Settings → Secrets and variables → Actions :
 
 | Nom | Type | Valeur |
 |---|---|---|
-| `FTP_SERVER` | Secret | Serveur FTP de l'hébergement OVH (espace client OVH → Hébergements → FTP - SSH), par exemple `ftp.clusterXXX.hosting.ovh.net` |
-| `FTP_USERNAME` | Secret | Utilisateur FTP. De préférence un utilisateur dédié au site, limité à son dossier |
+| `FTP_SERVER` | Secret | Serveur SFTP de l'hébergement OVH (espace client OVH → Hébergements → onglet FTP - SSH, « Serveur FTP et SFTP »), sans `sftp://` ni port |
+| `FTP_USERNAME` | Secret | Utilisateur FTP/SFTP. De préférence un utilisateur dédié au site, limité à son dossier |
 | `FTP_PASSWORD` | Secret | Mot de passe de cet utilisateur |
-| `SITE_REMOTE_DIR` | Variable | Dossier distant du site, terminé par `/`, par exemple `./step/`. Doit être la racine du multisite `step.architech.lu` dans OVH. **Ne pas** indiquer le dossier d'un autre site : l'action y supprimerait les fichiers qu'elle a elle-même envoyés |
+| `SITE_REMOTE_DIR` | Variable | Dossier distant du site, relatif au dossier de connexion, par exemple `step`. Doit être la racine du multisite du site dans OVH |
+| `SFTP_KNOWN_HOSTS` | Variable | Clé d'hôte du serveur, obtenue une fois depuis un poste de confiance : `ssh-keyscan -p 22 <serveur>` (coller toutes les lignes). Ce n'est pas un secret |
+
+Pour contrôler la clé obtenue, se connecter une fois à la main (`sftp <utilisateur>@<serveur>`) et comparer l'empreinte affichée avec `ssh-keygen -lf` sur la ligne collée.
+
+### Envoyer à la main
+
+Depuis `site/`, avec lftp installé, après `hugo --minify` :
+
+```bash
+export SFTP_HOST=… SFTP_USER=… REMOTE_DIR=step
+export SFTP_KNOWN_HOSTS="$(ssh-keyscan -p 22 "$SFTP_HOST")"
+read -rs LFTP_PASSWORD && export LFTP_PASSWORD
+scripts/deploy-sftp.sh
+```
 
 ### À vérifier au premier déploiement
 
-- **FTPS** : l'action utilise `protocol: ftps`. Si OVH refuse la connexion chiffrée (ou le certificat), ne pas repasser en FTP en clair : utiliser une action SFTP si l'offre d'hébergement le permet.
 - **Préversion** : publier d'abord sous un nom temporaire (ADR 0005, ordre de bascule), puis vérifier pages, redirections et `assetlinks.json`.
+- Que l'utilisateur SFTP arrive bien dans le dossier attendu (le chemin de `SITE_REMOTE_DIR` est relatif à son dossier de connexion).
 
 ### Vérifier le `.htaccess`
 
