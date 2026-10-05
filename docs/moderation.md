@@ -30,7 +30,10 @@ SELECT
   reporter.name                         AS signale_par,
   r.invitation_id IS NOT NULL           AS via_invitation,
   (SELECT count(*) FROM user_reports r2
-   WHERE r2.reported_id = r.reported_id) AS signalements_total
+   WHERE r2.reported_id = r.reported_id) AS signalements_total,
+  EXISTS (SELECT 1 FROM user_credentials uc
+          WHERE uc.user_id = r.reporter_id AND uc.type = 'demo')
+  OR r.reported_id::text LIKE 'de300000-0000-4000-8000-%' AS demonstration
 FROM user_reports r
 LEFT JOIN users reported ON reported.id = r.reported_id
 LEFT JOIN users reporter ON reporter.id = r.reporter_id
@@ -41,6 +44,7 @@ ORDER BY r.created_at;
 - `nom_signale` est le nom **au moment du signalement** ; `nom_actuel` peut avoir changé depuis (vide si le compte a été supprimé).
 - `signalements_total` aide à repérer un comportement répété.
 - Motifs : `offensive_name` (nom offensant), `impersonation` (usurpation d'identité), `harassment` (harcèlement), `other` (autre).
+- `demonstration` : signalement venant du compte de démonstration des examinateurs (voir plus bas).
 
 ## 2. Décider
 
@@ -109,6 +113,30 @@ SET resolved_at = now(), resolution = 'dismissed'
 WHERE id = '00000000-0000-0000-0000-000000000000'
   AND resolved_at IS NULL;
 ```
+
+## Signalements venant du compte de démonstration
+
+Les examinateurs Google et Huawei se connectent au compte de démonstration ([ADR 0006](adr/0006-review-demo-access.md)) et testent souvent le signalement. Ces signalements ne concernent aucune personne réelle : **les classer sans suite**, sans autre action.
+
+On les reconnaît (colonne `demonstration` de l'étape 1) :
+
+- à leur **auteur** : le compte qui porte l'identifiant de connexion de type `demo` ;
+- ou à la **personne signalée** : un des amis fictifs, dont les identifiants commencent par `de300000-0000-4000-8000-` (`backend/src/demo/demoData.ts`). Ce second critère reste valable quand l'examinateur a supprimé le compte de démonstration après avoir signalé (l'auteur devient alors vide).
+
+Les classer tous d'un coup :
+
+```sql
+UPDATE user_reports r
+SET resolved_at = now(), resolution = 'dismissed'
+WHERE r.resolved_at IS NULL
+  AND (
+    EXISTS (SELECT 1 FROM user_credentials uc
+            WHERE uc.user_id = r.reporter_id AND uc.type = 'demo')
+    OR r.reported_id::text LIKE 'de300000-0000-4000-8000-%'
+  );
+```
+
+Ne jamais réinitialiser le nom d'un ami fictif ni supprimer le compte de démonstration à la suite d'un signalement : la connexion de démonstration les recrée de toute façon, avec leurs données d'origine.
 
 ## 4. Historique d'un utilisateur
 
