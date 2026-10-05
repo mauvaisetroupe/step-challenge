@@ -254,7 +254,7 @@ async function getHealthConnectIntradayStats(
   })
 }
 
-async function getWebDailyStats(
+async function getDatabaseDailyStats(
   startDate: Date,
   endDate: Date,
 ): Promise<DayStat[]> {
@@ -286,7 +286,7 @@ async function getWebDailyStats(
   return days
 }
 
-async function getWebMonthlyStats(
+async function getDatabaseMonthlyStats(
   startDate: Date,
   endDate: Date,
 ): Promise<MonthStat[]> {
@@ -354,7 +354,7 @@ export default function StatsScreen() {
           endDate.setDate(endDate.getDate() + 1)
           endDate.setHours(0, 0, 0, 0)
 
-          const stats = await getWebDailyStats(
+          const stats = await getDatabaseDailyStats(
             startDate,
             endDate,
           )
@@ -377,7 +377,7 @@ export default function StatsScreen() {
             1,
           )
 
-          const stats = await getWebMonthlyStats(
+          const stats = await getDatabaseMonthlyStats(
             startDate,
             endDate,
           )
