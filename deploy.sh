@@ -52,7 +52,7 @@ curl -fsS http://127.0.0.1:3000/api/health
 echo
 echo
 echo "▶ Vérification via Cloudflare"
-curl -fsS https://step.architech.lu/api/health
+curl -fsS https://step-api.architech.lu/api/health
 
 echo
 echo

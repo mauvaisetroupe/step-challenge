@@ -39,7 +39,7 @@ Installation, lancement en local, tests, déploiement et build : voir le [README
 
 | Élément | État |
 |---|---|
-| API | https://step.architech.lu, derrière un tunnel Cloudflare. Le backend n'écoute que sur `127.0.0.1` (`HOST`) |
+| API | https://step-api.architech.lu, derrière un tunnel Cloudflare (ADR 0005). Le backend n'écoute que sur `127.0.0.1` (`HOST`). Jusqu'à la bascule vers OVH, `step.architech.lu` mène aussi au backend |
 | Base | PostgreSQL, migrations 001 à 003 appliquées. Pas encore de sauvegarde automatique |
 | Authentification ([ADR 0001](adr/0001-authentication.md)) | En production : connexion Google (OIDC), sessions de l'application |
 | Amis ([ADR 0002](adr/0002-friends.md)) | En production : invitations par lien ou code, classement entre amis, surnoms, limites de débit, App Links vérifiés |

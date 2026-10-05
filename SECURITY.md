@@ -24,6 +24,6 @@ Step Challenge est maintenu par une seule personne, sur son temps libre : ces d�
 ## Périmètre
 
 - Le code de ce dépôt (`apps/mobile`, `backend`).
-- Le service hébergé `step.architech.lu`.
+- Le service hébergé : l'API `step-api.architech.lu` et le site `step.architech.lu`.
 
 Les tests intrusifs contre le service hébergé (déni de service, accès aux données d'autres utilisateurs) ne sont pas autorisés : démontrez la vulnérabilité sur votre propre instance (le backend est auto-hébergeable, voir le README).
