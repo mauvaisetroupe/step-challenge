@@ -310,18 +310,30 @@ export default function StatsScreen() {
       //   the 1-day view stays empty.
 
       if (Platform.OS !== 'web') {
-        await initialize()
+        try {
+          await initialize()
 
-        await requestPermission([
-          {
-            accessType: 'read',
-            recordType: 'Steps',
-          },
-        ])
+          await requestPermission([
+            {
+              accessType: 'read',
+              recordType: 'Steps',
+            },
+          ])
 
-        // Sends today's Health Connect total to the backend before
-        // displaying: the 1-year view then includes today.
-        await syncTodaySteps()
+          // Sends today's Health Connect total to the backend before
+          // displaying: the 1-year view then includes today.
+          await syncTodaySteps()
+        } catch (err) {
+          // The other views need Health Connect. The 1-year view reads
+          // the database: it is shown even when Health Connect is
+          // unavailable or today's sync fails (permission refused, no
+          // network), without today's latest steps.
+          if (period !== '1y') {
+            throw err
+          }
+
+          console.error('Sync before the 1-year view failed:', err)
+        }
       }
 
       if (period === '1y') {

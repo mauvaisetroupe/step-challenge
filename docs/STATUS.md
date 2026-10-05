@@ -86,13 +86,12 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 
 - [x] **Accès de démonstration pour les examinateurs** ([ADR 0006](adr/0006-review-demo-access.md), accepté) : développé le 2026-10-05. Backend (migration 005, `POST /api/auth/demo`, compte et amis fictifs recréés et rafraîchis à chaque connexion, tests), lien « Accès démonstration » sur l'écran de connexion, [`exposure.md`](exposure.md) et [`moderation.md`](moderation.md) (signalements venant du compte de démonstration). Mise en production : voir la liste du mainteneur.
 - [x] **Données de démonstration** pour les captures d'écran : `npm run seed:demo` (voir le [README](../README.md)), pour la base de **développement** uniquement, avec le même code que l'accès de démonstration : 6 amis aux prénoms fictifs, pas crédibles sur plusieurs semaines, et en option les pas du compte lui-même.
-- [ ] **Données de démonstration** pour faire des captures d'écran propres : un script SQL pour la base de **développement** uniquement, avec des prénoms fictifs, des amitiés et des pas crédibles sur plusieurs semaines.
 - [x] **Statistiques sur un an** : depuis le 2026-10-05, la vue « 1a » de l'écran Statistiques lit la base (`GET /api/me/steps`, somme par mois dans l'application), sur Android aussi ; les vues 1j, 7j et 30j restent sur Santé Connect. Vérifié sur le web (totaux mensuels identiques à ceux de la base). **À tester sur téléphone** :
   - la vue 1a montre les mois antérieurs à la première autorisation Santé Connect (ils étaient vides) et des totaux cohérents avec le classement du mois ;
   - le mois en cours inclut les pas du jour (synchronisés à l'ouverture de l'écran) ;
   - les vues 1j, 7j et 30j n'ont pas changé ;
   - sans réseau, la vue 1a affiche une erreur (elle lisait Santé Connect hors ligne) : vérifier que le message est compréhensible ;
-  - autorisation Santé Connect refusée : la vue 1a échoue aussi, car la synchronisation du jour passe avant l'affichage ; décider si c'est acceptable.
+  - autorisation Santé Connect refusée : la vue 1a s'affiche quand même depuis la base (la synchronisation du jour n'est plus bloquante pour cette vue).
 - [ ] **Ménage des restes du modèle Expo**, à vérifier un par un avant suppression :
   - dépendances apparemment inutilisées : `expo-device`, `expo-status-bar`, `react-native-gesture-handler` ;
   - `AnimatedIcon` dans `components/animated-icon.tsx` (seul `AnimatedSplashOverlay` est utilisé), `expo-logo.png`, `logo-glow.png` ;
