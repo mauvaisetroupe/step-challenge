@@ -2,7 +2,7 @@
 
 Point d'étape pour reprendre le travail, notamment dans une nouvelle session d'assistant (Claude Code en local ou dans le cloud). À mettre à jour à chaque étape importante.
 
-**Dernière mise à jour : 2026-10-04**
+**Dernière mise à jour : 2026-10-05**
 
 ## En bref
 
@@ -65,7 +65,7 @@ Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migratio
 Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 
 - [ ] **Règle Google Play sur le contenu généré par les utilisateurs** (voir ADR 0002, section des points ouverts) : vérifier si un moyen de **signaler** un utilisateur est attendu en plus du retrait d'un ami, et mettre à jour les conditions d'utilisation (`backend/public/agreement.html`). Probablement un ADR, ou un complément à l'ADR 0002.
-- [ ] **Liste des invitations actives** dans l'écran Amis, avec révocation. Le backend existe déjà : `GET /invitations` et `DELETE /invitations/:id`.
+- [x] **Liste des invitations actives** dans l'écran Amis, avec révocation (date de création, expiration, nombre d'acceptations). Développée le 2026-10-05, à tester sur téléphone par le mainteneur.
 - [ ] **Données de démonstration** pour faire des captures d'écran propres : un script SQL pour la base de **développement** uniquement, avec des prénoms fictifs, des amitiés et des pas crédibles sur plusieurs semaines.
 - [ ] **Ménage des restes du modèle Expo**, à vérifier un par un avant suppression :
   - dépendances apparemment inutilisées : `expo-device`, `expo-status-bar`, `react-native-gesture-handler` ;
