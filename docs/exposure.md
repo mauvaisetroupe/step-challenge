@@ -14,9 +14,9 @@ Site statique généré par Hugo (`site/`). Aucun code serveur, aucune base de d
 
 | Chemin | Contenu | Pourquoi public |
 |---|---|---|
-| `/en/…`, `/fr/…` (accueil, aide, guide) | Présentation de l'application, aide (Huawei, HMS Core…), guide utilisateur | Contenu marketing et d'aide |
-| `/en/privacy/`, `/en/agreement/`, `/en/delete-account/` (et `/fr/…`) | Pages légales | Doivent être lisibles par les examinateurs Google et Huawei, partout dans le monde |
-| `/privacy.html`, `/agreement.html`, `/delete-account.html` | Redirections permanentes vers les pages anglaises | Anciennes URL déclarées dans la Play Console et chez Huawei |
+| `/`, `/help/…`, `/faq.html` et leurs équivalents `/fr/…` (accueil, aide, guide) | Présentation de l'application, aide (Huawei, HMS Core…), guide utilisateur | Contenu marketing et d'aide |
+| `/sitemap.xml`, `/robots.txt` | Liste des pages publiques pour les moteurs de recherche | Référencement du contenu public |
+| `/privacy.html`, `/agreement.html`, `/delete-account.html` (et `/fr/…`) | Pages légales, aux URL déclarées dans la Play Console et chez Huawei | Doivent être lisibles par les examinateurs Google et Huawei, partout dans le monde |
 | `/i/<code>` | Page d'atterrissage d'une invitation : explique comment installer l'application | Ouverte par un invité qui n'a pas encore l'application ni de compte. Le code n'est que dans l'adresse ; la page ne contacte aucun serveur |
 | `/.well-known/assetlinks.json` | Package et empreintes des certificats de signature (publics) | Lu par Android et les serveurs de Google pour vérifier les App Links, sans identifiant |
 

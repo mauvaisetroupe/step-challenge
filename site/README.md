@@ -20,11 +20,11 @@ Puis :
 
 ```bash
 cd site
-hugo server        # http://localhost:1313/en/, rechargé à chaque modification
+hugo server        # http://localhost:1313/, rechargé à chaque modification
 hugo --minify      # construction complète dans site/public/ (ignoré par git)
 ```
 
-`hugo server` ne lit pas le `.htaccess` : la réécriture de `/i/<code>` et les redirections des anciennes URL ne fonctionnent qu'avec Apache (voir « Vérifier le `.htaccess` »).
+`hugo server` ne lit pas le `.htaccess` : la réécriture de `/i/<code>` ne fonctionne qu'avec Apache (voir « Vérifier le `.htaccess` »).
 
 ## Structure
 
@@ -33,8 +33,8 @@ hugo --minify      # construction complète dans site/public/ (ignoré par git)
 | `hugo.toml` | Configuration : langues, adresse du site, paramètres (lien Play Store, e-mail de contact) |
 | `content/` | Pages en Markdown, une par langue : `privacy.en.md` et `privacy.fr.md` |
 | `content/help/` | Section d'aide : Santé Connect, Huawei |
-| `layouts/` | Gabarits : `baseof.html` (squelette), `home.html`, `page.html`, `section.html`, `alias.html` (redirection de `/` vers `/en/`) |
-| `layouts/_partials/` | En-tête, pied de page, sélecteur de langue et drapeaux (SVG intégrés) |
+| `layouts/` | Gabarits : `baseof.html` (squelette), `home.html`, `page.html`, `section.html`, `home.sitemapxml.xml` (sitemap), `robots.txt` |
+| `layouts/_partials/` | En-tête, pied de page, sélecteur de langue et drapeaux (SVG intégrés), `url.html` (adresse sans `index.html` final) |
 | `assets/css/site.css` | Feuille de style, minifiée et empreinte à la construction |
 | `i18n/` | Textes des gabarits (`en.toml`, `fr.toml`) |
 | `static/` | Copié tel quel : logo, `.htaccess`, `.well-known/assetlinks.json`, page `i/index.html`, marqueur `.step-challenge-site` |
@@ -42,15 +42,17 @@ hugo --minify      # construction complète dans site/public/ (ignoré par git)
 
 ### Langues
 
-- Anglais par défaut, chaque langue dans son dossier : `/en/…` et `/fr/…`. La racine `/` redirige vers `/en/`.
-- **Mêmes chemins dans les deux langues** : seul le préfixe change. Le nom du fichier fixe le chemin, le suffixe la langue.
+- Anglais, langue par défaut, **à la racine** ; français sous `/fr/`. Aucune adresse en `/en/`.
+- Adresses en `.html` (`uglyURLs`) : `content/privacy.en.md` donne `/privacy.html`, `content/privacy.fr.md` donne `/fr/privacy.html`. Les anciennes URL déclarées chez Google et Huawei sont donc les pages elles-mêmes, sans redirection. L'accueil et les index de section s'écrivent avec un `/` final (`/`, `/fr/`, `/help/`) grâce au partial `url.html`.
+- **Mêmes chemins dans les deux langues** : seul le préfixe `/fr` s'ajoute. Le nom du fichier fixe le chemin, le suffixe la langue.
+- **Sitemap unique** `/sitemap.xml` (gabarit `layouts/home.sitemapxml.xml`), avec les pages des deux langues et leurs traductions (`hreflang`), annoncé par `/robots.txt`. Il remplace celui de Hugo, qui en multilingue placerait le sitemap anglais sous `/en/`. Une nouvelle page y apparaît automatiquement.
 - Le drapeau de l'en-tête mène à la même page dans l'autre langue (`.Translations`).
 - Les versions françaises des pages légales sont des traductions ; la version anglaise fait foi (mention en tête de page).
 
 ### Fichiers particuliers de `static/`
 
 - **`.well-known/assetlinks.json`** : vérification des App Links par Android. Package et empreintes SHA-256 des clés Google Play et d'importation (voir [`docs/signing.md`](../docs/signing.md)). Doit rester identique à ce que servait `backend/src/routes/appLinks.ts`, et être servi en `application/json`, sans redirection.
-- **`.htaccess`** : règles Apache (réécriture de `/i/<code>` vers `/i/index.html`, redirections 301 des anciennes URL `.html`, type JSON).
+- **`.htaccess`** : règles Apache (réécriture de `/i/<code>` vers `/i/index.html`, type JSON pour `assetlinks.json`).
 - **`i/index.html`** : page d'un invité qui n'a pas l'application. Un script lit le code dans l'adresse ; aucune ressource externe, `noindex`, `no-referrer`, et une `Content-Security-Policy` qui interdit tout appel extérieur : le code d'invitation ne doit fuiter vers personne. Page bilingue, langue choisie d'après le navigateur.
 - **`images/logo.svg`** : dérivé de `icons/app-icon-foreground.svg` (chaussure blanche agrandie sur le fond bleu `#1389FC`). À régénérer si l'icône change.
 
@@ -118,7 +120,7 @@ scripts/deploy-sftp.sh
 
 ### À vérifier au premier déploiement
 
-- **Préversion** : publier d'abord sous un nom temporaire (ADR 0005, ordre de bascule), puis vérifier pages, redirections et `assetlinks.json`.
+- **Préversion** : publier d'abord sous un nom temporaire (ADR 0005, ordre de bascule), puis vérifier pages, anciennes URL et `assetlinks.json`.
 - Que l'utilisateur SFTP arrive bien dans le dossier attendu (le chemin de `SITE_REMOTE_DIR` est relatif à son dossier de connexion).
 
 ### Vérifier le `.htaccess`
@@ -127,10 +129,11 @@ Il a été testé avec Apache 2.4 (`AllowOverride All`, `mod_rewrite`). Sur l'h�
 
 ```bash
 HOST=https://step.architech.lu   # ou le nom temporaire de la préversion
-curl -sI $HOST/                              # 200 (redirection HTML vers /en/)
-curl -sI $HOST/privacy.html                  # 301, Location: /en/privacy/
-curl -sI $HOST/agreement.html                # 301, Location: /en/agreement/
-curl -sI $HOST/delete-account.html           # 301, Location: /en/delete-account/
+curl -sI $HOST/                              # 200, accueil anglais
+curl -sI $HOST/privacy.html                  # 200, sans redirection
+curl -sI $HOST/agreement.html                # 200, sans redirection
+curl -sI $HOST/delete-account.html           # 200, sans redirection
+curl -sI $HOST/fr/privacy.html               # 200
 curl -sI $HOST/i/K7F3-M9QX                   # 200, page d'invitation
 curl -sI $HOST/.well-known/assetlinks.json   # 200, Content-Type: application/json, sans redirection
 ```
