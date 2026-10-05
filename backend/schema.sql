@@ -1,6 +1,6 @@
 -- Step Challenge — schéma PostgreSQL complet.
 -- Pour une base neuve. Une base existante évolue via migrations/ (voir migrations/README.md).
--- Dernière migration incluse : 004_reports_and_blocks.
+-- Dernière migration incluse : 005_demo_credential.
 
 -- name est un nom affiché libre et non unique : l'identité repose sur
 -- user_credentials (ADR 0001).
@@ -23,14 +23,16 @@ CREATE TABLE daily_steps (
 );
 
 -- Identifiants de connexion (ADR 0001) : OIDC aujourd'hui, passkeys plus tard.
+-- 'demo' : compte de démonstration des examinateurs (ADR 0006).
 CREATE TABLE user_credentials (
     id           uuid        PRIMARY KEY,
     user_id      uuid        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    type         text        NOT NULL CHECK (type IN ('oidc')),
+    type         text        NOT NULL,
     issuer       text        NOT NULL,
     subject      text        NOT NULL,
     created_at   timestamptz NOT NULL DEFAULT now(),
     last_used_at timestamptz,
+    CONSTRAINT user_credentials_type_check CHECK (type IN ('oidc', 'demo')),
     CONSTRAINT user_credentials_issuer_subject_key UNIQUE (issuer, subject)
 );
 
