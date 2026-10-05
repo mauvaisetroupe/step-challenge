@@ -17,6 +17,13 @@ export type AppearancePreference = 'system' | 'light' | 'dark'
 
 export type Scheme = 'light' | 'dark'
 
+/** Names shown in Settings → Appearance. */
+export const APPEARANCE_LABELS: Record<AppearancePreference, string> = {
+  system: 'Système',
+  light: 'Clair',
+  dark: 'Sombre',
+}
+
 const STORAGE_KEY = 'appearance-preference'
 
 type ThemeContextValue = {
