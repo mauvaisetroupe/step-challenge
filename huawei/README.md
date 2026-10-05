@@ -635,7 +635,7 @@ Sans fichier de configuration (clone du dépôt public, CI), ou pour un autre pa
 
 ### Empreintes déclarées dans AppGallery Connect
 
-Les trois empreintes SHA-256 doivent être déclarées : clé de debug (builds locaux), clé d'envoi, et **clé de signature Google Play**, qui signe l'application installée depuis le Store.
+Les trois empreintes SHA-256 doivent être déclarées : clé de debug (builds locaux), clé d'envoi, et **clé de signature Google Play**, qui signe l'application installée depuis le Store. Valeurs et emplacements : voir [`docs/signing.md`](../docs/signing.md).
 
 ### Constat du 2026-10-04
 

@@ -143,6 +143,8 @@ npx eas-cli build --platform android --profile production --local
 
 Le build produit un `.aab` signé à téléverser dans la Google Play Console. Les credentials se consultent ou se modifient avec `npx eas-cli credentials`.
 
+Clés de signature, empreintes et services où elles sont déclarées (Play, connexion Google, Huawei) : voir [`docs/signing.md`](docs/signing.md).
+
 ## Licence
 
 [GNU AGPL-3.0-or-later](LICENSE), avec une permission additionnelle autorisant la liaison avec les SDK propriétaires des plateformes (Google Play services, Huawei HMS) — voir [NOTICE](NOTICE).
