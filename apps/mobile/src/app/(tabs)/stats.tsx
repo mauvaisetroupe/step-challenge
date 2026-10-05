@@ -25,7 +25,6 @@ import {
 import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
-import DayProgressRing from '@/components/stats/DayProgressRing'
 import DayTimeline from '@/components/stats/DayTimeline'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
@@ -292,9 +291,8 @@ export default function StatsScreen() {
   const [period, setPeriod] = useState<Period>('7d')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
-  // 1-day view: steps per hour (Android) and the day's total.
+  // 1-day view: steps per hour (Android).
   const [hourlySteps, setHourlySteps] = useState<number[]>([])
-  const [dayTotal, setDayTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -317,7 +315,7 @@ export default function StatsScreen() {
       //   the watch's own history: this is the only view that reads the
       //   database.
       // - On the web (no Health Connect), the views read the database;
-      //   the 1-day view shows the day's total, without hourly detail.
+      //   the 1-day view has no hourly detail.
 
       if (Platform.OS !== 'web') {
         try {
@@ -389,12 +387,7 @@ export default function StatsScreen() {
           return
         }
 
-        // 1 day: today's total only.
-        const startDate = getStartOfDay(now)
-        const endDate = getStartOfDay(getDaysAgo(now, -1))
-        const [today] = await getDatabaseDailyStats(startDate, endDate)
-
-        setDayTotal(today?.steps ?? 0)
+        // 1 day: no hourly detail on the web.
         setHourlySteps([])
         setDailyStats([])
         setMonthlyStats([])
@@ -409,7 +402,6 @@ export default function StatsScreen() {
         )
 
         setHourlySteps(hours)
-        setDayTotal(hours.reduce((total, steps) => total + steps, 0))
         setDailyStats([])
         setMonthlyStats([])
 
@@ -448,10 +440,6 @@ export default function StatsScreen() {
   }, [loadStats])
 
   const totalSteps = useMemo(() => {
-    if (period === '1d') {
-      return dayTotal
-    }
-
     if (period === '1y') {
       return monthlyStats.reduce(
         (total, item) => total + item.steps,
@@ -467,7 +455,6 @@ export default function StatsScreen() {
     period,
     dailyStats,
     monthlyStats,
-    dayTotal,
   ])
 
   return (
@@ -523,10 +510,6 @@ export default function StatsScreen() {
           </View>
         ) : period === '1d' ? (
           <>
-            <DayProgressRing steps={dayTotal} goal={DAILY_GOAL} />
-
-            <Text style={styles.sectionTitle}>Au fil de la journée</Text>
-
             <DayTimeline
               hourlySteps={hourlySteps}
               goal={DAILY_GOAL}
@@ -887,12 +870,6 @@ const createStyles = (c: Colors) =>
       fontWeight: '700',
     },
 
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: '700',
-      color: c.text,
-      marginBottom: 8,
-    },
 
     totalContainer: {
       alignItems: 'center',
