@@ -59,10 +59,9 @@ Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migratio
 - [x] Migrer le dernier testeur encore sur un ancien compte : fait le 2026-10-05. Tous les testeurs sont sur leur compte Google et amis entre eux.
 - [ ] Supprimer les exports de base faits pendant les migrations (données de santé), une fois la production stable.
 - [ ] Huawei : en attente de la validation du Health Service Kit par Huawei (voir `huawei/README.md`, section 14). Une fois la permission de test accordée, ajouter les comptes HUAWEI de test (0/100 aujourd'hui).
-- [x] **Préversion du site public** (ADR 0005, étape 2 de la bascule) : publiée le 2026-10-05 sur `https://step-preview.architech.lu` (multisite OVH, dossier `step`), déployée par la GitHub Action en SFTP. Vérifié : toutes les pages en 200 sans redirection (dont `/privacy.html`, `/agreement.html`, `/delete-account.html`), `/i/<code>` réécrit par le `.htaccess`, `assetlinks.json` en `application/json`, sitemap et `robots.txt`.
+- [x] **Préversion du site public** (ADR 0005, étape 2 de la bascule) : publiée le 2026-10-05 sur `https://step-preview.architech.lu` (multisite OVH, dossier `step`), déployée par la GitHub Action en SFTP. Vérifié : toutes les pages en 200 sans redirection (dont `/privacy.html`, `/agreement.html`, `/delete-account.html`), `/i/<code>` réécrit par le `.htaccess` et affiché correctement dans un navigateur, `assetlinks.json` en `application/json`, sitemap et `robots.txt`.
 - [ ] **Site public, suite** :
   - créer un utilisateur FTP limité au dossier `step` et l'utiliser dans les secrets (`SITE_REMOTE_DIR` = `.`) : l'utilisateur actuel voit tous les sites de l'hébergement ;
-  - vérifier dans un navigateur que `/i/<code>` affiche le code ;
   - relire les traductions françaises des pages légales, et décider si la date de mise à jour des conditions d'utilisation change avec la correction du contact (laissée au 27 septembre 2026) ;
   - régler la mise en cache Cloudflare du site (point ouvert de l'ADR 0005) ;
   - poursuivre la bascule (ADR 0005, étapes 1 et 3 à 7) : `step-api.architech.lu` dans le tunnel, version de l'application avec la nouvelle URL d'API, puis `step.architech.lu` vers OVH (même dossier `step`) et vérification des App Links.
