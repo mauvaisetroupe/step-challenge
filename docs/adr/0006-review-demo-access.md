@@ -1,6 +1,6 @@
 # ADR 0006 — Accès de démonstration pour les examinateurs
 
-- **Statut** : Proposé
+- **Statut** : Accepté
 - **Date** : 2026-10-05
 - **Décideur** : mauvaisetroupe
 - **Dépend de** : [ADR 0001 — Authentification](0001-authentication.md)
