@@ -25,13 +25,24 @@ import {
   type ActiveInvitation,
   type Friend,
 } from '../api/friends'
+import {
+  blockUser,
+  listBlocks,
+  unblockUser,
+  type BlockedUser,
+} from '../api/moderation'
+import ActionSheet from '../components/ActionSheet'
 import RenameFriendModal from '../components/RenameFriendModal'
+import ReportUserModal, {
+  type ReportTarget,
+} from '../components/ReportUserModal'
 import UserBadge from '../components/UserBadge'
 
 /**
  * Friends screen (ADR 0002): invite friends with a link, accept a code,
  * rename (alias) or remove a friend, list and revoke my active
- * invitation links. Opened from the leaderboard.
+ * invitation links. Report, block and unblock (ADR 0004). Opened from
+ * the leaderboard.
  */
 export default function FriendsScreen() {
   const [friends, setFriends] = useState<Friend[]>([])
@@ -45,6 +56,10 @@ export default function FriendsScreen() {
   const [renaming, setRenaming] = useState<Friend | null>(null)
   const [renameSaving, setRenameSaving] = useState(false)
   const [renameError, setRenameError] = useState<string | null>(null)
+  const [blocked, setBlocked] = useState<BlockedUser[]>([])
+  const [unblockingId, setUnblockingId] = useState<string | null>(null)
+  const [actionsFor, setActionsFor] = useState<Friend | null>(null)
+  const [reporting, setReporting] = useState<ReportTarget | null>(null)
 
   // A failure only hides the list: the rest of the screen still works.
   const loadInvitations = useCallback(async () => {
@@ -55,13 +70,22 @@ export default function FriendsScreen() {
     }
   }, [])
 
+  const loadBlocks = useCallback(async () => {
+    try {
+      setBlocked(await listBlocks())
+    } catch (err) {
+      console.error('Blocks load error:', err)
+    }
+  }, [])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
 
-    // Loaded independently: an invitations error must not be reported
-    // as a friends error.
+    // Loaded independently: an invitations or blocks error must not be
+    // reported as a friends error.
     loadInvitations()
+    loadBlocks()
 
     try {
       setFriends(await listFriends())
@@ -71,7 +95,7 @@ export default function FriendsScreen() {
     } finally {
       setLoading(false)
     }
-  }, [loadInvitations])
+  }, [loadInvitations, loadBlocks])
 
   // Reload when coming back, e.g. after accepting an invitation.
   useFocusEffect(
@@ -172,23 +196,100 @@ export default function FriendsScreen() {
     )
   }
 
-  const openActions = (friend: Friend) => {
-    Alert.alert(displayName(friend), undefined, [
-      {
-        text: 'Renommer',
-        onPress: () => {
-          setRenameError(null)
-          setRenaming(friend)
+  const confirmBlock = (target: { id: string; name: string }) => {
+    Alert.alert(
+      `Bloquer ${target.name} ?`,
+      `Vous ne serez plus amis, et ${target.name} ne pourra plus devenir ton ami, même avec un lien d'invitation. ${target.name} n'est pas prévenu.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Bloquer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(target.id)
+              await load()
+            } catch (err) {
+              console.error('Block error:', err)
+              setError('Impossible de bloquer cette personne.')
+            }
+          },
         },
-      },
-      {
-        text: 'Retirer',
-        style: 'destructive',
-        onPress: () => confirmRemove(friend),
-      },
-      { text: 'Annuler', style: 'cancel' },
-    ])
+      ],
+    )
   }
+
+  // After a report, blocking is offered, not automatic: one may report a
+  // name without wanting to lose a friend (ADR 0004).
+  const offerBlock = (target: ReportTarget) => {
+    Alert.alert(
+      'Merci pour ton signalement',
+      `Veux-tu aussi bloquer ${target.name} ?`,
+      [
+        { text: 'Non merci', style: 'cancel' },
+        {
+          text: 'Bloquer',
+          style: 'destructive',
+          onPress: () => confirmBlock(target),
+        },
+      ],
+    )
+  }
+
+  const confirmUnblock = (user: BlockedUser) => {
+    Alert.alert(
+      `Débloquer ${user.name} ?`,
+      'Vous ne redevenez pas amis automatiquement : il faudra un nouveau lien d\'invitation.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Débloquer',
+          onPress: async () => {
+            setUnblockingId(user.userId)
+
+            try {
+              await unblockUser(user.userId)
+            } catch (err) {
+              // Already unblocked (double tap): the reload shows it.
+              if (!(err instanceof ApiError && err.status === 404)) {
+                console.error('Unblock error:', err)
+                setError('Impossible de débloquer cette personne.')
+              }
+            } finally {
+              await loadBlocks()
+              setUnblockingId(null)
+            }
+          },
+        },
+      ],
+    )
+  }
+
+  const friendActions = (friend: Friend) => [
+    {
+      label: 'Renommer',
+      onPress: () => {
+        setRenameError(null)
+        setRenaming(friend)
+      },
+    },
+    {
+      label: 'Signaler',
+      onPress: () =>
+        setReporting({ id: friend.id, name: displayName(friend) }),
+    },
+    {
+      label: 'Bloquer',
+      destructive: true,
+      onPress: () =>
+        confirmBlock({ id: friend.id, name: displayName(friend) }),
+    },
+    {
+      label: 'Retirer',
+      destructive: true,
+      onPress: () => confirmRemove(friend),
+    },
+  ]
 
   const saveAlias = async (
     action: (friend: Friend) => Promise<unknown>,
@@ -279,7 +380,7 @@ export default function FriendsScreen() {
             <Pressable
               key={friend.id}
               style={styles.row}
-              onPress={() => openActions(friend)}
+              onPress={() => setActionsFor(friend)}
             >
               <UserBadge userId={friend.id} name={displayName(friend)} />
               <View style={styles.names}>
@@ -335,6 +436,56 @@ export default function FriendsScreen() {
           </View>
         </>
       )}
+
+      {!loading && blocked.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>
+            {`Personnes bloquées (${blocked.length})`}
+          </Text>
+          <Text style={styles.hint}>
+            Elles ne peuvent plus devenir tes amies et ne savent pas qu'elles
+            sont bloquées.
+          </Text>
+
+          <View style={styles.list}>
+            {blocked.map((user) => (
+              <View key={user.userId} style={styles.row}>
+                <View style={styles.names}>
+                  <Text style={styles.name} numberOfLines={1}>
+                    {user.name}
+                  </Text>
+                  <Text style={styles.realName} numberOfLines={1}>
+                    {`Bloqué le ${formatDate(user.since)}`}
+                  </Text>
+                </View>
+                <Pressable
+                  style={[
+                    styles.unblockButton,
+                    unblockingId === user.userId && styles.disabled,
+                  ]}
+                  onPress={() => confirmUnblock(user)}
+                  disabled={unblockingId === user.userId}
+                  hitSlop={8}
+                >
+                  <Text style={styles.unblockButtonText}>Débloquer</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+
+      <ActionSheet
+        title={actionsFor ? displayName(actionsFor) : null}
+        actions={actionsFor ? friendActions(actionsFor) : []}
+        onClose={() => setActionsFor(null)}
+      />
+
+      <ReportUserModal
+        target={reporting}
+        onClose={() => setReporting(null)}
+        onReported={offerBlock}
+      />
 
       <RenameFriendModal
         friend={renaming}
@@ -502,6 +653,17 @@ const styles = StyleSheet.create({
   revokeButton: {
     paddingVertical: 6,
     paddingHorizontal: 4,
+  },
+
+  unblockButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+
+  unblockButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#208AEF',
   },
 
   revokeButtonText: {

@@ -59,7 +59,7 @@ async function readErrorCode(response: Response) {
  * - On any other error status, throws ApiError with the backend error
  *   code (e.g. "display_name_required").
  *
- * Returns the parsed JSON body, or undefined for 204 No Content.
+ * Returns the parsed JSON body, or undefined when there is none.
  */
 export async function apiFetch<T = unknown>(
   path: string,
@@ -102,9 +102,9 @@ export async function apiFetch<T = unknown>(
     throw new ApiError(response.status, await readErrorCode(response), path)
   }
 
-  if (response.status === 204) {
-    return undefined as T
-  }
+  // Some successes have no body (204, or 201 for a created report or
+  // block): there is nothing to parse.
+  const text = await response.text()
 
-  return (await response.json()) as T
+  return (text ? JSON.parse(text) : undefined) as T
 }
