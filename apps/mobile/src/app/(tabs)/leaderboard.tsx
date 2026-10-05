@@ -95,7 +95,7 @@ export default function LeaderboardScreen() {
     // clock, battery); the tab bar handles the bottom.
     <SafeAreaView edges={['top']} style={styles.screen}>
       <TabScreenHeader
-        title="🏆 Classement"
+        title="Classement"
         right={
           <Pressable
             style={styles.friendsButton}
