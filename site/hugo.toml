@@ -1,0 +1,65 @@
+# Public site of Step Challenge (ADR 0005): https://step.architech.lu
+#
+# Built with the Hugo version pinned in .github/workflows/deploy-site.yml.
+# No theme: the templates are in layouts/.
+
+baseURL = 'https://step.architech.lu/'
+title = 'Step Challenge'
+
+# English, the default language, at the root; French under /fr/.
+defaultContentLanguage = 'en'
+
+# Pages end in .html (/privacy.html, /help/huawei.html): the addresses
+# already declared to Google and Huawei are the pages themselves, with
+# no redirect.
+uglyURLs = true
+
+# No /en/ copy of the English pages redirecting to the root.
+disableDefaultLanguageRedirect = true
+
+# Only plain pages: no tags, categories or RSS feeds. Hugo's own sitemap
+# is replaced by a single /sitemap.xml for both languages (Hugo's would
+# put the English one under /en/): see outputFormats below.
+disableKinds = ['taxonomy', 'term', 'rss', 'sitemap']
+
+# robots.txt, from layouts/robots.txt: points to the sitemap.
+enableRobotsTXT = true
+
+# Same paths in both languages: content/privacy.en.md and
+# content/privacy.fr.md become /privacy.html and /fr/privacy.html.
+
+[languages.en]
+  label = 'English'
+  locale = 'en'
+  weight = 1
+
+[languages.fr]
+  label = 'Français'
+  locale = 'fr'
+  weight = 2
+  # The sitemap is generated once, by the English home page.
+  [languages.fr.outputs]
+    home = ['html']
+
+[params]
+  description = 'Step challenges between friends'
+  playStoreUrl = 'https://play.google.com/store/apps/details?id=lu.architech.stepchallenge'
+  sourceUrl = 'https://github.com/mauvaisetroupe/step-challenge'
+  email = 'support@architech.lu'
+
+[markup.goldmark.renderer]
+  # Content is plain Markdown: no raw HTML.
+  unsafe = false
+
+
+# Single sitemap at the root, listing the pages of both languages with
+# their translations (layouts/home.sitemapxml.xml).
+[outputFormats.sitemapxml]
+  mediaType = 'application/xml'
+  baseName = 'sitemap'
+  isPlainText = true
+  notAlternative = true
+  root = true
+
+[outputs]
+  home = ['html', 'sitemapxml']

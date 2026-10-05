@@ -1,0 +1,247 @@
+/* Step Challenge public site. Light theme only, like the app. */
+
+:root {
+  color-scheme: light;
+  --blue: #1389fc;
+  --blue-dark: #0b6fd3;
+  --blue-light: #eef6ff;
+  --text: #1f2933;
+  --muted: #5f6b76;
+  --border: #e3e8ee;
+  --background: #f6f9fc;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--background);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+a {
+  color: var(--blue-dark);
+}
+
+/* Header */
+
+.site-header {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header .bar {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+}
+
+.brand img {
+  border-radius: 8px;
+}
+
+.site-header nav {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.site-header nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.site-header nav a:hover {
+  color: var(--blue-dark);
+}
+
+.lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.flag {
+  display: block;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+/* Content */
+
+.content {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.content h1 {
+  margin-top: 0;
+  line-height: 1.2;
+}
+
+.content h2 {
+  margin-top: 2rem;
+  line-height: 1.3;
+}
+
+.content h3 {
+  margin-top: 1.5rem;
+}
+
+.content li {
+  margin: 0.3rem 0;
+}
+
+.content blockquote {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--blue);
+  background: var(--blue-light);
+  border-radius: 0 8px 8px 0;
+}
+
+.content blockquote p {
+  margin: 0.4rem 0;
+}
+
+.updated {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Home */
+
+.hero {
+  text-align: center;
+  padding: 1.5rem 0 2rem;
+}
+
+.hero img {
+  border-radius: 22px;
+}
+
+.hero h1 {
+  margin: 0.75rem 0 0;
+  font-size: 2.2rem;
+}
+
+.tagline {
+  margin: 0.25rem 0 1.5rem;
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.8rem 1.4rem;
+  border-radius: 10px;
+  background: var(--blue);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: var(--blue-dark);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* Help section */
+
+.cards {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cards a {
+  display: block;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.cards a:hover {
+  border-color: var(--blue);
+}
+
+.cards span {
+  display: block;
+  color: var(--muted);
+}
+
+/* Footer */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: #fff;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.25rem;
+}
+
+.site-footer p {
+  margin: 0.75rem 0 0;
+}
+
+@media (max-width: 520px) {
+  .content {
+    padding: 1.25rem;
+  }
+
+  .lang span {
+    display: none;
+  }
+}

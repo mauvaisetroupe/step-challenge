@@ -1,0 +1,8 @@
+RewriteEngine On
+# Without this condition, /i/index.html matches the rule too and loops.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^i/[^/]+/?$ /i/index.html [L]
+
+<Files "assetlinks.json">
+  ForceType application/json
+</Files>

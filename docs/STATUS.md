@@ -12,7 +12,8 @@ Step Challenge est une application Android de défi de pas entre amis : gratuite
 |---|---|---|
 | Backend | Node.js, Fastify 5, PostgreSQL 18 | `backend/` |
 | Application | Expo SDK 57, expo-router, React Native | `apps/mobile/` |
-| Pages publiques | HTML statique servi par le backend | `backend/public/` |
+| Pages publiques (actuelles) | HTML statique servi par le backend, jusqu'à la bascule de l'ADR 0005 | `backend/public/` |
+| Site public (à publier) | Hugo, bilingue, déployé chez OVH par une GitHub Action | `site/` |
 | Icônes et visuels du Store | SVG (Inkscape) et script d'export | `icons/` |
 | Décisions d'architecture | ADR | `docs/adr/` |
 | Intégration Huawei (en pause) | Notes et plan | `huawei/README.md` |
@@ -58,6 +59,12 @@ Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migratio
 - [x] Migrer le dernier testeur encore sur un ancien compte : fait le 2026-10-05. Tous les testeurs sont sur leur compte Google et amis entre eux.
 - [ ] Supprimer les exports de base faits pendant les migrations (données de santé), une fois la production stable.
 - [ ] Huawei : en attente de la validation du Health Service Kit par Huawei (voir `huawei/README.md`, section 14). Une fois la permission de test accordée, ajouter les comptes HUAWEI de test (0/100 aujourd'hui).
+- [ ] **Site public** (ADR 0005, étape 2 de la bascule) :
+  - créer dans OVH le dossier (multisite) du site, d'abord sous un nom temporaire ;
+  - créer les secrets GitHub `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` et les variables `SITE_REMOTE_DIR` et `SFTP_KNOWN_HOSTS` (clé d'hôte, `ssh-keyscan`) : voir `site/README.md` ;
+  - vérifier le comportement réel du `.htaccess` chez OVH (testé seulement avec un Apache 2.4 local) : anciennes URL servies directement (`/privacy.html`…), réécriture de `/i/<code>`, `assetlinks.json` en `application/json` sans redirection (commandes dans `site/README.md`) ;
+  - relire les traductions françaises des pages légales, et décider si la date de mise à jour des conditions d'utilisation change avec la correction du contact (laissée au 27 septembre 2026) ;
+  - régler la mise en cache Cloudflare du site (point ouvert de l'ADR 0005).
 - [ ] Huawei : créer la variable d'environnement EAS `AGCONNECT_SERVICES_JSON` (type fichier) pour que les builds de production embarquent la configuration AppGallery Connect (voir `huawei/README.md`, section 14).
 
 ### Développement possible dans une session
@@ -69,7 +76,8 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
   - la mise en production : migration 004, déploiement du backend, puis nouvelle version de l'application (avec la nouvelle URL d'API, ADR 0005) ;
   - le formulaire Data safety (signalements), à vérifier.
 - [x] **Liste des invitations actives** dans l'écran Amis, avec révocation (date de création, expiration, nombre d'acceptations). Testée sur téléphone le 2026-10-05, livrée avec la prochaine version.
-- [ ] **Site public Hugo** ([ADR 0005](adr/0005-public-site-and-domains.md), accepté) : squelette bilingue dans `site/` (anglais par défaut, `/en/` et `/fr/`, sélecteur de langue), pages légales reprises de `backend/public/` (`/en/privacy/`…, versions françaises à traduire), aide Huawei et Santé Connect, page statique `/i/<code>`, `static/.well-known/assetlinks.json` (contenu actuel de `backend/src/routes/appLinks.ts`), `static/.htaccess` (réécriture `/i/`, redirections 301 des anciennes URL, type JSON), GitHub Action de déploiement OVH (modèle et adaptations dans l'ADR). Ne pas toucher au backend : son nettoyage vient après la bascule. Les conditions d'utilisation de l'[ADR 0004](adr/0004-user-reporting-and-blocking.md) s'écrivent directement dans le site.
+- [x] **Site public Hugo** ([ADR 0005](adr/0005-public-site-and-domains.md)) : développé le 2026-10-05 dans `site/` (voir [`site/README.md`](../site/README.md)), pas encore publié. Squelette bilingue (anglais à la racine, français sous `/fr/`, adresses en `.html` : `/privacy.html` reste l'URL de la page, sans redirection ; drapeau vers la même page), pages légales reprises de `backend/public/` et traduites (contact provisoire d'`agreement.html` remplacé par `support@architech.lu`), accueil, aide Santé Connect et Huawei (« pas encore disponible »), FAQ, page `/i/<code>`, `assetlinks.json` (identique à celui du backend), `.htaccess`, GitHub Action `deploy-site.yml` (Hugo 0.167.0, envoi en SFTP par `site/scripts/deploy-sftp.sh`, sauté tant que la configuration manque). Le `.htaccess` de l'ADR bouclait sur `/i/` (erreur 500) : corrigé, et l'ADR précisé. La section « Contenus et comportement » de l'[ADR 0004](adr/0004-user-reporting-and-blocking.md) n'est pas encore dans les conditions d'utilisation : elle sera publiée avec la version de l'application qui contient le signalement et le blocage.
+
 - [ ] **Données de démonstration** pour faire des captures d'écran propres : un script SQL pour la base de **développement** uniquement, avec des prénoms fictifs, des amitiés et des pas crédibles sur plusieurs semaines.
 - [ ] **Ménage des restes du modèle Expo**, à vérifier un par un avant suppression :
   - dépendances apparemment inutilisées : `expo-device`, `expo-status-bar`, `react-native-gesture-handler` ;

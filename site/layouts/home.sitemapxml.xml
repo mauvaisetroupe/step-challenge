@@ -1,0 +1,17 @@
+{{- /* Single sitemap for both languages, with hreflang alternates. */ -}}
+{{ printf "<?xml version=\"1.0\" encoding=\"utf-8\"?>" | safeHTML }}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+{{- range hugo.Sites }}
+  {{- range .Pages }}
+  <url>
+    <loc>{{ partial "url.html" .Permalink }}</loc>
+    {{- if not .Lastmod.IsZero }}
+    <lastmod>{{ .Lastmod.Format "2006-01-02" }}</lastmod>
+    {{- end }}
+    {{- range .AllTranslations }}
+    <xhtml:link rel="alternate" hreflang="{{ .Language.Lang }}" href="{{ partial "url.html" .Permalink }}"/>
+    {{- end }}
+  </url>
+  {{- end }}
+{{- end }}
+</urlset>

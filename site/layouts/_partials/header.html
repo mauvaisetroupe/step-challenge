@@ -1,0 +1,17 @@
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="{{ partial "url.html" site.Home.RelPermalink }}">
+      <img src="{{ "images/logo.svg" | relURL }}" alt="" width="36" height="36">
+      <span>{{ site.Title }}</span>
+    </a>
+    <nav aria-label="{{ T "navLabel" }}">
+      {{- with site.GetPage "/help" }}
+      <a href="{{ partial "url.html" .RelPermalink }}">{{ T "help" }}</a>
+      {{- end }}
+      {{- with site.GetPage "/faq" }}
+      <a href="{{ .RelPermalink }}">{{ T "faq" }}</a>
+      {{- end }}
+      {{ partial "language-switch.html" . }}
+    </nav>
+  </div>
+</header>

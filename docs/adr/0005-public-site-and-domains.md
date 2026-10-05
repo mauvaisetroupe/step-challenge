@@ -58,7 +58,7 @@ Site Hugo chez OVH sous `stepchallenge.architech.lu` ; `step.architech.lu` garde
 `step.architech.lu` est servi par OVH (site Hugo, pages légales aux mêmes URL, invitations, App Links) ; l'API passe sur `step-api.architech.lu`, seul nom servi par le home lab.
 
 - ✅ Respecte la règle : le home lab ne sert plus que l'API.
-- ✅ Les URL déclarées restent valides (redirection vers les nouvelles pages) ; les App Links restent valides (même nom, nouvel hébergeur).
+- ✅ Les URL déclarées restent valides (ce sont les pages elles-mêmes, voir « Site Hugo ») ; les App Links restent valides (même nom, nouvel hébergeur).
 - ✅ Les invités ne touchent plus le home lab.
 - ❌ Une nouvelle version de l'application (nouvelle URL d'API), et une bascule à orchestrer.
 - ❌ La page `/i/<code>` devient statique : plus de vérification côté serveur de l'existence du code (l'application le vérifie à l'ouverture).
@@ -81,10 +81,13 @@ Sous-domaine **à un seul niveau** pour l'API : le certificat Cloudflare gratuit
 ### Site Hugo
 
 - Dans le dépôt, sous `site/` ; version de Hugo figée (dans la GitHub Action).
-- **Langues** : anglais (langue par défaut) et français, chacune dans son dossier (`defaultContentLanguageInSubdir`) : `/en/…` et `/fr/…`. La racine `/` redirige vers `/en/`. Un sélecteur de langue (drapeau) dans l'en-tête mène à la même page dans l'autre langue.
-- **Mêmes chemins dans les deux langues** : seul le préfixe change (`/en/privacy/`, `/fr/privacy/`, `/en/help/huawei/`, `/fr/help/huawei/`). Pas de chemins traduits.
-- **Pages légales** : `/en/privacy/`, `/en/agreement/`, `/en/delete-account/` et leurs équivalents `/fr/…`. Les conditions d'utilisation de l'ADR 0004 y sont rédigées directement.
-- **Anciennes URL** (déclarées chez Google et Huawei) : redirection permanente par Apache, dans le `.htaccess` : `/privacy.html` → `/en/privacy/`, `/agreement.html` → `/en/agreement/`, `/delete-account.html` → `/en/delete-account/`. Une vraie redirection HTTP (301), plutôt que les pages de redirection HTML de Hugo (`aliases`), que certains robots suivent mal. Les URL déclarées dans les consoles seront mises à jour plus tard, sans urgence (après l'examen Huawei en cours).
+*Révisé le 2026-10-05 pendant l'implémentation.* La version initiale plaçait chaque langue dans son dossier (`/en/…`, `/fr/…`), la racine redirigeant vers `/en/`, et redirigeait les anciennes URL `.html` vers `/en/…` par des 301. Elle est abandonnée au profit du fonctionnement par défaut de Hugo (langue principale à la racine) et d'adresses en `.html` : les URL déclarées chez Google et Huawei sont alors les pages elles-mêmes, sans redirection ni exception à maintenir.
+
+- **Langues** : anglais (langue par défaut) **à la racine**, français sous `/fr/`. Pas de `/en/` dans les adresses. Un sélecteur de langue (drapeau) dans l'en-tête mène à la même page dans l'autre langue.
+- **Adresses en `.html`** (`uglyURLs`) : `/privacy.html`, `/help/huawei.html`, `/faq.html`. L'accueil est `/` et les index de section se terminent par `/` (`/help/`).
+- **Sitemap** : un seul `/sitemap.xml` pour les deux langues, avec les traductions (`hreflang`), annoncé par `/robots.txt` (le sitemap multilingue de Hugo placerait l'anglais sous `/en/`).
+- **Mêmes chemins dans les deux langues** : seul le préfixe `/fr` s'ajoute (`/privacy.html`, `/fr/privacy.html`, `/help/huawei.html`, `/fr/help/huawei.html`). Pas de chemins traduits.
+- **Pages légales** : `/privacy.html`, `/agreement.html`, `/delete-account.html` et leurs équivalents `/fr/…`. Ce sont **exactement les URL déjà déclarées** dans la Play Console et chez Huawei : rien à rediriger, rien à mettre à jour dans les consoles. Les conditions d'utilisation de l'ADR 0004 y sont rédigées directement.
 - **Contenu initial** : accueil, aide Huawei (AppGallery, HMS Core, Huawei Santé, compte HUAWEI), aide Santé Connect, foire aux questions.
 - **Pas de service tiers** : ni statistiques, ni polices ou scripts externes. Aucun cookie.
 - **Thème** : à choisir ; de préférence un thème minimal ou des gabarits maison, pour ne pas dépendre d'un thème tiers.
@@ -96,16 +99,15 @@ Sous-domaine **à un seul niveau** pour l'API : le certificat Cloudflare gratuit
 
   ```apache
   RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^i/[^/]+/?$ /i/index.html [L]
-
-  Redirect 301 /privacy.html /en/privacy/
-  Redirect 301 /agreement.html /en/agreement/
-  Redirect 301 /delete-account.html /en/delete-account/
 
   <Files "assetlinks.json">
     ForceType application/json
   </Files>
   ```
+
+  *Précisé le 2026-10-05 à l'implémentation :* la condition `RewriteCond %{REQUEST_FILENAME} !-f` est nécessaire. Sans elle, `/i/index.html` correspond aussi à la règle : Apache la réapplique en boucle et toute adresse `/i/…` renvoie une erreur 500 (constaté avec Apache 2.4).
 
 - `/i/index.html` : page fixe ; un script lit le code dans l'adresse pour le bouton « Ouvrir dans l'application », avec le lien vers le Play Store. `noindex`, `<meta name="referrer" content="no-referrer">`, aucune ressource externe (le code d'invitation ne doit fuiter vers personne).
 - Le nom de l'invitant n'est plus affiché sur la page web (la page actuelle ne l'affiche pas non plus) ; l'application l'affiche après ouverture.
@@ -121,6 +123,7 @@ Sous-domaine **à un seul niveau** pour l'API : le certificat Cloudflare gratuit
   - vérifier que `.htaccess` et `.well-known/` sont envoyés (exclusions par défaut de l'action) ;
   - **pas de commit de l'état de synchronisation** dans le dépôt depuis la CI : l'action conserve déjà son état sur le serveur (`.ftp-deploy-sync-state.json`), et un commit automatique sur `main` entrerait en concurrence avec les push du mainteneur ;
   - secrets du dépôt : `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` ; dossier distant dédié au site sur l'hébergement OVH.
+- *Précisé le 2026-10-05 à l'implémentation :* l'hébergement OVH propose SFTP (port 22) ; l'envoi se fait donc en **SFTP** avec lftp (`site/scripts/deploy-sftp.sh`) plutôt qu'avec `FTP-Deploy-Action`. Le dossier distant est un miroir du site généré (fichiers retirés supprimés, tout renvoyé à chaque fois), la clé d'hôte du serveur est vérifiée (variable `SFTP_KNOWN_HOSTS`), et le script refuse un dossier distant non vide qui ne porte pas le marqueur `.step-challenge-site`. Variables du dépôt en plus des trois secrets : `SITE_REMOTE_DIR` et `SFTP_KNOWN_HOSTS`. Voir `site/README.md`.
 - **Préversion** : avant la bascule, le site est publié sous un nom temporaire pour vérification.
 
 ### Backend
@@ -140,7 +143,7 @@ Sous-domaine **à un seul niveau** pour l'API : le certificat Cloudflare gratuit
 2. Publier le site Hugo chez OVH sous un nom temporaire ; vérifier pages, `.htaccess`, `assetlinks.json`.
 3. Publier la version de l'application qui utilise `step-api.architech.lu` ; attendre que les testeurs l'aient installée.
 4. Faire pointer `step.architech.lu` vers OVH ; retirer ce nom du tunnel.
-5. Vérifier : App Links (`adb shell pm get-app-links`, après réinstallation ou nouvelle vérification), pages légales et redirections des anciennes URL, `/i/<code>` avec et sans l'application.
+5. Vérifier : App Links (`adb shell pm get-app-links`, après réinstallation ou nouvelle vérification), pages légales aux anciennes URL (`/privacy.html`…), `/i/<code>` avec et sans l'application.
 6. Nettoyer le backend (routes et dossier statiques).
 7. Éventuellement, filtrer `step-api.architech.lu` par pays dans Cloudflare (voir les points ouverts).
 

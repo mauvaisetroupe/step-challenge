@@ -1,0 +1,5 @@
+{{- /*
+  Address of a page without a trailing index.html (uglyURLs writes
+  /index.html, /fr/index.html, /help/index.html): / , /fr/ , /help/.
+*/ -}}
+{{- return strings.TrimSuffix "index.html" . -}}

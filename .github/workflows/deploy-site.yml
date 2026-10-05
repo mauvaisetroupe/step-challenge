@@ -1,0 +1,92 @@
+# Public site (ADR 0005): builds site/ with Hugo and uploads it to the OVH
+# web hosting over SFTP. See site/README.md for the secrets and variables to set.
+#
+# - Pull request touching site/: build only, as a check.
+# - Push to main touching site/: build, then upload. The upload is skipped
+#   (with a notice) until the secrets and the remote folder are configured.
+
+name: Public site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy-site.yml'
+  pull_request:
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy-site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never two uploads at the same time; a newer push waits for the current one.
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          # Pinned for reproducible builds: update it on purpose, after
+          # building locally with the same version (site/README.md).
+          hugo-version: '0.167.0'
+
+      - name: Build
+        run: hugo --minify --gc
+
+      - name: Check generated files
+        # Hidden files are easy to lose: Apache rules and App Links.
+        run: |
+          test -f public/.htaccess
+          test -f public/.well-known/assetlinks.json
+          test -f public/i/index.html
+          test -f public/.step-challenge-site
+          test -f public/sitemap.xml
+          # English is at the root: no /en/ folder.
+          test ! -e public/en
+          python3 -m json.tool public/.well-known/assetlinks.json > /dev/null
+
+      - name: Check deployment configuration
+        id: config
+        if: github.event_name != 'pull_request'
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          SITE_REMOTE_DIR: ${{ vars.SITE_REMOTE_DIR }}
+          SFTP_KNOWN_HOSTS: ${{ vars.SFTP_KNOWN_HOSTS }}
+        run: |
+          if [ -n "$FTP_SERVER" ] && [ -n "$FTP_USERNAME" ] && [ -n "$FTP_PASSWORD" ] && [ -n "$SITE_REMOTE_DIR" ] && [ -n "$SFTP_KNOWN_HOSTS" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Upload skipped: set the FTP_SERVER, FTP_USERNAME and FTP_PASSWORD secrets and the SITE_REMOTE_DIR and SFTP_KNOWN_HOSTS variables (see site/README.md)."
+          fi
+
+      - name: Install lftp
+        if: steps.config.outputs.ready == 'true'
+        run: sudo apt-get update -q && sudo apt-get install -y -q lftp
+
+      - name: Upload to OVH (SFTP)
+        if: steps.config.outputs.ready == 'true'
+        # SFTP: encrypted, and the server is authenticated by its host key.
+        # The remote folder is mirrored (removed pages are deleted); the
+        # script refuses a folder that is not empty and not marked as ours.
+        env:
+          SFTP_HOST: ${{ secrets.FTP_SERVER }}
+          SFTP_USER: ${{ secrets.FTP_USERNAME }}
+          LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          SFTP_KNOWN_HOSTS: ${{ vars.SFTP_KNOWN_HOSTS }}
+          REMOTE_DIR: ${{ vars.SITE_REMOTE_DIR }}
+        run: scripts/deploy-sftp.sh
