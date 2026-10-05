@@ -37,6 +37,11 @@ import {
   configureHuaweiHealth,
 } from '../../services/huaweiHealth'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import {
+  openPublicPage,
+  PRIVACY_URL,
+  TERMS_URL,
+} from '../../constants/links'
 
 type BackgroundSyncStatus = {
   history: BackgroundSyncRun[]
@@ -446,6 +451,32 @@ export default function SettingsScreen() {
             </View>
           )}
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Informations légales
+          </Text>
+
+          <Pressable
+            style={styles.legalLink}
+            onPress={() => openPublicPage(TERMS_URL)}
+          >
+            <Text style={styles.legalLinkText}>
+              Conditions d'utilisation
+            </Text>
+            <Text style={styles.legalLinkChevron}>›</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.legalLink}
+            onPress={() => openPublicPage(PRIVACY_URL)}
+          >
+            <Text style={styles.legalLinkText}>
+              Politique de confidentialité
+            </Text>
+            <Text style={styles.legalLinkChevron}>›</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
@@ -738,6 +769,25 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E5E7EB',
     marginVertical: 12,
+  },
+
+  legalLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 48,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E7EB',
+  },
+
+  legalLinkText: {
+    fontSize: 16,
+    color: '#111827',
+  },
+
+  legalLinkChevron: {
+    fontSize: 22,
+    color: '#9CA3AF',
   },
 
   generatedAt: {

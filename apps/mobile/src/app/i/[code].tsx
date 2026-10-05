@@ -14,7 +14,11 @@ import {
   previewInvitation,
   type InvitationPreview,
 } from '../../api/friends'
+import { blockUser } from '../../api/moderation'
 import { getSessionToken } from '../../auth/session'
+import ReportUserModal, {
+  type ReportTarget,
+} from '../../components/ReportUserModal'
 import UserBadge from '../../components/UserBadge'
 
 type State =
@@ -24,6 +28,7 @@ type State =
   | { name: 'ready'; preview: InvitationPreview }
   | { name: 'accepting'; preview: InvitationPreview }
   | { name: 'accepted'; friendName: string }
+  | { name: 'blocked'; inviterName: string }
 
 function errorMessage(error: unknown) {
   if (error instanceof ApiError) {
@@ -45,11 +50,14 @@ function errorMessage(error: unknown) {
 /**
  * Invitation screen (ADR 0002), opened by an invitation link
  * (https://step.architech.lu/i/K7F3-M9QX, or stepchallenge-dev://i/…
- * in development) or by a code typed in the friends screen.
+ * in development) or by a code typed in the friends screen. The inviter
+ * may be a stranger (a link that circulated): they can be reported and
+ * blocked without accepting (ADR 0004).
  */
 export default function InvitationScreen() {
   const { code } = useLocalSearchParams<{ code: string }>()
   const [state, setState] = useState<State>({ name: 'loading' })
+  const [reporting, setReporting] = useState<ReportTarget | null>(null)
 
   const load = useCallback(async () => {
     setState({ name: 'loading' })
@@ -99,6 +107,12 @@ export default function InvitationScreen() {
 
   const goToLeaderboard = () => router.replace('/leaderboard')
 
+  // Offered by the report modal once the report is sent.
+  const blockInviter = async (target: ReportTarget) => {
+    await blockUser(target.id)
+    setState({ name: 'blocked', inviterName: target.name })
+  }
+
   if (state.name === 'loading') {
     return (
       <View style={styles.center}>
@@ -128,6 +142,21 @@ export default function InvitationScreen() {
         <Text style={styles.error}>{state.message}</Text>
         <Pressable style={styles.primaryButton} onPress={load}>
           <Text style={styles.primaryButtonText}>Réessayer</Text>
+        </Pressable>
+      </View>
+    )
+  }
+
+  if (state.name === 'blocked') {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{state.inviterName} est bloqué·e</Text>
+        <Text style={styles.text}>
+          Cette personne ne pourra pas devenir ton amie. Tu peux la débloquer
+          depuis l'écran Amis.
+        </Text>
+        <Pressable style={styles.secondaryButton} onPress={goToLeaderboard}>
+          <Text style={styles.secondaryButtonText}>Retour au classement</Text>
         </Pressable>
       </View>
     )
@@ -201,6 +230,29 @@ export default function InvitationScreen() {
           </Pressable>
         </>
       )}
+
+      {!preview.isOwnInvitation && (
+        <Pressable
+          style={styles.reportLink}
+          onPress={() =>
+            setReporting({
+              id: preview.inviter.id,
+              name: preview.inviter.name,
+              invitationCode: code,
+            })
+          }
+          disabled={accepting}
+          hitSlop={8}
+        >
+          <Text style={styles.reportLinkText}>Signaler cette invitation</Text>
+        </Pressable>
+      )}
+
+      <ReportUserModal
+        target={reporting}
+        onClose={() => setReporting(null)}
+        onBlock={blockInviter}
+      />
     </View>
   )
 }
@@ -281,6 +333,17 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontSize: 15,
     fontWeight: '600',
+  },
+
+  reportLink: {
+    marginTop: 24,
+    alignSelf: 'center',
+  },
+
+  reportLinkText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textDecorationLine: 'underline',
   },
 
   disabled: {

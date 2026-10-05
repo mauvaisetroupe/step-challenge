@@ -16,6 +16,7 @@ import {
   isGoogleSignInSupported,
   signInWithGoogle,
 } from '../auth/google'
+import { openPublicPage, TERMS_URL } from '../constants/links'
 
 const MAX_DISPLAY_NAME_LENGTH = 50
 
@@ -191,6 +192,19 @@ export default function SignInScreen() {
                 {loading ? 'Création...' : 'Continuer'}
               </Text>
             </TouchableOpacity>
+
+            {/* Terms accepted before the display name, the only content a
+                user creates, is visible to others (ADR 0004). */}
+            <Text style={styles.terms}>
+              En créant ton compte, tu acceptes les{' '}
+              <Text
+                style={styles.termsLink}
+                onPress={() => openPublicPage(TERMS_URL)}
+              >
+                conditions d'utilisation
+              </Text>
+              .
+            </Text>
           </>
         )}
 
@@ -247,6 +261,19 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 14,
     marginBottom: 12,
+  },
+
+  terms: {
+    marginTop: 14,
+    color: '#6B7280',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+
+  termsLink: {
+    color: '#208AEF',
+    textDecorationLine: 'underline',
   },
 
   input: {
