@@ -216,11 +216,11 @@ Les testeurs actuels voient déjà tous les pas des autres dans le classement gl
 - Groupes de défi (défis datés, objectifs collectifs), construits plus tard au-dessus du graphe d'amis.
 - Notifications (nouvel ami, dépassement au classement).
 - Visibilité différenciée par ami (masquer ses pas à un ami sans le retirer).
-- Blocage d'un utilisateur au-delà du retrait et de la révocation des invitations.
+- Blocage d'un utilisateur au-delà du retrait et de la révocation des invitations (voir l'[ADR 0004](0004-user-reporting-and-blocking.md)).
 
 ## Points ouverts
 
 - **Durée de validité** : 7 jours, à ajuster à l'usage.
 - **Plafonds** (10 invitations actives, 200 amis) : à ajuster à l'usage.
 - **Configuration Expo des App Links** : `android.intentFilters` dans `app.json`, à vérifier dans la documentation SDK 57.
-- **Règle Google Play sur le contenu généré par les utilisateurs** : les noms affichés sont visibles par d'autres utilisateurs. La règle demande des conditions d'utilisation interdisant les contenus offensants et un moyen de signaler ou bloquer un utilisateur. Le retrait d'un ami couvre en partie le blocage ; vérifier si un signalement est attendu et mettre à jour les conditions d'utilisation (`agreement.html`).
+- ~~**Règle Google Play sur le contenu généré par les utilisateurs**~~ : traité par l'[ADR 0004 — Signalement et blocage des utilisateurs](0004-user-reporting-and-blocking.md).
