@@ -53,6 +53,9 @@ jobs:
           test -f public/.well-known/assetlinks.json
           test -f public/i/index.html
           test -f public/.step-challenge-site
+          test -f public/sitemap.xml
+          # English is at the root: no /en/ folder.
+          test ! -e public/en
           python3 -m json.tool public/.well-known/assetlinks.json > /dev/null
 
       - name: Check deployment configuration

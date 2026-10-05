@@ -17,9 +17,13 @@ uglyURLs = true
 # No /en/ copy of the English pages redirecting to the root.
 disableDefaultLanguageRedirect = true
 
-# Only plain pages: no tags, categories, RSS feeds or sitemap (the
-# multilingual sitemap would live under /en/).
+# Only plain pages: no tags, categories or RSS feeds. Hugo's own sitemap
+# is replaced by a single /sitemap.xml for both languages (Hugo's would
+# put the English one under /en/): see outputFormats below.
 disableKinds = ['taxonomy', 'term', 'rss', 'sitemap']
+
+# robots.txt, from layouts/robots.txt: points to the sitemap.
+enableRobotsTXT = true
 
 # Same paths in both languages: content/privacy.en.md and
 # content/privacy.fr.md become /privacy.html and /fr/privacy.html.
@@ -33,6 +37,9 @@ disableKinds = ['taxonomy', 'term', 'rss', 'sitemap']
   label = 'Français'
   locale = 'fr'
   weight = 2
+  # The sitemap is generated once, by the English home page.
+  [languages.fr.outputs]
+    home = ['html']
 
 [params]
   description = 'Step challenges between friends'
@@ -44,3 +51,15 @@ disableKinds = ['taxonomy', 'term', 'rss', 'sitemap']
   # Content is plain Markdown: no raw HTML.
   unsafe = false
 
+
+# Single sitemap at the root, listing the pages of both languages with
+# their translations (layouts/home.sitemapxml.xml).
+[outputFormats.sitemapxml]
+  mediaType = 'application/xml'
+  baseName = 'sitemap'
+  isPlainText = true
+  notAlternative = true
+  root = true
+
+[outputs]
+  home = ['html', 'sitemapxml']
