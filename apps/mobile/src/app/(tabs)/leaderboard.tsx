@@ -360,10 +360,12 @@ const createStyles = (c: Colors) =>
     periodText: {
       fontSize: 15,
       fontWeight: '500',
+      color: c.textSecondary,
     },
 
     periodTextActive: {
       fontWeight: '700',
+      color: c.text,
     },
 
     refreshRow: {
@@ -389,17 +391,20 @@ const createStyles = (c: Colors) =>
     refreshIcon: {
       fontSize: 22,
       lineHeight: 24,
+      color: c.text,
     },
 
     refreshText: {
       fontSize: 15,
       fontWeight: '600',
+      color: c.text,
     },
 
     periodTitle: {
       fontSize: 20,
       fontWeight: '700',
       marginBottom: 12,
+      color: c.text,
     },
 
     list: {
@@ -442,16 +447,19 @@ const createStyles = (c: Colors) =>
     rankNumber: {
       fontSize: 16,
       fontWeight: '600',
+      color: c.text,
     },
 
     name: {
       fontSize: 16,
       fontWeight: '600',
+      color: c.text,
     },
 
     steps: {
       fontSize: 14,
       fontWeight: '600',
+      color: c.text,
     },
 
     center: {
@@ -463,6 +471,7 @@ const createStyles = (c: Colors) =>
       fontSize: 15,
       textAlign: 'center',
       marginBottom: 15,
+      color: c.danger,
     },
 
     retryButton: {
