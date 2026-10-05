@@ -1,6 +1,11 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+// Android: an Alert opened while a Modal is closing is attached to the
+// closing window and disappears with it (Modal onDismiss is iOS only).
+// The action runs once the slide animation is over.
+const DISMISS_DELAY_MS = 300
+
 export type Action = {
   label: string
   onPress: () => void
@@ -48,7 +53,7 @@ export default function ActionSheet({
               style={styles.action}
               onPress={() => {
                 onClose()
-                action.onPress()
+                setTimeout(action.onPress, DISMISS_DELAY_MS)
               }}
             >
               <Text

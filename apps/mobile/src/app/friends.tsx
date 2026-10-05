@@ -219,21 +219,10 @@ export default function FriendsScreen() {
     )
   }
 
-  // After a report, blocking is offered, not automatic: one may report a
-  // name without wanting to lose a friend (ADR 0004).
-  const offerBlock = (target: ReportTarget) => {
-    Alert.alert(
-      'Merci pour ton signalement',
-      `Veux-tu aussi bloquer ${target.name} ?`,
-      [
-        { text: 'Non merci', style: 'cancel' },
-        {
-          text: 'Bloquer',
-          style: 'destructive',
-          onPress: () => confirmBlock(target),
-        },
-      ],
-    )
+  // Offered by the report modal once the report is sent.
+  const blockReported = async (target: ReportTarget) => {
+    await blockUser(target.id)
+    await load()
   }
 
   const confirmUnblock = (user: BlockedUser) => {
@@ -484,7 +473,7 @@ export default function FriendsScreen() {
       <ReportUserModal
         target={reporting}
         onClose={() => setReporting(null)}
-        onReported={offerBlock}
+        onBlock={blockReported}
       />
 
       <RenameFriendModal
