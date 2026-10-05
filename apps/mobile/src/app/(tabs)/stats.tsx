@@ -174,57 +174,6 @@ async function getHealthConnectDailyStats(
   return days
 }
 
-async function getHealthConnectMonthlyStats(
-  startDate: Date,
-  endDate: Date,
-): Promise<MonthStat[]> {
-  const result = await aggregateGroupByPeriod({
-    recordType: 'Steps',
-    timeRangeFilter: {
-      operator: 'between',
-      startTime: startDate.toISOString(),
-      endTime: endDate.toISOString(),
-    },
-      timeRangeSlicer: {
-        period: 'MONTHS',
-        length: 1,
-      },
-  })
-
-  const stats = new Map<string, number>()
-
-  for (const bucket of result) {
-    const date = new Date(bucket.startTime)
-    const key = `${date.getFullYear()}-${String(
-      date.getMonth() + 1,
-    ).padStart(2, '0')}`
-
-    stats.set(
-      key,
-      Number(bucket.result?.COUNT_TOTAL ?? 0),
-    )
-  }
-
-  const months: MonthStat[] = []
-
-  const current = new Date(startDate)
-
-  while (current < endDate) {
-    const key = `${current.getFullYear()}-${String(
-      current.getMonth() + 1,
-    ).padStart(2, '0')}`
-
-    months.push({
-      date: formatDateKey(current),
-      steps: stats.get(key) ?? 0,
-    })
-
-    current.setMonth(current.getMonth() + 1)
-  }
-
-  return months
-}
-
 async function getHealthConnectIntradayStats(
   startDate: Date,
   endDate: Date,
@@ -254,7 +203,7 @@ async function getHealthConnectIntradayStats(
   })
 }
 
-async function getWebDailyStats(
+async function getDatabaseDailyStats(
   startDate: Date,
   endDate: Date,
 ): Promise<DayStat[]> {
@@ -286,7 +235,7 @@ async function getWebDailyStats(
   return days
 }
 
-async function getWebMonthlyStats(
+async function getDatabaseMonthlyStats(
   startDate: Date,
   endDate: Date,
 ): Promise<MonthStat[]> {
@@ -346,6 +295,58 @@ export default function StatsScreen() {
     try {
       const now = new Date()
 
+      // Source of each view:
+      //
+      // - 1 day, 7 days, 30 days: Health Connect, on Android. It is the
+      //   reference for recent days and gives the hourly detail.
+      // - 1 year: the Step Challenge database (GET /api/me/steps), on
+      //   Android too, summed per month here. Health Connect only lets an
+      //   app read data from 30 days before its first permission, and its
+      //   history does not follow the user to a new phone: a year read
+      //   from it would be wrong. Step Challenge does not try to replace
+      //   the watch's own history: this is the only view that reads the
+      //   database.
+      // - On the web (no Health Connect), the views read the database;
+      //   the 1-day view stays empty.
+
+      if (Platform.OS !== 'web') {
+        await initialize()
+
+        await requestPermission([
+          {
+            accessType: 'read',
+            recordType: 'Steps',
+          },
+        ])
+
+        // Sends today's Health Connect total to the backend before
+        // displaying: the 1-year view then includes today.
+        await syncTodaySteps()
+      }
+
+      if (period === '1y') {
+        const startDate = getMonthsAgo(
+          getMonthStart(now),
+          11,
+        )
+        const endDate = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          1,
+        )
+
+        const stats = await getDatabaseMonthlyStats(
+          startDate,
+          endDate,
+        )
+
+        setMonthlyStats(stats)
+        setDailyStats([])
+        setIntradayStats([])
+
+        return
+      }
+
       if (Platform.OS === 'web') {
         if (period === '7d' || period === '30d') {
           const days = period === '7d' ? 7 : 30
@@ -354,7 +355,7 @@ export default function StatsScreen() {
           endDate.setDate(endDate.getDate() + 1)
           endDate.setHours(0, 0, 0, 0)
 
-          const stats = await getWebDailyStats(
+          const stats = await getDatabaseDailyStats(
             startDate,
             endDate,
           )
@@ -366,48 +367,12 @@ export default function StatsScreen() {
           return
         }
 
-        if (period === '1y') {
-          const startDate = getMonthsAgo(
-            getMonthStart(now),
-            11,
-          )
-          const endDate = new Date(
-            now.getFullYear(),
-            now.getMonth() + 1,
-            1,
-          )
-
-          const stats = await getWebMonthlyStats(
-            startDate,
-            endDate,
-          )
-
-          setMonthlyStats(stats)
-          setDailyStats([])
-          setIntradayStats([])
-
-          return
-        }
-
         setDailyStats([])
         setMonthlyStats([])
         setIntradayStats([])
 
         return
       }
-
-      await initialize()
-
-      await requestPermission([
-        {
-          accessType: 'read',
-          recordType: 'Steps',
-        },
-      ])
-
-      // Synchronise Health Connect avec le backend 
-      // avant de charger les statistiques.
-     await syncTodaySteps()
 
       if (period === '1d') {
         const startDate = getStartOfDay(now)
@@ -424,42 +389,19 @@ export default function StatsScreen() {
         return
       }
 
-      if (period === '7d' || period === '30d') {
-        const days = period === '7d' ? 7 : 30
-        const startDate = getStartOfDay(
-          getDaysAgo(now, days - 1),
-        )
-        const endDate = new Date(now)
-
-        const stats = await getHealthConnectDailyStats(
-          startDate,
-          endDate,
-        )
-
-        setDailyStats(stats)
-        setMonthlyStats([])
-        setIntradayStats([])
-
-        return
-      }
-
-      const startDate = getMonthsAgo(
-        getMonthStart(now),
-        11,
+      const days = period === '7d' ? 7 : 30
+      const startDate = getStartOfDay(
+        getDaysAgo(now, days - 1),
       )
-      const endDate = new Date(
-        now.getFullYear(),
-        now.getMonth() + 1,
-        1,
-      )
+      const endDate = new Date(now)
 
-      const stats = await getHealthConnectMonthlyStats(
+      const stats = await getHealthConnectDailyStats(
         startDate,
         endDate,
       )
 
-      setMonthlyStats(stats)
-      setDailyStats([])
+      setDailyStats(stats)
+      setMonthlyStats([])
       setIntradayStats([])
     } catch (err) {
       console.error(err)
