@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "lu.architech.stepchallenge",
+      "sha256_cert_fingerprints": [
+        "34:CE:57:9C:8E:EA:EB:1B:72:16:51:45:64:81:3D:82:2E:B7:71:4D:28:E7:B0:C7:27:61:48:DC:C1:A2:04:E5",
+        "71:B4:F8:FB:48:F2:F5:87:5F:D6:89:BD:92:F4:6B:55:4A:8D:42:EA:29:8E:FF:8F:EF:16:52:C9:EF:83:6D:C8"
+      ]
+    }
+  }
+]
