@@ -50,6 +50,46 @@ export async function signInWithGoogleIdToken(
   }
 }
 
+export type DemoSignInResult =
+  | { status: 'signed-in'; user: User }
+  | { status: 'invalid-code' }
+  | { status: 'unavailable' }
+  | { status: 'too-many-attempts' }
+
+/**
+ * Signs in to the demo account of store reviewers with the access code
+ * given in the Play Console (ADR 0006). The account already exists:
+ * there is no display name to choose.
+ */
+export async function signInWithDemoCode(
+  code: string,
+): Promise<DemoSignInResult> {
+  try {
+    const response = await apiFetch<SignInResponse>('/api/auth/demo', {
+      method: 'POST',
+      authenticated: false,
+      body: { code: code.trim() },
+    })
+
+    await setSessionToken(response.sessionToken)
+
+    return { status: 'signed-in', user: response.user }
+  } catch (error) {
+    // 404: demo access is disabled on the server.
+    const failures: Record<number, DemoSignInResult> = {
+      401: { status: 'invalid-code' },
+      404: { status: 'unavailable' },
+      429: { status: 'too-many-attempts' },
+    }
+
+    if (error instanceof ApiError && failures[error.status]) {
+      return failures[error.status]
+    }
+
+    throw error
+  }
+}
+
 /**
  * Revokes the session on the backend, then forgets it locally even if
  * the backend cannot be reached.

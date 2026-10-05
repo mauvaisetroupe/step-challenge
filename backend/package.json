@@ -12,7 +12,8 @@
     "db:down": "docker compose -f docker-compose.dev.yml down",
     "db:reset": "docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml up -d --wait",
     "dev:local": "DOTENV_CONFIG_PATH=.env.development tsx watch src/server.ts",
-    "test:local": "TEST_DATABASE_URL=postgres://postgres:test@localhost:55432/step_challenge_test npm test"
+    "test:local": "TEST_DATABASE_URL=postgres://postgres:test@localhost:55432/step_challenge_test npm test",
+    "seed:demo": "tsx --env-file=.env.development src/demo/seedDevelopment.ts"
   },
   "keywords": [],
   "author": "",

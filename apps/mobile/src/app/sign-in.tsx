@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native'
 
-import { signInWithGoogleIdToken } from '../api/auth'
+import { signInWithDemoCode, signInWithGoogleIdToken } from '../api/auth'
 import {
   GoogleSignInFailure,
   isGoogleSignInSupported,
@@ -23,6 +23,13 @@ const MAX_DISPLAY_NAME_LENGTH = 50
 type Step =
   | { name: 'google' }
   | { name: 'display-name'; idToken: string }
+  | { name: 'demo' }
+
+const DEMO_ERRORS = {
+  'invalid-code': "Code d'accès incorrect.",
+  unavailable: "L'accès démonstration n'est pas disponible.",
+  'too-many-attempts': 'Trop de tentatives. Réessaie dans une heure.',
+} as const
 
 function describeError(error: unknown) {
   if (error instanceof GoogleSignInFailure) {
@@ -41,6 +48,10 @@ function describeError(error: unknown) {
  *    a returning user is signed in directly.
  * 2. For a new account only, the user chooses a display name (prefilled
  *    with the Google given name) and the same ID token is sent again.
+ *
+ * Store reviewers, who cannot sign in with Google from their test
+ * devices, use the discreet "Accès démonstration" link and the access
+ * code given in the Play Console (ADR 0006).
  */
 /**
  * Where to go after signing in. `next` lets an invitation link opened
@@ -58,6 +69,7 @@ export default function SignInScreen() {
 
   const [step, setStep] = useState<Step>({ name: 'google' })
   const [displayName, setDisplayName] = useState('')
+  const [demoCode, setDemoCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -116,6 +128,35 @@ export default function SignInScreen() {
     }
   }
 
+  const handleDemoSignIn = async () => {
+    if (!demoCode.trim()) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      const result = await signInWithDemoCode(demoCode)
+
+      if (result.status === 'signed-in') {
+        router.replace(destinationAfterSignIn(next))
+        return
+      }
+
+      setError(DEMO_ERRORS[result.status])
+    } catch (err) {
+      setError(describeError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const showStep = (nextStep: Step) => {
+    setError(null)
+    setStep(nextStep)
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -151,6 +192,55 @@ export default function SignInScreen() {
                 Android.
               </Text>
             )}
+          </>
+        ) : step.name === 'demo' ? (
+          <>
+            <Text style={styles.question}>Accès démonstration</Text>
+
+            <Text style={styles.hint}>
+              Réservé aux examinateurs des boutiques d'applications : saisis
+              le code d'accès fourni avec les instructions d'examen.
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              value={demoCode}
+              onChangeText={(value) => {
+                setDemoCode(value)
+                setError(null)
+              }}
+              placeholder="Code d'accès"
+              placeholderTextColor="#9CA3AF"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+              maxLength={200}
+              returnKeyType="go"
+              onSubmitEditing={handleDemoSignIn}
+              editable={!loading}
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (!demoCode.trim() || loading) && styles.buttonDisabled,
+              ]}
+              onPress={handleDemoSignIn}
+              disabled={!demoCode.trim() || loading}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? 'Connexion...' : 'Entrer'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryLink}
+              onPress={() => showStep({ name: 'google' })}
+              disabled={loading}
+            >
+              <Text style={styles.secondaryLinkText}>Retour</Text>
+            </TouchableOpacity>
           </>
         ) : (
           <>
@@ -210,6 +300,16 @@ export default function SignInScreen() {
 
         {error && <Text style={styles.error}>{error}</Text>}
       </View>
+
+      {step.name === 'google' && (
+        <TouchableOpacity
+          style={styles.demoLink}
+          onPress={() => showStep({ name: 'demo' })}
+          disabled={loading}
+        >
+          <Text style={styles.demoLinkText}>Accès démonstration</Text>
+        </TouchableOpacity>
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -311,5 +411,30 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+
+  secondaryLink: {
+    marginTop: 16,
+    alignSelf: 'center',
+    padding: 8,
+  },
+
+  secondaryLinkText: {
+    color: '#6B7280',
+    fontSize: 15,
+  },
+
+  // Discreet on purpose (ADR 0006): reviewers are guided to it by the
+  // review instructions, other users have no reason to notice it.
+  demoLink: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+
+  demoLinkText: {
+    color: '#9CA3AF',
+    fontSize: 13,
   },
 })

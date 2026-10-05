@@ -27,6 +27,7 @@ Toutes les routes `/api/*` exigent une session (`requireAuth`), **sauf** :
 | Route | Rôle | Pourquoi sans session | Protections |
 |---|---|---|---|
 | `POST /api/auth/google` | Connexion : échange un jeton d'identité Google contre une session | C'est l'entrée de l'authentification. La requête porte un jeton signé par Google pour le client OAuth de l'application, vérifié par le serveur | Limite de débit (`RATE_LIMITS.signIn`), schéma strict (taille du jeton bornée) |
+| `POST /api/auth/demo` | Accès de démonstration des examinateurs ([ADR 0006](adr/0006-review-demo-access.md)) : un code d'accès contre une session sur le compte de démonstration, et sur lui seul | Les examinateurs Google et Huawei ne peuvent pas se connecter avec Google depuis leurs appareils de test. Le compte ne contient que des données fictives | **N'existe pas** (404) sans `DEMO_ACCESS_CODE` dans la configuration ; code d'au moins 20 caractères (sinon le serveur refuse de démarrer), comparé en temps constant ; limite de débit stricte (`RATE_LIMITS.demoSignIn`, 10 par heure) ; schéma strict. Changer ou retirer le code coupe l'accès |
 | `GET /api/health` | Contrôle de vie (`{"status":"ok"}`) | Utilisé par `deploy.sh` et la supervision | Ne renvoie aucune donnée. Peut être restreint par une règle Cloudflare si besoin |
 
 Réponses génériques, inévitables pour tout serveur HTTP : `404` pour une route inconnue, réponses CORS aux requêtes `OPTIONS`.

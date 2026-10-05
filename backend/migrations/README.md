@@ -23,3 +23,4 @@ Faire une sauvegarde avant (`pg_dump`, ou Adminer → Exporter avec les données
 | `002_display_name_not_unique.sql` | 0001 | Suppression de l'unicité du nom affiché |
 | `003_friends.sql` | 0002 | `invitations`, `friendships`, `friend_aliases` |
 | `004_reports_and_blocks.sql` | 0004 | `user_blocks`, `user_reports` |
+| `005_demo_credential.sql` | 0006 | Type d'identifiant `demo` (compte de démonstration des examinateurs) |

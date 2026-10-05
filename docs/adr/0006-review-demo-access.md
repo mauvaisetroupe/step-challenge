@@ -1,6 +1,6 @@
 # ADR 0006 — Accès de démonstration pour les examinateurs
 
-- **Statut** : Proposé
+- **Statut** : Accepté
 - **Date** : 2026-10-05
 - **Décideur** : mauvaisetroupe
 - **Dépend de** : [ADR 0001 — Authentification](0001-authentication.md)
@@ -72,6 +72,7 @@ Le serveur accepte un **code d'accès** secret, défini dans sa configuration, q
 ### Configuration du serveur
 
 - `DEMO_ACCESS_CODE` (`.env` de production) : code d'au moins 20 caractères aléatoires. **Absent = accès de démonstration désactivé** (la route répond `404`), y compris en développement par défaut.
+- *Précisé à l'implémentation :* sans code, la route n'est pas déclarée du tout (le `404` est celui de toute route inconnue) ; un code de moins de 20 caractères **empêche le serveur de démarrer**, plutôt que d'exposer une route protégée par un code devinable.
 - Le code n'est jamais stocké en base ni commité ; il est donné aux examinateurs dans la Play Console (et AppGallery Connect), et conservé dans le gestionnaire de mots de passe du mainteneur.
 
 ### Compte de démonstration
@@ -82,14 +83,24 @@ Le serveur accepte un **code d'accès** secret, défini dans sa configuration, q
 - Les pas du compte de démonstration lui-même viennent, comme pour tout utilisateur, de Santé Connect sur l'appareil de l'examinateur.
 - Le compte Gmail de démonstration actuel et son compte Step Challenge sont supprimés une fois l'accès de démonstration en place.
 
+*Précisé le 2026-10-05 à l'implémentation :*
+
+- **Rafraîchi à chaque connexion**, et pas seulement recréé : sinon les pas fictifs vieillissent et, quelques semaines plus tard, le classement de la semaine serait vide. À chaque connexion de démonstration, dans la même transaction que l'ouverture de la session :
+  - les **6 amis fictifs** (Camille, Hugo, Léa, Nora, Théo, Inès) reprennent leur nom d'origine ;
+  - les blocages et surnoms entre le compte de démonstration et eux sont supprimés, et les amitiés retirées sont recréées : un examinateur qui a testé « Retirer », « Bloquer » ou « Renommer » ne laisse pas un compte abîmé au suivant ;
+  - leurs pas des **42 derniers jours** sont réécrits.
+- **Identifiants fixes** pour les amis fictifs (`de300000-0000-4000-8000-00000000000N`) : un rafraîchissement ou une recréation du compte ne les duplique jamais, et la modération les reconnaît. Ils n'ont aucun identifiant de connexion.
+- **Pas crédibles et stables** : chaque valeur est calculée à partir de la personne et de la date (empreinte SHA-256), autour d'un profil (niveau habituel, habitude du week-end), avec quelques longues marches et journées calmes. La même date donne toujours la même valeur, l'historique ne change pas d'une connexion à l'autre ; le jour en cours est partiel, selon l'heure.
+- **Code partagé** (`backend/src/demo/`) entre la connexion de démonstration et un script pour la base de **développement** (`npm run seed:demo`), qui sert aux captures d'écran du Store. Le script refuse toute base qui n'est pas locale et nommée `*_dev`.
+
 ### API
 
 | Méthode | Route | Rôle |
 |---|---|---|
-| `POST` | `/api/auth/demo` | `{ code }` → `200 { sessionToken, user }`, comme `POST /api/auth/google`. `401` si le code est faux, `404` si l'accès est désactivé. |
+| `POST` | `/api/auth/demo` | `{ code }` → `200 { sessionToken, user, isNewUser: false }`, comme `POST /api/auth/google`. `401` (`invalid_demo_code`) si le code est faux, `404` si l'accès est désactivé, `429` au-delà de la limite de débit. |
 
 - Comparaison du code **en temps constant** (`crypto.timingSafeEqual` sur des empreintes SHA-256 de même longueur).
-- **Limite de débit stricte**, par exemple 10 tentatives par heure et par adresse IP (`rateLimit.ts`).
+- **Limite de débit stricte** : 10 tentatives par heure et par adresse IP (`RATE_LIMITS.demoSignIn`), réussies ou non.
 - Session ordinaire (ADR 0001) : même durée, mêmes droits.
 
 ### Application
@@ -127,6 +138,6 @@ Le serveur accepte un **code d'accès** secret, défini dans sa configuration, q
 
 ## Points ouverts
 
-- **Libellé et emplacement** de l'entrée « Accès démonstration » : assez visible pour un examinateur guidé par les instructions, assez discret pour ne pas intriguer les utilisateurs.
+- **Libellé et emplacement** de l'entrée « Accès démonstration » : assez visible pour un examinateur guidé par les instructions, assez discret pour ne pas intriguer les utilisateurs. *Implémenté :* petit lien gris, centré en bas de l'écran de connexion ; à ajuster à l'usage.
 - **Examinateurs Huawei** : vérifier qu'AppGallery Connect permet de fournir un code d'accès de la même façon.
-- **Signalements venant du compte de démonstration** (un examinateur qui teste la fonction) : les reconnaître et les classer sans suite dans la procédure de modération.
+- ~~**Signalements venant du compte de démonstration**~~ : traité dans [`docs/moderation.md`](../moderation.md) (repérage par l'auteur de type `demo` ou par l'ami fictif signalé, classement sans suite groupé).

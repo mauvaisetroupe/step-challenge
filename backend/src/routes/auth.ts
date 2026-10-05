@@ -8,19 +8,26 @@ import {
 } from '../auth/google.js'
 import {
   DisplayNameRequiredError,
+  signInDemo,
   signInWithOidc,
 } from '../auth/signIn.js'
+import { isDemoAccessCode } from '../demo/demoAccount.js'
 import { RATE_LIMITS } from '../rateLimit.js'
 
 export type AuthRoutesOptions = {
   db: Pool
   verifyGoogleIdToken: (idToken: string) => Promise<OidcIdentity>
   requireAuth: RequireAuth
+  /**
+   * Demo access code for store reviewers (ADR 0006). Absent: the demo
+   * sign-in route does not exist (404).
+   */
+  demoAccessCode?: string
 }
 
 const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
   app,
-  { db, verifyGoogleIdToken, requireAuth },
+  { db, verifyGoogleIdToken, requireAuth, demoAccessCode },
 ) => {
   /**
    * Revokes the current session only; other devices stay signed in.
@@ -94,6 +101,43 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
       }
     },
   )
+
+  if (demoAccessCode) {
+    /**
+     * Signs in to the demo account with the access code given to store
+     * reviewers (ADR 0006). The account and its fictitious friends are
+     * recreated or refreshed at each sign-in.
+     */
+    app.post<{ Body: { code: string } }>(
+      '/auth/demo',
+      {
+        config: { rateLimit: RATE_LIMITS.demoSignIn },
+        schema: {
+          body: {
+            type: 'object',
+            required: ['code'],
+            additionalProperties: false,
+            properties: {
+              code: { type: 'string', minLength: 1, maxLength: 200 },
+            },
+          },
+        },
+      },
+      async (request, reply) => {
+        if (!isDemoAccessCode(demoAccessCode, request.body.code.trim())) {
+          request.log.info('Invalid demo access code')
+
+          return reply.code(401).send({ error: 'invalid_demo_code' })
+        }
+
+        const result = await signInDemo(db)
+
+        request.log.info({ userId: result.user.id }, 'Demo sign-in')
+
+        return reply.code(200).send(result)
+      },
+    )
+  }
 }
 
 export default authRoutes

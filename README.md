@@ -37,6 +37,7 @@ GOOGLE_CLIENT_ID=
 # PORT=3000
 # HOST=0.0.0.0
 # PUBLIC_BASE_URL=https://step.architech.lu
+# DEMO_ACCESS_CODE=
 ```
 
 | Variable | Rôle |
@@ -46,6 +47,7 @@ GOOGLE_CLIENT_ID=
 | `PORT` | Port d'écoute, 3000 par défaut |
 | `HOST` | Interface d'écoute, `0.0.0.0` (toutes) par défaut. En production, `127.0.0.1` : seul `cloudflared`, sur la même machine, joint le backend, ce qui garantit que l'en-tête `CF-Connecting-IP` utilisé par la limite de débit vient bien de Cloudflare |
 | `PUBLIC_BASE_URL` | Base des liens d'invitation (`<base>/i/<code>`) et des App Links, `https://step.architech.lu` par défaut |
+| `DEMO_ACCESS_CODE` | Code d'accès de démonstration des examinateurs des boutiques ([ADR 0006](docs/adr/0006-review-demo-access.md)). **Secret**, au moins 20 caractères aléatoires (sinon le serveur refuse de démarrer), par exemple `openssl rand -base64 30`. Absent : l'accès de démonstration est désactivé (`POST /api/auth/demo` répond 404). Le donner aux examinateurs dans la Play Console (Contenu de l'application → Accès à l'application) et le garder dans un gestionnaire de mots de passe ; le changer coupe l'accès |
 
 Créer les tables avec `psql -d <base> -f backend/schema.sql` (base neuve) ; faire évoluer une base existante avec [`backend/migrations/`](backend/migrations/README.md).
 
@@ -67,6 +69,22 @@ npm run dev:local    # backend sur la base de dev, port 3001
 | `npm run db:up` | Démarre les bases de dev (port 55433, persistante) et de test (port 55432, en mémoire) |
 | `npm run db:reset` | Recrée les bases vides : **supprime les données de dev** |
 | `npm run db:down` | Arrête les bases (les données de dev sont conservées) |
+| `npm run seed:demo` | Données fictives dans la base de **dev**, pour les captures d'écran du Store (voir ci-dessous) |
+
+#### Données fictives pour les captures d'écran
+
+`npm run seed:demo` écrit dans la base de dev les amis fictifs et les historiques de pas du compte de démonstration (ADR 0006). Il refuse toute base qui n'est pas locale et nommée `*_dev`.
+
+```bash
+npm run seed:demo                                      # liste les comptes de la base de dev
+npm run seed:demo -- --user <id>                       # 6 amis fictifs pour ce compte, 42 jours de pas
+npm run seed:demo -- --user <id> --own-steps --days 120  # et ses propres pas (statistiques)
+npm run seed:demo -- --demo                            # le compte de démonstration lui-même
+```
+
+Relancer la commande rafraîchit les données (les pas du jour suivent l'heure). Les pas propres du compte restent synchronisés par Santé Connect, qui garde le maximum par jour : faire les captures sur un téléphone ou un émulateur sans pas réels, ou désactiver la synchronisation.
+
+Pour tester l'accès de démonstration en local, lancer le backend avec un code : `DEMO_ACCESS_CODE=<au moins 20 caractères> npm run dev:local`.
 
 ### Tests
 
