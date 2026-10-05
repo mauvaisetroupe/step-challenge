@@ -43,6 +43,16 @@ Utiliser une adresse d'un autre domaine (par exemple `@architech.lu`) ne change 
 - ❌ Stocke des adresses e-mail et des mots de passe, ce que l'ADR 0001 a évité ; impose la réinitialisation de mot de passe, la vérification d'adresse, etc.
 - ❌ Disproportionné : le besoin ne concerne que les examinateurs.
 
+### Option C bis — Passkeys
+
+Une passkey est une clé créée sur un appareil et gardée par son gestionnaire de mots de passe : elle ne se transmet pas comme un identifiant et un mot de passe, et ne peut donc pas être fournie aux examinateurs dans la Play Console. La seule variante possible serait que l'examinateur crée **son propre compte** avec une passkey, ce qui suppose une création de compte sans Google.
+
+- ❌ Sur Android, la création d'une passkey passe par le gestionnaire de mots de passe de Google : l'appareil de test doit avoir un compte Google et un verrouillage d'écran configurés, ce qui n'est pas garanti.
+- ❌ Le compte créé serait vide (pas d'amis, classement d'une seule ligne) : l'examinateur verrait mal l'application en fonctionnement.
+- ❌ Chantier important, déjà évalué par l'ADR 0001 (option C) : serveur WebAuthn, déclaration supplémentaire dans `assetlinks.json`, et surtout un mécanisme de récupération en cas de perte de la passkey.
+
+Les passkeys gardent leur intérêt comme **deuxième méthode de connexion** pour les vrais utilisateurs (sans compte Google, ou sur un téléphone Huawei sans services Google). Le modèle de données le permet déjà (ADR 0001) ; ce sera un ADR distinct, motivé par ces utilisateurs.
+
 ### Option D — Code d'accès de démonstration, réservé à un seul compte
 
 Le serveur accepte un **code d'accès** secret, défini dans sa configuration, qui ouvre une session sur le **compte de démonstration**, et sur lui seul. L'écran de connexion propose une entrée discrète « Accès démonstration ».
