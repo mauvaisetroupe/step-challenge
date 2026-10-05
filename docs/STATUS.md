@@ -65,7 +65,7 @@ Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migratio
   - relire les traductions françaises des pages légales (conditions d'utilisation, confidentialité et suppression de compte mises à jour le 2026-10-05 pour les ADR 0002 et 0004) ;
   - régler la mise en cache Cloudflare du site (point ouvert de l'ADR 0005) ;
   - poursuivre la bascule (ADR 0005, étapes 3 à 7 ; `step-api.architech.lu` est en place depuis le 2026-10-05) : version de l'application avec la nouvelle URL d'API, puis `step.architech.lu` vers OVH (même dossier `step`) et vérification des App Links.
-- [ ] **Accès de démonstration** ([ADR 0006](adr/0006-review-demo-access.md)), mise en production :
+- [ ] **Accès de démonstration** ([ADR 0006](adr/0006-review-demo-access.md)), testé en dev sur téléphone le 2026-10-05 (connexion, code faux, compte supprimé puis recréé, ami bloqué rétabli). Mise en production :
   1. générer le code (`openssl rand -base64 30`), le garder dans le gestionnaire de mots de passe et l'ajouter au `.env` de production (`DEMO_ACCESS_CODE`) ;
   2. appliquer la migration 005 (`backend/migrations/005_demo_credential.sql`), puis déployer le backend : le journal doit indiquer « Demo access enabled » ;
   3. publier la version de l'application qui contient le lien « Accès démonstration » ;
