@@ -61,18 +61,17 @@ Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migratio
 - [ ] Huawei : en attente de la validation du Health Service Kit par Huawei (voir `huawei/README.md`, section 14). Une fois la permission de test accordée, ajouter les comptes HUAWEI de test (0/100 aujourd'hui).
 - [x] **Préversion du site public** (ADR 0005, étape 2 de la bascule) : publiée le 2026-10-05 sur `https://step-preview.architech.lu` (multisite OVH, dossier `step`), déployée par la GitHub Action en SFTP. Vérifié : toutes les pages en 200 sans redirection (dont `/privacy.html`, `/agreement.html`, `/delete-account.html`), `/i/<code>` réécrit par le `.htaccess` et affiché correctement dans un navigateur, `assetlinks.json` en `application/json`, sitemap et `robots.txt`.
 - [ ] **Site public, suite** :
-  - créer un utilisateur FTP limité au dossier `step` et l'utiliser dans les secrets (`SITE_REMOTE_DIR` = `.`) : l'utilisateur actuel voit tous les sites de l'hébergement ;
-  - relire les traductions françaises des pages légales, et décider si la date de mise à jour des conditions d'utilisation change avec la correction du contact (laissée au 27 septembre 2026) ;
+  - l'offre OVH ne permet pas d'utilisateur FTP dédié : l'utilisateur des secrets GitHub voit tous les sites de l'hébergement. Le script refuse d'écrire dans un dossier non marqué ; à envisager en plus : environnement GitHub protégé (validation de chaque déploiement) et actions tierces figées par empreinte de commit ;
+  - relire les traductions françaises des pages légales (conditions d'utilisation, confidentialité et suppression de compte mises à jour le 2026-10-05 pour les ADR 0002 et 0004) ;
   - régler la mise en cache Cloudflare du site (point ouvert de l'ADR 0005) ;
-  - poursuivre la bascule (ADR 0005, étapes 1 et 3 à 7) : `step-api.architech.lu` dans le tunnel, version de l'application avec la nouvelle URL d'API, puis `step.architech.lu` vers OVH (même dossier `step`) et vérification des App Links.
-- [ ] Huawei : créer la variable d'environnement EAS `AGCONNECT_SERVICES_JSON` (type fichier) pour que les builds de production embarquent la configuration AppGallery Connect (voir `huawei/README.md`, section 14).
+  - poursuivre la bascule (ADR 0005, étapes 3 à 7 ; `step-api.architech.lu` est en place depuis le 2026-10-05) : version de l'application avec la nouvelle URL d'API, puis `step.architech.lu` vers OVH (même dossier `step`) et vérification des App Links.
+- [x] Huawei : variable d'environnement EAS `AGCONNECT_SERVICES_JSON` (type texte, contenu du fichier) créée ; la configuration AppGallery Connect est vérifiée dans l'`.aab` de la 1.2.2 (voir `huawei/README.md`, section 14).
 
 ### Développement possible dans une session
 
 Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 
 - [x] **Signalement et blocage des utilisateurs** ([ADR 0004](adr/0004-user-reporting-and-blocking.md)) : backend (migration 004, `/api/blocks`, `/api/reports`), application (signaler, bloquer, débloquer, signaler une invitation, mention des conditions à la création du compte, liens légaux dans les Paramètres) et procédure de modération ([`moderation.md`](moderation.md)) faits le 2026-10-05. Reste :
-  - la section « Contenus et comportement » des conditions d'utilisation et la mention des signalements dans la politique de confidentialité, à rédiger dans le site Hugo ;
   - la mise en production : migration 004, déploiement du backend, puis nouvelle version de l'application (avec la nouvelle URL d'API, ADR 0005) ;
   - le formulaire Data safety (signalements), à vérifier.
 - [x] **Liste des invitations actives** dans l'écran Amis, avec révocation (date de création, expiration, nombre d'acceptations). Testée sur téléphone le 2026-10-05, livrée avec la prochaine version.
