@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 
 import type { Friend } from '../api/friends'
+import { useThemedStyles, type Colors } from '@/theme'
 
 const MAX_ALIAS_LENGTH = 50
 
@@ -35,6 +36,8 @@ export default function RenameFriendModal({
   onReset,
   onClose,
 }: RenameFriendModalProps) {
+  const styles = useThemedStyles(createStyles)
+
   const [alias, setAlias] = useState('')
 
   useEffect(() => {
@@ -107,79 +110,80 @@ export default function RenameFriendModal({
   )
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: 24,
+      backgroundColor: c.overlay,
+    },
 
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 20,
-  },
+    card: {
+      backgroundColor: c.card,
+      borderRadius: 14,
+      padding: 20,
+    },
 
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-  },
+    title: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: c.text,
+    },
 
-  hint: {
-    marginTop: 4,
-    marginBottom: 14,
-    fontSize: 14,
-    color: '#6B7280',
-  },
+    hint: {
+      marginTop: 4,
+      marginBottom: 14,
+      fontSize: 14,
+      color: c.textSecondary,
+    },
 
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    color: '#111827',
-  },
+    input: {
+      height: 48,
+      borderWidth: 1,
+      borderColor: c.borderStrong,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      fontSize: 16,
+      color: c.text,
+    },
 
-  error: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#DC2626',
-  },
+    error: {
+      marginTop: 10,
+      fontSize: 14,
+      color: c.danger,
+    },
 
-  primaryButton: {
-    marginTop: 16,
-    minHeight: 46,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#208AEF',
-  },
+    primaryButton: {
+      marginTop: 16,
+      minHeight: 46,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+    },
 
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    primaryButtonText: {
+      color: c.onPrimary,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  secondaryButton: {
-    marginTop: 8,
-    minHeight: 44,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    secondaryButton: {
+      marginTop: 8,
+      minHeight: 44,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  secondaryButtonText: {
-    color: '#111827',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    secondaryButtonText: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  disabled: {
-    opacity: 0.5,
-  },
-})
+    disabled: {
+      opacity: 0.5,
+    },
+  })

@@ -18,10 +18,14 @@ import { displayName } from '../../api/friends'
 import UserBadge from '../../components/UserBadge'
 import { syncLast30Days } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Period = 'week' | 'month'
 
 export default function LeaderboardScreen() {
+  const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
+
   const [period, setPeriod] = useState<Period>('week')
   const [results, setResults] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -160,7 +164,7 @@ export default function LeaderboardScreen() {
             {refreshing ? (
               <ActivityIndicator
                 size="small"
-                color="#111827"
+                color={colors.text}
               />
             ) : (
               <>
@@ -271,204 +275,205 @@ export default function LeaderboardScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
 
-  container: {
-    padding: 20,
-    paddingBottom: 32,
-  },
+    container: {
+      padding: 20,
+      paddingBottom: 32,
+    },
 
-  friendsButton: {
-    minHeight: 40,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    justifyContent: 'center',
-    backgroundColor: '#F1F1F1',
-  },
+    friendsButton: {
+      minHeight: 40,
+      paddingHorizontal: 14,
+      borderRadius: 10,
+      justifyContent: 'center',
+      backgroundColor: c.surfaceAlt,
+    },
 
-  friendsButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111827',
-  },
+    friendsButtonText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: c.text,
+    },
 
-  emptyCard: {
-    marginBottom: 8,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#F1F7FE',
-  },
+    emptyCard: {
+      marginBottom: 8,
+      padding: 16,
+      borderRadius: 12,
+      backgroundColor: c.primarySoft,
+    },
 
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
+    emptyTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: c.text,
+    },
 
-  emptyText: {
-    marginTop: 4,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#4B5563',
-  },
+    emptyText: {
+      marginTop: 4,
+      fontSize: 14,
+      lineHeight: 20,
+      color: c.textSecondary,
+    },
 
-  emptyAction: {
-    marginTop: 10,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#208AEF',
-  },
+    emptyAction: {
+      marginTop: 10,
+      fontSize: 15,
+      fontWeight: '600',
+      color: c.primary,
+    },
 
-  names: {
-    flex: 1,
-    marginRight: 8,
-  },
+    names: {
+      flex: 1,
+      marginRight: 8,
+    },
 
-  realName: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
+    realName: {
+      fontSize: 12,
+      color: c.textMuted,
+    },
 
-  periodSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f1f1',
-    borderRadius: 10,
-    padding: 3,
-    marginBottom: 12,
-  },
+    periodSelector: {
+      flexDirection: 'row',
+      backgroundColor: c.surfaceAlt,
+      borderRadius: 10,
+      padding: 3,
+      marginBottom: 12,
+    },
 
-  periodButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
+    periodButton: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderRadius: 8,
+    },
 
-  periodButtonActive: {
-    backgroundColor: '#ffffff',
-  },
+    periodButtonActive: {
+      backgroundColor: c.background,
+    },
 
-  periodText: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
+    periodText: {
+      fontSize: 15,
+      fontWeight: '500',
+    },
 
-  periodTextActive: {
-    fontWeight: '700',
-  },
+    periodTextActive: {
+      fontWeight: '700',
+    },
 
-  refreshRow: {
-    alignItems: 'flex-end',
-    marginBottom: 20,
-  },
+    refreshRow: {
+      alignItems: 'flex-end',
+      marginBottom: 20,
+    },
 
-  refreshButton: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: '#f1f1f1',
-  },
+    refreshButton: {
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingHorizontal: 14,
+      borderRadius: 10,
+      backgroundColor: c.surfaceAlt,
+    },
 
-  refreshButtonDisabled: {
-    opacity: 0.45,
-  },
+    refreshButtonDisabled: {
+      opacity: 0.45,
+    },
 
-  refreshIcon: {
-    fontSize: 22,
-    lineHeight: 24,
-  },
+    refreshIcon: {
+      fontSize: 22,
+      lineHeight: 24,
+    },
 
-  refreshText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    refreshText: {
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  periodTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
+    periodTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      marginBottom: 12,
+    },
 
-  list: {
-    gap: 8,
-  },
+    list: {
+      gap: 8,
+    },
 
-  row: {
-    minHeight: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f8f8',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-  },
+    row: {
+      minHeight: 60,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+    },
 
-  rowMe: {
-    backgroundColor: '#E6F4FE',
-    borderWidth: 1,
-    borderColor: '#208AEF',
-  },
+    rowMe: {
+      backgroundColor: c.primarySoft,
+      borderWidth: 1,
+      borderColor: c.primary,
+    },
 
-  me: {
-    color: '#208AEF',
-    fontWeight: '700',
-  },
+    me: {
+      color: c.primary,
+      fontWeight: '700',
+    },
 
-  rank: {
-    width: 42,
-    alignItems: 'center',
-  },
+    rank: {
+      width: 42,
+      alignItems: 'center',
+    },
 
-  medal: {
-    fontSize: 22,
-  },
+    medal: {
+      fontSize: 22,
+    },
 
-  badge: {
-    marginRight: 10,
-  },
+    badge: {
+      marginRight: 10,
+    },
 
-  rankNumber: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+    rankNumber: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
 
-  name: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
+    name: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
 
-  steps: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
+    steps: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
 
-  center: {
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
+    center: {
+      paddingVertical: 40,
+      alignItems: 'center',
+    },
 
-  error: {
-    fontSize: 15,
-    textAlign: 'center',
-    marginBottom: 15,
-  },
+    error: {
+      fontSize: 15,
+      textAlign: 'center',
+      marginBottom: 15,
+    },
 
-  retryButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#111827',
-  },
+    retryButton: {
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 8,
+      backgroundColor: c.primary,
+    },
 
-  retryText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-})
+    retryText: {
+      color: c.onPrimary,
+      fontWeight: '600',
+    },
+  })

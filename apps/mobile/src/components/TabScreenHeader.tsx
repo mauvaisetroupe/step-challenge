@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
+import { useThemedStyles, type Colors } from '@/theme'
 
 type Props = {
   title: string
@@ -15,6 +16,8 @@ type Props = {
  * below the status bar (camera, clock, battery).
  */
 export default function TabScreenHeader({ title, right }: Props) {
+  const styles = useThemedStyles(createStyles)
+
   return (
     <View style={styles.header}>
       <Text style={styles.title} numberOfLines={1}>
@@ -26,27 +29,28 @@ export default function TabScreenHeader({ title, right }: Props) {
   )
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    minHeight: 56,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E7EB',
-    // Android shadow; zIndex keeps it above the scrolling content.
-    elevation: 3,
-    zIndex: 1,
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+      minHeight: 56,
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      backgroundColor: c.background,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+      // Android shadow; zIndex keeps it above the scrolling content.
+      elevation: 3,
+      zIndex: 1,
+    },
 
-  title: {
-    flexShrink: 1,
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
-  },
-})
+    title: {
+      flexShrink: 1,
+      fontSize: 28,
+      fontWeight: '700',
+      color: c.text,
+    },
+  })

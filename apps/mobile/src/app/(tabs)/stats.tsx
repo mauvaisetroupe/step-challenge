@@ -27,6 +27,7 @@ import {
 import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const DAILY_GOAL = 10_000
 
@@ -281,6 +282,8 @@ async function getDatabaseMonthlyStats(
 }
 
 export default function StatsScreen() {
+  const styles = useThemedStyles(createStyles)
+
   const [period, setPeriod] = useState<Period>('7d')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
@@ -564,6 +567,8 @@ function DailyStatsList({
 }: {
   stats: DayStat[]
 }) {
+  const styles = useThemedStyles(createStyles)
+
   return (
     <View style={styles.statsList}>
       {stats
@@ -632,6 +637,8 @@ function MonthlyStatsList({
 }: {
   stats: MonthStat[]
 }) {
+  const styles = useThemedStyles(createStyles)
+
   return (
     <View style={styles.statsList}>
       {stats
@@ -706,6 +713,9 @@ function BarChart({
 }: {
   data: ChartPoint[]
 }) {
+  const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
+
   if (data.length === 0) {
     return (
       <View style={styles.emptyChart}>
@@ -753,7 +763,7 @@ function BarChart({
         y1={paddingTop + chartHeight}
         x2={width - paddingRight}
         y2={paddingTop + chartHeight}
-        stroke="#d1d5db"
+        stroke={colors.borderStrong}
         strokeWidth={1}
       />
 
@@ -779,7 +789,7 @@ function BarChart({
               width={barWidth}
               height={barHeight}
               rx={3}
-              fill="#111827"
+              fill={colors.text}
             />
 
             {(data.length <= 7 ||
@@ -789,7 +799,7 @@ function BarChart({
                 x={x + barWidth / 2}
                 y={height - 10}
                 fontSize={9}
-                fill="#6b7280"
+                fill={colors.textSecondary}
                 textAnchor="middle"
               >
                 {item.label}
@@ -807,6 +817,9 @@ function IntradayChart({
 }: {
   data: ChartPoint[]
 }) {
+  const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
+
   if (data.length === 0) {
     return (
       <View style={styles.emptyChart}>
@@ -883,7 +896,7 @@ function IntradayChart({
           chartHeight -
           (DAILY_GOAL / maxValue) * chartHeight
         }
-        stroke="#d1d5db"
+        stroke={colors.borderStrong}
         strokeWidth={1}
         strokeDasharray="4 4"
       />
@@ -894,7 +907,7 @@ function IntradayChart({
         y1={paddingTop + chartHeight}
         x2={width - paddingRight}
         y2={paddingTop + chartHeight}
-        stroke="#d1d5db"
+        stroke={colors.borderStrong}
         strokeWidth={1}
       />
 
@@ -902,7 +915,7 @@ function IntradayChart({
       <Polyline
         points={points}
         fill="none"
-        stroke="#111827"
+        stroke={colors.text}
         strokeWidth={2.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -926,7 +939,7 @@ function IntradayChart({
             cx={x}
             cy={y}
             r={2.5}
-            fill="#111827"
+            fill={colors.text}
           />
         )
       })}
@@ -952,7 +965,7 @@ function IntradayChart({
             x={x}
             y={height - 10}
             fontSize={9}
-            fill="#6b7280"
+            fill={colors.textSecondary}
             textAnchor="middle"
           >
             {item.label}
@@ -965,203 +978,204 @@ function IntradayChart({
 
 
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-
-  periodSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 10,
-    padding: 3,
-    marginBottom: 24,
-  },
-
-  periodButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: 8,
-  },
-
-  periodButtonActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    shadowOffset: {
-      width: 0,
-      height: 1,
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
     },
-    elevation: 2,
-  },
 
-  periodButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
+    content: {
+      padding: 20,
+      paddingBottom: 40,
+    },
 
-  periodButtonTextActive: {
-    color: '#111827',
-    fontWeight: '700',
-  },
+    periodSelector: {
+      flexDirection: 'row',
+      backgroundColor: c.surface,
+      borderRadius: 10,
+      padding: 3,
+      marginBottom: 24,
+    },
 
-  totalContainer: {
-    alignItems: 'center',
-    marginBottom: 10,
-  },
+    periodButton: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 9,
+      borderRadius: 8,
+    },
 
-  totalValue: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#111827',
-  },
+    periodButtonActive: {
+      backgroundColor: c.card,
+      shadowColor: c.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 3,
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      elevation: 2,
+    },
 
-  totalLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 2,
-  },
+    periodButtonText: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: c.textSecondary,
+    },
 
-  chartContainer: {
-    width: '100%',
-    marginBottom: 18,
-  },
+    periodButtonTextActive: {
+      color: c.text,
+      fontWeight: '700',
+    },
 
-  loading: {
-    height: 250,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    totalContainer: {
+      alignItems: 'center',
+      marginBottom: 10,
+    },
 
-  errorContainer: {
-    alignItems: 'center',
-    paddingVertical: 50,
-  },
+    totalValue: {
+      fontSize: 32,
+      fontWeight: '700',
+      color: c.text,
+    },
 
-  errorText: {
-    color: '#dc2626',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
+    totalLabel: {
+      fontSize: 14,
+      color: c.textSecondary,
+      marginTop: 2,
+    },
 
-  retryButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#111827',
-  },
+    chartContainer: {
+      width: '100%',
+      marginBottom: 18,
+    },
 
-  retryText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+    loading: {
+      height: 250,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  emptyChart: {
-    height: 220,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    errorContainer: {
+      alignItems: 'center',
+      paddingVertical: 50,
+    },
 
-  emptyText: {
-    color: '#9ca3af',
-  },
+    errorText: {
+      color: c.danger,
+      textAlign: 'center',
+      marginBottom: 15,
+    },
 
-  statsList: {
-    marginTop: 4,
-  },
+    retryButton: {
+      paddingHorizontal: 18,
+      paddingVertical: 10,
+      borderRadius: 8,
+      backgroundColor: c.primary,
+    },
 
-  statItem: {
-    paddingVertical: 11,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e5e7eb',
-  },
+    retryText: {
+      color: c.onPrimary,
+      fontWeight: '600',
+    },
 
-  statMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
+    emptyChart: {
+      height: 220,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  dayName: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-    textTransform: 'capitalize',
-  },
+    emptyText: {
+      color: c.textMuted,
+    },
 
-  stepsStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
+    statsList: {
+      marginTop: 4,
+    },
 
-  stepsValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    minWidth: 70,
-    textAlign: 'right',
-  },
+    statItem: {
+      paddingVertical: 11,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
 
-  statusCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-  },
+    statMainRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
 
-  statusCircleSuccess: {
-    borderColor: '#16a34a',
-    backgroundColor: '#dcfce7',
-  },
+    dayName: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '500',
+      color: c.text,
+      textTransform: 'capitalize',
+    },
 
-  statusCircleFailure: {
-    borderColor: '#dc2626',
-    backgroundColor: '#fee2e2',
-  },
+    stepsStatus: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
 
-  statusIcon: {
-    fontSize: 13,
-    fontWeight: '800',
-    lineHeight: 16,
-  },
+    stepsValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: c.text,
+      minWidth: 70,
+      textAlign: 'right',
+    },
 
-  statusIconSuccess: {
-    color: '#16a34a',
-  },
+    statusCircle: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+    },
 
-  statusIconFailure: {
-    color: '#dc2626',
-  },
+    statusCircleSuccess: {
+      borderColor: c.success,
+      backgroundColor: c.successSoft,
+    },
 
-  statSubRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 2,
-  },
+    statusCircleFailure: {
+      borderColor: c.danger,
+      backgroundColor: c.dangerSoft,
+    },
 
-  dateText: {
-    fontSize: 12,
-    color: '#9ca3af',
-    textTransform: 'capitalize',
-  },
+    statusIcon: {
+      fontSize: 13,
+      fontWeight: '800',
+      lineHeight: 16,
+    },
 
-  percentText: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-})
+    statusIconSuccess: {
+      color: c.success,
+    },
+
+    statusIconFailure: {
+      color: c.danger,
+    },
+
+    statSubRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 2,
+    },
+
+    dateText: {
+      fontSize: 12,
+      color: c.textMuted,
+      textTransform: 'capitalize',
+    },
+
+    percentText: {
+      fontSize: 12,
+      color: c.textMuted,
+    },
+  })

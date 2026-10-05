@@ -13,6 +13,8 @@ export type Colors = {
   background: string
   /** Cards, rows, list items. */
   surface: string
+  /** Raised elements: modals, sheets, selected segment. */
+  card: string
   /** Secondary buttons, inputs, selected segment background. */
   surfaceAlt: string
   border: string
@@ -51,6 +53,7 @@ export type Colors = {
 export const lightColors: Colors = {
   background: '#FFFFFF',
   surface: '#F6F7F9',
+  card: '#FFFFFF',
   surfaceAlt: '#ECEEF1',
   border: '#E5E7EB',
   borderStrong: '#D1D5DB',
@@ -80,6 +83,7 @@ export const lightColors: Colors = {
 export const darkColors: Colors = {
   background: '#0B0E13',
   surface: '#161A21',
+  card: '#232933',
   surfaceAlt: '#20252E',
   border: '#272D37',
   borderStrong: '#3A4250',

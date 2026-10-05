@@ -13,6 +13,7 @@ import {
 import { signOut, type User } from '../api/auth'
 import { deleteAccount, getMe, updateDisplayName } from '../api/me'
 import { signOutFromGoogle } from '../auth/google'
+import { useThemedStyles, type Colors } from '@/theme'
 
 const MAX_DISPLAY_NAME_LENGTH = 50
 
@@ -21,6 +22,8 @@ const MAX_DISPLAY_NAME_LENGTH = 50
  * deletion (required by the Play Store for apps that create accounts).
  */
 export default function AccountSection() {
+  const styles = useThemedStyles(createStyles)
+
   const [user, setUser] = useState<User | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState<
@@ -212,100 +215,101 @@ export default function AccountSection() {
   )
 }
 
-const styles = StyleSheet.create({
-  center: {
-    paddingVertical: 20,
-    alignItems: 'center',
-  },
+const createStyles = (c: Colors) =>
+  StyleSheet.create({
+    center: {
+      paddingVertical: 20,
+      alignItems: 'center',
+    },
 
-  card: {
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    padding: 14,
-  },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      padding: 14,
+    },
 
-  label: {
-    fontSize: 15,
-    color: '#6B7280',
-    marginBottom: 8,
-  },
+    label: {
+      fontSize: 15,
+      color: c.textSecondary,
+      marginBottom: 8,
+    },
 
-  input: {
-    height: 48,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    color: '#111827',
-    fontSize: 16,
-  },
+    input: {
+      height: 48,
+      backgroundColor: c.background,
+      borderWidth: 1,
+      borderColor: c.borderStrong,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      color: c.text,
+      fontSize: 16,
+    },
 
-  hint: {
-    fontSize: 13,
-    color: '#9CA3AF',
-    marginTop: 6,
-  },
+    hint: {
+      fontSize: 13,
+      color: c.textMuted,
+      marginTop: 6,
+    },
 
-  primaryButton: {
-    marginTop: 12,
-    minHeight: 44,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#208AEF',
-  },
+    primaryButton: {
+      marginTop: 12,
+      minHeight: 44,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.primary,
+    },
 
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    primaryButtonText: {
+      color: c.onPrimary,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  secondaryButton: {
-    marginTop: 12,
-    minHeight: 48,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F1F1',
-  },
+    secondaryButton: {
+      marginTop: 12,
+      minHeight: 48,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.surfaceAlt,
+    },
 
-  secondaryButtonText: {
-    color: '#111827',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    secondaryButtonText: {
+      color: c.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  dangerButton: {
-    marginTop: 12,
-    minHeight: 48,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#DC2626',
-  },
+    dangerButton: {
+      marginTop: 12,
+      minHeight: 48,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: c.danger,
+    },
 
-  dangerButtonText: {
-    color: '#DC2626',
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    dangerButtonText: {
+      color: c.danger,
+      fontSize: 15,
+      fontWeight: '600',
+    },
 
-  disabled: {
-    opacity: 0.5,
-  },
+    disabled: {
+      opacity: 0.5,
+    },
 
-  success: {
-    color: '#15803D',
-    fontSize: 14,
-    marginTop: 10,
-  },
+    success: {
+      color: c.success,
+      fontSize: 14,
+      marginTop: 10,
+    },
 
-  error: {
-    color: '#DC2626',
-    fontSize: 14,
-    marginTop: 10,
-  },
-})
+    error: {
+      color: c.danger,
+      fontSize: 14,
+      marginTop: 10,
+    },
+  })
