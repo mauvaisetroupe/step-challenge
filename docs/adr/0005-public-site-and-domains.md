@@ -96,6 +96,7 @@ Sous-domaine **à un seul niveau** pour l'API : le certificat Cloudflare gratuit
 
   ```apache
   RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^i/[^/]+/?$ /i/index.html [L]
 
   Redirect 301 /privacy.html /en/privacy/
@@ -106,6 +107,8 @@ Sous-domaine **à un seul niveau** pour l'API : le certificat Cloudflare gratuit
     ForceType application/json
   </Files>
   ```
+
+  *Précisé le 2026-10-05 à l'implémentation :* la condition `RewriteCond %{REQUEST_FILENAME} !-f` est nécessaire. Sans elle, `/i/index.html` correspond aussi à la règle : Apache la réapplique en boucle et toute adresse `/i/…` renvoie une erreur 500 (constaté avec Apache 2.4).
 
 - `/i/index.html` : page fixe ; un script lit le code dans l'adresse pour le bouton « Ouvrir dans l'application », avec le lien vers le Play Store. `noindex`, `<meta name="referrer" content="no-referrer">`, aucune ressource externe (le code d'invitation ne doit fuiter vers personne).
 - Le nom de l'invitant n'est plus affiché sur la page web (la page actuelle ne l'affiche pas non plus) ; l'application l'affiche après ouverture.
