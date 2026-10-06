@@ -38,7 +38,7 @@ import ReportUserModal, {
   type ReportTarget,
 } from '../components/ReportUserModal'
 import UserBadge from '../components/UserBadge'
-import { formatDate } from '@/i18n'
+import { useFormatters, type Formatters } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 /**
@@ -51,6 +51,7 @@ export default function FriendsScreen() {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { t } = useTranslation()
+  const formatters = useFormatters()
 
   const [friends, setFriends] = useState<Friend[]>([])
   const [invitations, setInvitations] = useState<ActiveInvitation[]>([])
@@ -403,12 +404,12 @@ export default function FriendsScreen() {
                 <View style={styles.names}>
                   <Text style={styles.name} numberOfLines={1}>
                     {t('friends.invitations.created', {
-                      date: formatShortDate(invitation.createdAt),
+                      date: formatShortDate(invitation.createdAt, formatters),
                     })}
                   </Text>
                   <Text style={styles.realName} numberOfLines={1}>
                     {t('friends.invitations.expires', {
-                      date: formatShortDate(invitation.expiresAt),
+                      date: formatShortDate(invitation.expiresAt, formatters),
                     })}
                     {' · '}
                     {invitation.useCount === 0
@@ -453,7 +454,7 @@ export default function FriendsScreen() {
                   </Text>
                   <Text style={styles.realName} numberOfLines={1}>
                     {t('friends.blocked.since', {
-                      date: formatShortDate(user.since),
+                      date: formatShortDate(user.since, formatters),
                     })}
                   </Text>
                 </View>
@@ -500,8 +501,8 @@ export default function FriendsScreen() {
   )
 }
 
-function formatShortDate(value: string) {
-  return formatDate(new Date(value), {
+function formatShortDate(value: string, f: Formatters) {
+  return f.formatDate(new Date(value), {
     day: 'numeric',
     month: 'short',
   })

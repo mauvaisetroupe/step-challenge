@@ -19,7 +19,7 @@ import { displayName } from '../../api/friends'
 import UserBadge from '../../components/UserBadge'
 import { syncLast30Days } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
-import { formatNumber } from '@/i18n'
+import { useFormatters } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Period = 'week' | 'month'
@@ -28,6 +28,7 @@ export default function LeaderboardScreen() {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { t } = useTranslation()
+  const { formatNumber } = useFormatters()
 
   const [period, setPeriod] = useState<Period>('week')
   const [results, setResults] = useState<LeaderboardEntry[]>([])

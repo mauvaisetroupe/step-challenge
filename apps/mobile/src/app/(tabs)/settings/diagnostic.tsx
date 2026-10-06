@@ -16,13 +16,14 @@ import {
   type HealthConnectDiagnostic,
 } from '@/services/healthConnectDiagnostic'
 import { getHuaweiHealthDiagnostic } from '@/services/huaweiHealthDiagnostic'
-import { formatDateTime } from '@/i18n'
+import { useFormatters } from '@/i18n'
 import { useThemedStyles, type Colors } from '@/theme'
 
 /** Checks Health Connect, permissions, Huawei Health and the server. */
 export default function DiagnosticSettingsScreen() {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
+  const { formatDateTime } = useFormatters()
   const [diagnostic, setDiagnostic] =
     useState<HealthConnectDiagnostic | null>(null)
   const [loading, setLoading] = useState(false)

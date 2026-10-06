@@ -26,7 +26,7 @@ import {
 import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
-import { formatDate, formatNumber } from '@/i18n'
+import { useFormatters, type Formatters } from '@/i18n'
 import DayTimeline from '@/components/stats/DayTimeline'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
@@ -70,25 +70,25 @@ function parseDateKey(value: string) {
   return new Date(year, month - 1, day)
 }
 
-function formatSteps(value: number) {
-  return formatNumber(Math.round(value))
+function formatSteps(value: number, f: Formatters) {
+  return f.formatNumber(Math.round(value))
 }
 
-function formatShortDate(date: Date) {
-  return formatDate(date, {
+function formatShortDate(date: Date, f: Formatters) {
+  return f.formatDate(date, {
     day: 'numeric',
     month: 'short',
   })
 }
 
-function formatMonth(date: Date) {
-  return formatDate(date, {
+function formatMonth(date: Date, f: Formatters) {
+  return f.formatDate(date, {
     month: 'short',
   })
 }
 
-function formatWeekDay(date: Date) {
-  return formatDate(date, {
+function formatWeekDay(date: Date, f: Formatters) {
+  return f.formatDate(date, {
     weekday: 'long',
   })
 }
@@ -285,6 +285,7 @@ async function getDatabaseMonthlyStats(
 export default function StatsScreen() {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
+  const formatters = useFormatters()
 
   const [period, setPeriod] = useState<Period>('7d')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
@@ -523,7 +524,7 @@ export default function StatsScreen() {
           <>
             <View style={styles.totalContainer}>
               <Text style={styles.totalValue}>
-                {formatSteps(totalSteps)}
+                {formatSteps(totalSteps, formatters)}
               </Text>
 
               <Text style={styles.totalLabel}>
@@ -535,18 +536,14 @@ export default function StatsScreen() {
               {period === '1y' ? (
                 <BarChart
                   data={monthlyStats.map((item) => ({
-                    label: formatMonth(
-                      parseDateKey(item.date),
-                    ),
+                    label: formatMonth(parseDateKey(item.date), formatters),
                     value: item.steps,
                   }))}
                 />
               ) : (
                 <BarChart
                   data={dailyStats.map((item) => ({
-                    label: formatShortDate(
-                      parseDateKey(item.date),
-                    ),
+                    label: formatShortDate(parseDateKey(item.date), formatters),
                     value: item.steps,
                   }))}
                 />
@@ -574,6 +571,7 @@ function DailyStatsList({
 }) {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
+  const formatters = useFormatters()
 
   return (
     <View style={styles.statsList}>
@@ -592,12 +590,12 @@ function DailyStatsList({
             >
               <View style={styles.statMainRow}>
                 <Text style={styles.dayName}>
-                  {formatWeekDay(date)}
+                  {formatWeekDay(date, formatters)}
                 </Text>
 
                 <View style={styles.stepsStatus}>
                   <Text style={styles.stepsValue}>
-                    {formatSteps(item.steps)}
+                    {formatSteps(item.steps, formatters)}
                   </Text>
 
                   <View
@@ -624,11 +622,13 @@ function DailyStatsList({
 
               <View style={styles.statSubRow}>
                 <Text style={styles.dateText}>
-                  {formatShortDate(date)}
+                  {formatShortDate(date, formatters)}
                 </Text>
 
                 <Text style={styles.percentText}>
-                  {t('stats.percent', { percent: formatNumber(percent) })}
+                  {t('stats.percent', {
+                    percent: formatters.formatNumber(percent),
+                  })}
                 </Text>
               </View>
             </View>
@@ -645,6 +645,7 @@ function MonthlyStatsList({
 }) {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
+  const formatters = useFormatters()
 
   return (
     <View style={styles.statsList}>
@@ -667,14 +668,14 @@ function MonthlyStatsList({
             >
               <View style={styles.statMainRow}>
                 <Text style={styles.dayName}>
-                  {formatDate(date, {
+                  {formatters.formatDate(date, {
                     month: 'long',
                   })}
                 </Text>
 
                 <View style={styles.stepsStatus}>
                   <Text style={styles.stepsValue}>
-                    {formatSteps(item.steps)}
+                    {formatSteps(item.steps, formatters)}
                   </Text>
 
                   <View
@@ -705,7 +706,9 @@ function MonthlyStatsList({
                 </Text>
 
                 <Text style={styles.percentText}>
-                  {t('stats.percent', { percent: formatNumber(percent) })}
+                  {t('stats.percent', {
+                    percent: formatters.formatNumber(percent),
+                  })}
                 </Text>
               </View>
             </View>

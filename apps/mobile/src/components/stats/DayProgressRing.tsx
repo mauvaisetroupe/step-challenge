@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 
-import { formatNumber } from '@/i18n'
+import { useFormatters } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Props = {
@@ -23,6 +23,7 @@ export default function DayProgressRing({ steps, goal }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { t } = useTranslation()
+  const { formatNumber } = useFormatters()
 
   const reached = steps >= goal
   const progress = Math.min(1, Math.max(0, steps / goal))

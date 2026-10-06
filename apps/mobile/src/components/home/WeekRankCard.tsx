@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
-import { formatNumber } from '@/i18n'
+import { useFormatters } from '@/i18n'
 import type { WeekRank } from '@/services/insights'
 import { useThemedStyles, type Colors } from '@/theme'
 
@@ -26,6 +26,7 @@ export default function WeekRankCard({
 }: Props) {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
+  const { formatNumber } = useFormatters()
   const title = t('home.weekRank.title')
 
   if (error || !rank) {

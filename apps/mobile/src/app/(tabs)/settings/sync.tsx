@@ -13,13 +13,14 @@ import {
   triggerBackgroundStepSyncForTesting,
   type BackgroundSyncRun,
 } from '@/services/backgroundSync'
-import { formatDateTime } from '@/i18n'
+import { useFormatters } from '@/i18n'
 import { useThemedStyles, type Colors } from '@/theme'
 
 /** History of the background step sync, and a manual test run. */
 export default function SyncSettingsScreen() {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
+  const { formatDateTime } = useFormatters()
   const [history, setHistory] = useState<BackgroundSyncRun[]>([])
 
   const load = useCallback(async () => {

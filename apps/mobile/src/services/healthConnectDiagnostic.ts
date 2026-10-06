@@ -7,7 +7,7 @@ import {
 } from 'react-native-health-connect'
 
 import { API_URL } from '../api/config'
-import { formatDateTime, i18n } from '@/i18n'
+import { getFormatters, i18n } from '@/i18n'
 
 const t = i18n.t
 
@@ -251,7 +251,7 @@ export function formatDiagnostic(
   lines.push('')
   lines.push(
     t('diagnostic.generatedAt', {
-      date: formatDateTime(new Date(diagnostic.generatedAt)),
+      date: getFormatters().formatDateTime(new Date(diagnostic.generatedAt)),
     }),
   )
 

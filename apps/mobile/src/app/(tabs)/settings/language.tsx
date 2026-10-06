@@ -13,10 +13,10 @@ import {
 /** Name of the phone language, in that language ("español"). */
 function phoneLanguageName() {
   try {
-    const tag = getLocales()[0]?.languageTag
+    const code = getLocales()[0]?.languageCode
 
-    if (tag) {
-      return new Intl.DisplayNames([tag], { type: 'language' }).of(tag) ?? tag
+    if (code) {
+      return new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code
     }
   } catch {
     // Intl.DisplayNames is missing on some engines: no name then.

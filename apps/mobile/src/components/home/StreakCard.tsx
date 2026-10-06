@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 
-import { formatNumber } from '@/i18n'
+import { useFormatters } from '@/i18n'
 import type { Streaks } from '@/services/insights'
 import { useThemedStyles, type Colors } from '@/theme'
 
@@ -20,6 +20,7 @@ type Props = {
 export default function StreakCard({ streaks, goal, error }: Props) {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
+  const { formatNumber } = useFormatters()
   const title = t('home.streak.title')
   const goalValues = { goal: formatNumber(goal) }
 
