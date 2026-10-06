@@ -23,6 +23,10 @@ export default function SettingsLayout() {
         name="language"
         options={{ title: t('settings.language.title') }}
       />
+      <Stack.Screen
+        name="sources"
+        options={{ title: t('settings.sources.title') }}
+      />
       <Stack.Screen name="sync" options={{ title: t('settings.sync.title') }} />
       <Stack.Screen
         name="huawei"

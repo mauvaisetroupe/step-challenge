@@ -77,6 +77,14 @@
       "detail": "Conditions d'utilisation, confidentialité",
       "terms": "Conditions d'utilisation",
       "privacy": "Politique de confidentialité"
+    },
+    "sources": {
+      "title": "Sources de pas",
+      "detail": "Montre, téléphone, priorités",
+      "description": "Les applications qui enregistrent tes pas dans Santé Connect aujourd'hui, et le total que Step Challenge utilise.",
+      "openHealthConnect": "Ouvrir Santé Connect",
+      "refresh": "Actualiser",
+      "androidOnly": "Les sources de pas ne sont visibles que dans l'application Android."
     }
   },
   "friends": {
@@ -195,7 +203,9 @@
     "stepsUnit_many": "pas",
     "stepsUnit_other": "pas",
     "percent": "{{percent}} %",
-    "noData": "Aucune donnée"
+    "noData": "Aucune donnée",
+    "sources": "Sources : {{names}}",
+    "seeSources": "Voir les sources"
   },
   "home": {
     "today": "Aujourd'hui",

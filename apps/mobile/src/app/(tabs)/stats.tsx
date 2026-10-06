@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import Svg, {
@@ -25,6 +26,8 @@ import {
 
 import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
+import { stepSourceLabel } from '@/services/healthConnectDiagnostic'
+import { getTodayStepSources } from '@/services/stepSources'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import { useFormatters, type Formatters } from '@/i18n'
 import DayTimeline from '@/components/stats/DayTimeline'
@@ -292,6 +295,8 @@ export default function StatsScreen() {
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
   // 1-day view: steps per hour (Android).
   const [hourlySteps, setHourlySteps] = useState<number[]>([])
+  // Names of today's step sources, under the 1-day view (Android).
+  const [sourceNames, setSourceNames] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -403,6 +408,20 @@ export default function StatsScreen() {
         setHourlySteps(hours)
         setDailyStats([])
         setMonthlyStats([])
+
+        // Best effort: the link to the sources screen works without names.
+        getTodayStepSources()
+          .then((report) =>
+            setSourceNames(
+              report.sources
+                .filter((source) => source.steps > 0)
+                .map(stepSourceLabel),
+            ),
+          )
+          .catch((err) => {
+            console.error('Step sources error:', err)
+            setSourceNames([])
+          })
 
         return
       }
@@ -519,6 +538,23 @@ export default function StatsScreen() {
                   : t('stats.noStepsToday')
               }
             />
+
+            {Platform.OS === 'android' && (
+              <Pressable
+                style={styles.sourcesLink}
+                onPress={() => router.push('/settings/sources')}
+                hitSlop={8}
+              >
+                {sourceNames.length > 0 && (
+                  <Text style={styles.sourcesText} numberOfLines={1}>
+                    {t('stats.sources', { names: sourceNames.join(', ') })}
+                  </Text>
+                )}
+                <Text style={styles.sourcesAction}>
+                  {t('stats.seeSources')}
+                </Text>
+              </Pressable>
+            )}
           </>
         ) : (
           <>
@@ -825,6 +861,23 @@ function BarChart({
 
 const createStyles = (c: Colors) =>
   StyleSheet.create({
+    sourcesLink: {
+      marginTop: 16,
+      alignItems: 'center',
+      gap: 2,
+    },
+
+    sourcesText: {
+      fontSize: 13,
+      color: c.textSecondary,
+    },
+
+    sourcesAction: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: c.primary,
+    },
+
     container: {
       flex: 1,
       backgroundColor: c.background,

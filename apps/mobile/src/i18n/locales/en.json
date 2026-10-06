@@ -76,6 +76,14 @@
       "detail": "Terms of use, privacy",
       "terms": "Terms of use",
       "privacy": "Privacy policy"
+    },
+    "sources": {
+      "title": "Step sources",
+      "detail": "Watch, phone, priorities",
+      "description": "The apps that record your steps in Health Connect today, and the total Step Challenge uses.",
+      "openHealthConnect": "Open Health Connect",
+      "refresh": "Refresh",
+      "androidOnly": "Step sources are only available in the Android app."
     }
   },
   "friends": {
@@ -189,7 +197,9 @@
     "stepsUnit_one": "step",
     "stepsUnit_other": "steps",
     "percent": "{{percent}}%",
-    "noData": "No data"
+    "noData": "No data",
+    "sources": "Sources: {{names}}",
+    "seeSources": "See sources"
   },
   "home": {
     "today": "Today",

@@ -52,6 +52,11 @@ export default function SettingsScreen() {
       title: t('settings.groups.steps'),
       entries: [
         {
+          title: t('settings.sources.title'),
+          detail: t('settings.sources.detail'),
+          href: '/settings/sources',
+        },
+        {
           title: t('settings.sync.title'),
           detail: t('settings.sync.detail'),
           href: '/settings/sync',
