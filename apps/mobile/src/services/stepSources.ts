@@ -32,8 +32,14 @@ const KNOWN_SOURCES: Record<string, string> = {
   'com.strava': 'Strava',
 }
 
-/** Steps counted by the phone itself (Android 14 and later). */
+/**
+ * Steps counted by the phone itself. Android 14 declares them as
+ * "android"; recent versions (seen on Android 17) as
+ * "com.android.healthconnect.phone.<id>", with an id specific to the
+ * device.
+ */
 const PHONE_SOURCE = 'android'
+const PHONE_SOURCE_PREFIX = 'com.android.healthconnect.phone'
 
 /** How far back to look for sources: one that wrote nothing today still shows. */
 const SOURCE_DISCOVERY_DAYS = 30
@@ -59,7 +65,10 @@ export type StepSourcesReport = {
 }
 
 export function isPhoneSource(packageName: string) {
-  return packageName === PHONE_SOURCE
+  return (
+    packageName === PHONE_SOURCE ||
+    packageName.startsWith(PHONE_SOURCE_PREFIX)
+  )
 }
 
 function sourceName(packageName: string) {

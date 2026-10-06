@@ -281,8 +281,13 @@ export function formatDiagnostic(
         const devices =
           source.devices.length > 0 ? ` (${source.devices.join(', ')})` : ''
 
+        const label = stepSourceLabel(source)
+        // The package name helps support, unless it is already the label.
+        const packageName =
+          label === source.packageName ? '' : ` [${source.packageName}]`
+
         lines.push(
-          `- ${stepSourceLabel(source)} [${source.packageName}]${devices}: ${formatNumber(source.steps)}`,
+          `- ${label}${packageName}${devices}: ${formatNumber(source.steps)}`,
         )
       }
 
