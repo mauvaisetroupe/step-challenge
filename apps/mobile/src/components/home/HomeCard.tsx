@@ -1,6 +1,14 @@
 import type { ReactNode } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type TextStyle,
+} from 'react-native'
 
+import { RichText } from '@/i18n'
 import { useThemedStyles, type Colors } from '@/theme'
 
 type Props = {
@@ -43,11 +51,28 @@ export default function HomeCard({ icon, title, children, onPress }: Props) {
   )
 }
 
-/** Bold part of a sentence in a card. */
-export function Strong({ children }: { children: ReactNode }) {
+/**
+ * Translated sentence of a card, with <b>…</b> parts in bold (ADR 0007).
+ */
+export function CardText({
+  text,
+  values,
+  style,
+}: {
+  text: string
+  values?: Record<string, string>
+  style?: StyleProp<TextStyle>
+}) {
   const styles = useThemedStyles(createStyles)
 
-  return <Text style={styles.strong}>{children}</Text>
+  return (
+    <RichText
+      text={text}
+      values={values}
+      style={style}
+      boldStyle={styles.strong}
+    />
+  )
 }
 
 const createStyles = (c: Colors) =>

@@ -8,8 +8,10 @@ import {
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { onSignedOut } from '@/api/client'
+import { LanguageProvider } from '@/i18n'
 import { AnimatedSplashOverlay } from '@/components/animated-icon'
 import { registerBackgroundStepSync } from '@/services/backgroundSync'
 import { ThemeProvider, useTheme } from '@/theme'
@@ -22,6 +24,7 @@ SplashScreen.preventAutoHideAsync()
  */
 function ThemedNavigation() {
   const { colors, scheme } = useTheme()
+  const { t } = useTranslation()
 
   const navigationTheme = useMemo(() => {
     const base = scheme === 'dark' ? DarkTheme : DefaultTheme
@@ -50,11 +53,11 @@ function ThemedNavigation() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen
           name="friends"
-          options={{ headerShown: true, title: 'Amis' }}
+          options={{ headerShown: true, title: t('friends.title') }}
         />
         <Stack.Screen
           name="i/[code]"
-          options={{ headerShown: true, title: 'Invitation' }}
+          options={{ headerShown: true, title: t('invitation.title') }}
         />
       </Stack>
     </NavigationThemeProvider>
@@ -82,10 +85,13 @@ export default function RootLayout() {
   }, [])
 
   return (
-    // Light or dark appearance: phone setting, or the choice made in
-    // Settings → Appearance (app.json: userInterfaceStyle "automatic").
-    <ThemeProvider>
-      <ThemedNavigation />
-    </ThemeProvider>
+    // Language and appearance: phone settings, or the choices made in
+    // Settings → Language (ADR 0007) and Settings → Appearance (app.json:
+    // userInterfaceStyle "automatic").
+    <LanguageProvider>
+      <ThemeProvider>
+        <ThemedNavigation />
+      </ThemeProvider>
+    </LanguageProvider>
   )
 }

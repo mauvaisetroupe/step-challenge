@@ -2,7 +2,7 @@
 
 Point d'étape pour reprendre le travail, notamment dans une nouvelle session d'assistant (Claude Code en local ou dans le cloud). À mettre à jour à chaque étape importante.
 
-**Dernière mise à jour : 2026-10-05**
+**Dernière mise à jour : 2026-10-06**
 
 ## En bref
 
@@ -102,6 +102,12 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
   - messages de la carte « Cette semaine » : personne devant, premier, égalité, seul (bouton vers Amis) ; un appui ouvre le Classement ;
   - série : elle compte jusqu'à hier tant que l'objectif du jour n'est pas atteint, puis inclut aujourd'hui ; badge « C'est ton record ! » ; un jour absent de la base coupe la série ;
   - tirer vers le bas recharge l'écran ; sans réseau, les cartes affichent un message d'indisponibilité sans bloquer l'anneau.
+- [x] **Application en anglais** ([ADR 0007](adr/0007-internationalization.md), 2026-10-06) : tous les textes passent par des clés i18next (`apps/mobile/src/i18n/locales/fr.json` et `en.json`). L'application suit la langue du téléphone, ou le choix fait dans Paramètres → Langue (Système, Français, English) ; anglais par défaut pour une langue non prise en charge. Vérifié sur le web, en français et en anglais (Accueil, Statistiques, Classement, Paramètres, Amis, connexion), changement de langue immédiat. **À tester sur téléphone** (nouveau build nécessaire : module natif expo-localization et langues déclarées pour Android 13, donc `prebuild` pour la variante de développement) :
+  - téléphone en anglais, puis en espagnol : l'application est en anglais ; téléphone en français : en français ;
+  - Paramètres → Langue : le choix s'applique tout de suite (onglets, titres des écrans, nombres et dates) et reste après redémarrage ;
+  - Android 13 et plus : réglages du téléphone → Applis → Step Challenge → Langue propose Français et English, et l'option Système de l'application le suit ;
+  - pluriels et rangs : « 1 jour / 4 jours », « 1st / 2nd / 3rd / 5th », « 1 step / 2 steps » ; fenêtres (retirer, bloquer, supprimer le compte) et message d'invitation partagé.
+- [ ] **Anglais, suite** : fiche Play Store et captures d'écran en anglais (Play Console) ; une fois `step.architech.lu` basculé vers le site Hugo (ADR 0005), ouvrir les pages légales françaises (`/fr/privacy.html`…) quand l'application est en français (`constants/links.ts`).
 - [ ] **Historique complet des pas** (ADR à écrire) : l'autorisation Santé Connect « lire les données passées » (`READ_HEALTH_DATA_HISTORY`) permettrait d'envoyer une fois tout l'historique à la base (séries et vue 1 an justes dès l'installation ; aujourd'hui, elles partent de l'arrivée sur Step Challenge). À évaluer : disponibilité selon les versions de Santé Connect, justification dans la déclaration des autorisations de santé de la Play Console, politique de confidentialité. Garmin et Xiaomi écrivent déjà dans Santé Connect ; Garmin n'ouvre son API qu'à des partenaires approuvés.
 - [ ] **Ménage des restes du modèle Expo**, à vérifier un par un avant suppression :
   - dépendances apparemment inutilisées : `expo-device`, `react-native-gesture-handler` (`expo-status-bar` sert désormais à la barre d'état claire ou sombre) ;
@@ -117,6 +123,8 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 - **Routes typées** : après l'ajout d'un écran, lancer brièvement `expo start` pour régénérer les types de routes, sinon `tsc` échoue.
 - **Sources de l'écran Statistiques** : 1j, 7j et 30j lisent Santé Connect ; 1a lit la base, car Santé Connect ne donne que 30 jours avant la première autorisation et ne suit pas l'utilisateur sur un nouveau téléphone. C'est la seule vue des Statistiques qui lit la base : Step Challenge ne remplace pas l'historique de la montre (commentaire dans `stats.tsx`). L'Accueil lit aussi la base, pour le classement et les séries (tout l'historique, `from=2000-01-01`).
 - **Thème clair et sombre** : aucune couleur en dur dans les écrans. Les couleurs sont des jetons (`src/theme/colors.ts`) lus par `useTheme()` ou `useThemedStyles(createStyles)`, où `createStyles` est une fonction des couleurs. Un texte sans couleur explicite reste noir et devient illisible en sombre : toujours donner une couleur aux styles de texte. Le choix de l'apparence est appliqué avec `Appearance.setColorScheme`, gardé dans AsyncStorage.
+- **Traductions** (ADR 0007) : aucun texte en dur dans les écrans, toujours `t('clé')` (`useTranslation()`), et la clé dans **chaque** fichier de `src/i18n/locales/`. `en.json` est la référence du typage : une clé inconnue fait échouer `tsc`. `npm run check:i18n` (lancé par la CI) compare les langues : mêmes clés, formes de pluriel de chaque langue (en français `_one`, `_many`, `_other` ; en anglais `_one`, `_other`), mêmes `{{valeurs}}`. Nombres et dates : `useFormatters()` dans les composants, jamais `'fr-FR'` ni `getFormatters()` (le React Compiler mémoriserait une valeur dans l'ancienne langue). Mots en gras dans une phrase : `<b>…</b>` dans la traduction, rendu par `RichText` (ou `CardText` sur l'Accueil) avec `t(clé, { skipInterpolation: true })`.
+- **Web et langue** : l'export web statique est rendu en anglais ; dans un navigateur en français, React signale une différence au chargement (erreur 418) et refait le rendu côté client. Sans effet sur Android.
 - **Paramètres** : un menu (`(tabs)/settings/index.tsx`) et un écran par section dans `(tabs)/settings/`, éléments communs dans `components/settings/ui.tsx`.
 - **Écrans des onglets** : chacun est enveloppé dans un `SafeAreaView` limité au bord haut, avec un titre fixe (`components/TabScreenHeader.tsx`).
 - **Clés de signature** : une fonction qui marche en local mais pas avec l'application du Store (ou l'inverse) vient presque toujours d'une empreinte non déclarée. Voir [`signing.md`](signing.md).

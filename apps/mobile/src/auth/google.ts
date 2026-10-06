@@ -35,10 +35,16 @@ export type GoogleSignInFailureReason =
   | 'unavailable'
   | 'unknown'
 
+/**
+ * The message is technical, for the logs; the sign-in screen shows a
+ * translated text chosen from the reason (ADR 0007).
+ */
 export class GoogleSignInFailure extends Error {
   constructor(
     readonly reason: GoogleSignInFailureReason,
     message: string,
+    /** Error code of the Google module, for 'unknown'. */
+    readonly code?: string,
   ) {
     super(message)
     this.name = 'GoogleSignInFailure'
@@ -95,19 +101,20 @@ export async function signInWithGoogle(): Promise<GoogleCredential | null> {
       case statusCodes.DEVELOPER_ERROR:
         throw new GoogleSignInFailure(
           'configuration',
-          'Configuration Google invalide (client OAuth Android, package ou SHA-1).',
+          'Invalid Google configuration (Android OAuth client, package or SHA-1).',
         )
 
       case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
         throw new GoogleSignInFailure(
           'play-services',
-          'Les services Google Play sont absents ou à mettre à jour.',
+          'Google Play services are missing or need an update.',
         )
 
       default:
         throw new GoogleSignInFailure(
           'unknown',
-          `Connexion Google impossible (${error.code}).`,
+          `Google sign-in failed (${error.code}).`,
+          String(error.code),
         )
     }
   }

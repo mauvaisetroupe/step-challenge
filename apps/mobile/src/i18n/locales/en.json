@@ -1,0 +1,371 @@
+{
+  "tabs": {
+    "home": "Home",
+    "stats": "Stats",
+    "leaderboard": "Leaderboard",
+    "settings": "Settings"
+  },
+  "settings": {
+    "groups": {
+      "general": "General",
+      "steps": "Step data",
+      "information": "Information"
+    },
+    "account": {
+      "title": "Account",
+      "detail": "Display name, sign-out, deletion"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "description": "Choose how the app looks. This choice is kept on this phone.",
+      "options": {
+        "system": {
+          "label": "System",
+          "hint": "Follows the phone setting"
+        },
+        "light": {
+          "label": "Light",
+          "hint": "Always light"
+        },
+        "dark": {
+          "label": "Dark",
+          "hint": "Always dark"
+        }
+      }
+    },
+    "language": {
+      "title": "Language",
+      "description": "Choose the language of the app. This choice is kept on this phone.",
+      "system": "System",
+      "systemHint": "Follows the phone language ({{language}})"
+    },
+    "sync": {
+      "title": "Background sync",
+      "detail": "Latest runs",
+      "description": "The sync regularly checks the last 30 days of data.",
+      "empty": "No run recorded",
+      "manual": "MANUAL",
+      "automatic": "AUTOMATIC",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "failed": "Failed",
+      "refresh": "Refresh",
+      "test": "Test the sync"
+    },
+    "huawei": {
+      "title": "Huawei Health",
+      "detail": "Huawei watches",
+      "description": "Connect Step Challenge to Huawei Health so that it can read your steps.",
+      "configure": "Set up Huawei Health",
+      "configured": "Huawei Health is set up.",
+      "error": "Huawei Health setup error"
+    },
+    "diagnostic": {
+      "title": "Diagnostics",
+      "detail": "Health Connect, permissions, server"
+    },
+    "about": {
+      "title": "About",
+      "versionDetail": "Version {{version}}",
+      "unknown": "unknown",
+      "app": "App",
+      "version": "Version"
+    },
+    "legal": {
+      "title": "Legal",
+      "detail": "Terms of use, privacy",
+      "terms": "Terms of use",
+      "privacy": "Privacy policy"
+    }
+  },
+  "friends": {
+    "title": "Friends",
+    "intro": "Only your friends see your steps, and you only see theirs.",
+    "loadError": "Cannot load your friends.",
+    "haveCode": "I have a code",
+    "list": "My friends",
+    "listCount_one": "My friends ({{count}})",
+    "listCount_other": "My friends ({{count}})",
+    "empty": "No friends yet. Share an invitation link: everyone who opens it and accepts joins your friends list.",
+    "invite": {
+      "button": "Invite friends",
+      "creating": "Creating the link...",
+      "message": "Join me on Step Challenge to compare our steps! Open this link (valid for 7 days): {{url}}",
+      "tooMany": "You already have too many active invitation links. Deactivate one below, or wait for it to expire.",
+      "error": "Cannot create an invitation link."
+    },
+    "invitations": {
+      "title_one": "Active invitation link ({{count}})",
+      "title_other": "Active invitation links ({{count}})",
+      "hint": "For security, the app does not keep the links: to invite someone else, create a new link.",
+      "created": "Created on {{date}}",
+      "expires": "Expires on {{date}}",
+      "unused": "not used yet",
+      "accepted_one": "accepted by {{count}} person",
+      "accepted_other": "accepted by {{count}} people"
+    },
+    "revoke": {
+      "title": "Deactivate this link?",
+      "message": "Nobody will be able to use it to become your friend anymore. Friends who already accepted it remain your friends.",
+      "confirm": "Deactivate",
+      "error": "Cannot deactivate this link."
+    },
+    "remove": {
+      "title": "Remove {{name}}?",
+      "message": "You will no longer see each other's steps. Your invitation links still active will be deactivated.",
+      "confirm": "Remove",
+      "error": "Cannot remove this friend."
+    },
+    "block": {
+      "title": "Block {{name}}?",
+      "message": "You will no longer be friends, and {{name}} will not be able to become your friend again, even with an invitation link. {{name}} is not notified.",
+      "confirm": "Block",
+      "error": "Cannot block this person."
+    },
+    "unblock": {
+      "title": "Unblock {{name}}?",
+      "message": "You do not become friends again automatically: a new invitation link will be needed.",
+      "confirm": "Unblock",
+      "error": "Cannot unblock this person."
+    },
+    "blocked": {
+      "title_one": "Blocked person ({{count}})",
+      "title_other": "Blocked people ({{count}})",
+      "hint": "They can no longer become your friends and do not know they are blocked.",
+      "since": "Blocked on {{date}}"
+    },
+    "actions": {
+      "rename": "Rename",
+      "report": "Report"
+    },
+    "rename": {
+      "error": "Cannot save.",
+      "hint": "Only you can see this name.",
+      "realName": "Their name: {{name}}.",
+      "reset": "Back to “{{name}}”"
+    }
+  },
+  "invitation": {
+    "title": "Invitation",
+    "errors": {
+      "friendLimit": "The friend limit has been reached.",
+      "tooManyAttempts": "Too many attempts. Try again in a minute.",
+      "generic": "Cannot process this invitation. Check your connection."
+    },
+    "invalid": {
+      "title": "Invalid invitation link",
+      "text": "This link has expired or has been deactivated. Ask the person who invited you for a new link."
+    },
+    "blocked": {
+      "title": "{{name}} is blocked",
+      "text": "This person will not be able to become your friend. You can unblock them from the Friends screen."
+    },
+    "accepted": {
+      "title": "Done!",
+      "text": "You and {{name}} are now friends: you appear in each other's leaderboard."
+    },
+    "own": "This is your own invitation: share this link with your friends so that they join you.",
+    "alreadyFriends": "You are already friends.",
+    "invites": "{{name}} invites you to become friends. You will see each other's steps in the leaderboard.",
+    "accept": "Become friends",
+    "accepting": "One moment...",
+    "notNow": "Not now",
+    "report": "Report this invitation",
+    "backToLeaderboard": "Back to the leaderboard",
+    "seeLeaderboard": "See the leaderboard"
+  },
+  "stats": {
+    "goal": "Goal",
+    "title": "Statistics",
+    "periods": {
+      "1d": "1D",
+      "7d": "7D",
+      "30d": "30D",
+      "1y": "1Y"
+    },
+    "loadError": "Cannot load the statistics",
+    "hourlyAndroidOnly": "The hour-by-hour detail is only available on Android.",
+    "noStepsToday": "No steps recorded today.",
+    "stepsUnit_one": "step",
+    "stepsUnit_other": "steps",
+    "percent": "{{percent}}%",
+    "noData": "No data"
+  },
+  "home": {
+    "today": "Today",
+    "healthConnectError": "Cannot read steps from Health Connect",
+    "ring": {
+      "percentOfGoal": "{{percent}}% of the goal"
+    },
+    "weekRank": {
+      "title": "This week",
+      "unavailable": "Leaderboard unavailable for now.",
+      "alone": "The challenge starts with your friends: invite them to compare your steps.",
+      "invite": "Invite friends",
+      "rank_ordinal_one": "{{count}}st",
+      "rank_ordinal_two": "{{count}}nd",
+      "rank_ordinal_few": "{{count}}rd",
+      "rank_ordinal_other": "{{count}}th",
+      "total": "out of {{total}}",
+      "toPass_one": "Only <b>{{steps}} step</b> to pass <b>{{name}}</b> 🏃",
+      "toPass_other": "Only <b>{{steps}} steps</b> to pass <b>{{name}}</b> 🏃",
+      "lead_one": "You're in the lead, <b>{{steps}} step</b> ahead of <b>{{name}}</b> 🥇",
+      "lead_other": "You're in the lead, <b>{{steps}} steps</b> ahead of <b>{{name}}</b> 🥇",
+      "tie": "Tied with <b>{{name}}</b>: every step counts! 🤝"
+    },
+    "streak": {
+      "title": "Streak",
+      "unavailable": "Streak unavailable for now.",
+      "daysInARow_one": "day in a row",
+      "daysInARow_other": "days in a row",
+      "aboveGoal": "at {{goal}} steps or more",
+      "extend": "Reach {{goal}} steps today to extend it.",
+      "isRecord": "That's your record!",
+      "none": "No streak in progress.",
+      "start": "Reach {{goal}} steps today to start one.",
+      "record_one": "Record: <b>{{days}} day</b>",
+      "record_other": "Record: <b>{{days}} days</b>",
+      "noRecord": "Record: <b>no day at {{goal}} steps yet</b>",
+      "since": "since you joined Step Challenge"
+    }
+  },
+  "common": {
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "save": "Save",
+    "saving": "Saving...",
+    "close": "Close",
+    "back": "Back"
+  },
+  "leaderboard": {
+    "loadError": "Cannot load the leaderboard.",
+    "syncError": "Cannot update the steps.",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "week": "Week",
+    "month": "Month",
+    "refresh": "Refresh",
+    "emptyTitle": "The leaderboard is played among friends",
+    "emptyText": "Invite your friends with a link: you will see each other's steps here.",
+    "emptyAction": "Invite friends →",
+    "me": "you",
+    "steps_one": "{{steps}} step",
+    "steps_other": "{{steps}} steps"
+  },
+  "report": {
+    "title": "Report {{name}}",
+    "hint": "Your report is read by the Step Challenge team. The reported person is not notified.",
+    "reasons": {
+      "offensive_name": "Offensive name",
+      "impersonation": "Pretends to be someone else",
+      "harassment": "Harassment",
+      "other": "Other"
+    },
+    "comment": "Details (optional)",
+    "send": "Send the report",
+    "sending": "Sending...",
+    "error": "Cannot send the report. Try again later.",
+    "thanks": "Thank you",
+    "sent": "Your report has been sent.",
+    "offerBlock": "Do you also want to block {{name}}? You will no longer be friends, and this person will not be able to become your friend again, even with an invitation link. They are not notified.",
+    "block": "Block {{name}}",
+    "blocking": "Blocking..."
+  },
+  "account": {
+    "loadError": "Cannot load your account.",
+    "displayName": "Display name",
+    "displayNameHint": "Visible to the other participants.",
+    "nameSaved": "Name updated.",
+    "nameError": "Cannot save the name.",
+    "signOut": "Sign out",
+    "signingOut": "Signing out...",
+    "delete": {
+      "button": "Delete my account",
+      "deleting": "Deleting...",
+      "title": "Delete your account?",
+      "message": "Your account, your name and all your step history will be permanently deleted from the Step Challenge server. The Health Connect data on your phone is not affected.\n\nThis cannot be undone.",
+      "confirm": "Delete",
+      "error": "Deletion failed. Try again later."
+    }
+  },
+  "signIn": {
+    "welcome": "WELCOME",
+    "explanation": "Sign in with your Google account. Step Challenge only keeps a technical identifier: neither your email nor your photo.",
+    "google": "Sign in with Google",
+    "signingIn": "Signing in...",
+    "networkError": "Cannot sign in. Check your internet connection and try again.",
+    "nameRequired": "Enter your first name",
+    "googleErrors": {
+      "configuration": "Invalid Google configuration (Android OAuth client, package or SHA-1).",
+      "play-services": "Google Play services are missing or need an update.",
+      "unavailable": "Sign-in is only available in the Android app.",
+      "unknown": "Google sign-in failed ({{code}})."
+    },
+    "demo": {
+      "title": "Demo access",
+      "hint": "For app store reviewers only: enter the access code given with the review instructions.",
+      "code": "Access code",
+      "enter": "Enter"
+    },
+    "demoErrors": {
+      "invalid-code": "Wrong access code.",
+      "unavailable": "Demo access is not available.",
+      "too-many-attempts": "Too many attempts. Try again in an hour."
+    },
+    "name": {
+      "question": "What's your name?",
+      "hint": "This is the name the other participants will see. You can change it later.",
+      "placeholder": "Your first name",
+      "continue": "Continue",
+      "creating": "Creating..."
+    },
+    "terms": {
+      "before": "By creating your account, you accept the ",
+      "link": "terms of use",
+      "after": "."
+    }
+  },
+  "errors": {
+    "sessionExpired": "Session expired, please sign in again"
+  },
+  "diagnostic": {
+    "description": "Checks the connection to Health Connect, the permissions and the access to the server.",
+    "run": "Run the diagnostics",
+    "copy": "Copy the diagnostics",
+    "copied": "✓ Diagnostics copied",
+    "generatedAt": "Diagnostics generated on {{date}}",
+    "labels": {
+      "app": "App",
+      "platform": "Platform",
+      "device": "Device",
+      "initialization": "Initialization",
+      "stepsPermission": "Steps permission",
+      "grantedPermissions": "Granted permissions",
+      "permissions": "Permissions"
+    },
+    "sdk": {
+      "unavailable": "Not available",
+      "updateRequired": "Available after an update",
+      "available": "Available"
+    },
+    "httpError": "HTTP error {{status}}",
+    "reachable": "Reachable",
+    "connectionFailed": "Cannot connect",
+    "unknown": "Unknown",
+    "notApplicable": "Not applicable",
+    "androidOnly": "Only available on Android",
+    "cannotCheck": "Cannot check",
+    "ok": "OK",
+    "failed": "Failed",
+    "unknownError": "Unknown error",
+    "granted": "Granted",
+    "notGranted": "Not granted",
+    "none": "None",
+    "huawei": {
+      "moduleLoaded": "Module loaded",
+      "authorization": "Huawei authorization",
+      "todaySteps": "Steps today"
+    }
+  }
+}

@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 
+import { useFormatters } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Props = {
@@ -13,10 +15,6 @@ const STROKE = 16
 const RADIUS = (SIZE - STROKE) / 2
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('fr-FR').format(Math.round(value))
-}
-
 /**
  * Today's steps as a ring: an arc proportional to steps / goal, in a
  * neutral color, that closes and turns blue once the goal is reached.
@@ -24,6 +22,8 @@ function formatNumber(value: number) {
 export default function DayProgressRing({ steps, goal }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const { t } = useTranslation()
+  const { formatNumber } = useFormatters()
 
   const reached = steps >= goal
   const progress = Math.min(1, Math.max(0, steps / goal))
@@ -62,14 +62,16 @@ export default function DayProgressRing({ steps, goal }: Props) {
 
         <View style={styles.center} pointerEvents="none">
           <Text style={styles.steps} adjustsFontSizeToFit numberOfLines={1}>
-            {formatNumber(steps)}
+            {formatNumber(Math.round(steps))}
           </Text>
           <Text style={styles.goal}>{formatNumber(goal)}</Text>
           {reached && <Text style={styles.check}>✓</Text>}
         </View>
       </View>
 
-      <Text style={styles.percent}>{percent} % de l'objectif</Text>
+      <Text style={styles.percent}>
+        {t('home.ring.percentOfGoal', { percent: formatNumber(percent) })}
+      </Text>
     </View>
   )
 }

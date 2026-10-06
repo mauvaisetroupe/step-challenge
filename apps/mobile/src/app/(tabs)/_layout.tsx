@@ -1,9 +1,12 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs'
 
+import { useTranslation } from 'react-i18next'
+
 import { useTheme } from '@/theme'
 
 export default function TabsLayout() {
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   return (
     <NativeTabs
@@ -23,7 +26,7 @@ export default function TabsLayout() {
           md="home"
         />
         <NativeTabs.Trigger.Label>
-          Accueil
+          {t('tabs.home')}
         </NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
@@ -33,7 +36,7 @@ export default function TabsLayout() {
           md="bar_chart"
         />
         <NativeTabs.Trigger.Label>
-          Stats
+          {t('tabs.stats')}
         </NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
@@ -43,7 +46,7 @@ export default function TabsLayout() {
           md="emoji_events"
         />
         <NativeTabs.Trigger.Label>
-          Classement
+          {t('tabs.leaderboard')}
         </NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
@@ -53,7 +56,7 @@ export default function TabsLayout() {
           md="settings"
         />
         <NativeTabs.Trigger.Label>
-          Paramètres
+          {t('tabs.settings')}
         </NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>

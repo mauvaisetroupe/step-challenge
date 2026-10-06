@@ -15,11 +15,12 @@ export type ReportReason =
   | 'harassment'
   | 'other'
 
-export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
-  { value: 'offensive_name', label: 'Nom offensant' },
-  { value: 'impersonation', label: "Se fait passer pour quelqu'un d'autre" },
-  { value: 'harassment', label: 'Harcèlement' },
-  { value: 'other', label: 'Autre' },
+/** Reasons offered, in this order (labels: report.reasons.<reason>). */
+export const REPORT_REASONS: ReportReason[] = [
+  'offensive_name',
+  'impersonation',
+  'harassment',
+  'other',
 ]
 
 export function listBlocks() {

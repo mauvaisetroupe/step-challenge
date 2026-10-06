@@ -1,16 +1,13 @@
 import Constants from 'expo-constants'
 import { router, type Href } from 'expo-router'
+import { useTranslation } from 'react-i18next'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import TabScreenHeader from '@/components/TabScreenHeader'
 import { NavRow } from '@/components/settings/ui'
-import {
-  APPEARANCE_LABELS,
-  useTheme,
-  useThemedStyles,
-  type Colors,
-} from '@/theme'
+import { LANGUAGE_NAMES, useLanguage } from '@/i18n'
+import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Entry = {
   title: string
@@ -24,54 +21,66 @@ type Entry = {
 export default function SettingsScreen() {
   const styles = useThemedStyles(createStyles)
   const { preference } = useTheme()
+  const language = useLanguage()
+  const { t } = useTranslation()
 
   const groups: { title: string; entries: Entry[] }[] = [
     {
-      title: 'Général',
+      title: t('settings.groups.general'),
       entries: [
         {
-          title: 'Compte',
-          detail: 'Nom affiché, déconnexion, suppression',
+          title: t('settings.account.title'),
+          detail: t('settings.account.detail'),
           href: '/settings/account',
         },
         {
-          title: 'Apparence',
-          detail: APPEARANCE_LABELS[preference],
+          title: t('settings.appearance.title'),
+          detail: t(`settings.appearance.options.${preference}.label`),
           href: '/settings/appearance',
+        },
+        {
+          title: t('settings.language.title'),
+          detail:
+            language.preference === 'system'
+              ? t('settings.language.system')
+              : LANGUAGE_NAMES[language.preference],
+          href: '/settings/language',
         },
       ],
     },
     {
-      title: 'Données de pas',
+      title: t('settings.groups.steps'),
       entries: [
         {
-          title: 'Synchronisation en arrière-plan',
-          detail: 'Dernières exécutions',
+          title: t('settings.sync.title'),
+          detail: t('settings.sync.detail'),
           href: '/settings/sync',
         },
         {
-          title: 'Huawei Health',
-          detail: 'Montres Huawei',
+          title: t('settings.huawei.title'),
+          detail: t('settings.huawei.detail'),
           href: '/settings/huawei',
         },
         {
-          title: 'Diagnostic',
-          detail: 'Santé Connect, autorisations, serveur',
+          title: t('settings.diagnostic.title'),
+          detail: t('settings.diagnostic.detail'),
           href: '/settings/diagnostic',
         },
       ],
     },
     {
-      title: 'Informations',
+      title: t('settings.groups.information'),
       entries: [
         {
-          title: 'À propos',
-          detail: `Version ${Constants.expoConfig?.version ?? 'inconnue'}`,
+          title: t('settings.about.title'),
+          detail: t('settings.about.versionDetail', {
+            version: Constants.expoConfig?.version ?? t('settings.about.unknown'),
+          }),
           href: '/settings/about',
         },
         {
-          title: 'Informations légales',
-          detail: "Conditions d'utilisation, confidentialité",
+          title: t('settings.legal.title'),
+          detail: t('settings.legal.detail'),
           href: '/settings/legal',
         },
       ],
@@ -82,7 +91,7 @@ export default function SettingsScreen() {
     // Top edge only: keeps the content below the status bar (camera,
     // clock, battery); the tab bar handles the bottom.
     <SafeAreaView edges={['top']} style={styles.screen}>
-      <TabScreenHeader title="Paramètres" />
+      <TabScreenHeader title={t('tabs.settings')} />
 
       <ScrollView
         style={styles.screen}

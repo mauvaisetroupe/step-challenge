@@ -7,6 +7,9 @@ import {
 } from 'react-native-health-connect'
 
 import { API_URL } from '../api/config'
+import { getFormatters, i18n } from '@/i18n'
+
+const t = i18n.t
 
 export type DiagnosticStatus =
   | 'ok'
@@ -28,11 +31,11 @@ export interface HealthConnectDiagnostic {
 function formatSdkStatus(status: number | string) {
   switch (status) {
     case 1:
-      return 'Non disponible'
+      return t('diagnostic.sdk.unavailable')
     case 2:
-      return 'Disponible après mise à jour'
+      return t('diagnostic.sdk.updateRequired')
     case 3:
-      return 'Disponible'
+      return t('diagnostic.sdk.available')
     default:
       return String(status)
   }
@@ -45,14 +48,14 @@ async function checkBackend(): Promise<DiagnosticItem> {
     if (!response.ok) {
       return {
         label: 'Backend',
-        value: `Erreur HTTP ${response.status}`,
+        value: t('diagnostic.httpError', { status: response.status }),
         status: 'error',
       }
     }
 
     return {
       label: 'Backend',
-      value: 'Accessible',
+      value: t('diagnostic.reachable'),
       status: 'ok',
     }
   } catch (error) {
@@ -61,7 +64,7 @@ async function checkBackend(): Promise<DiagnosticItem> {
       value:
         error instanceof Error
           ? error.message
-          : 'Connexion impossible',
+          : t('diagnostic.connectionFailed'),
       status: 'error',
     }
   }
@@ -71,15 +74,15 @@ export async function getHealthConnectDiagnostic(): Promise<HealthConnectDiagnos
   const items: DiagnosticItem[] = []
 
   items.push({
-    label: 'Application',
+    label: t('diagnostic.labels.app'),
     value:
       Constants.expoConfig?.version ??
-      'Inconnue',
+      t('diagnostic.unknown'),
     status: 'ok',
   })
 
   items.push({
-    label: 'Plateforme',
+    label: t('diagnostic.labels.platform'),
     value: Platform.OS,
     status:
       Platform.OS === 'android'
@@ -92,7 +95,7 @@ export async function getHealthConnectDiagnostic(): Promise<HealthConnectDiagnos
     value:
       Platform.OS === 'android'
         ? String(Platform.Version)
-        : 'Non applicable',
+        : t('diagnostic.notApplicable'),
     status:
       Platform.OS === 'android'
         ? 'ok'
@@ -100,17 +103,17 @@ export async function getHealthConnectDiagnostic(): Promise<HealthConnectDiagnos
   })
 
   items.push({
-    label: 'Appareil',
+    label: t('diagnostic.labels.device'),
     value:
       Constants.deviceName ??
-      'Inconnu',
+      t('diagnostic.unknown'),
     status: 'ok',
   })
 
   if (Platform.OS !== 'android') {
     items.push({
       label: 'Health Connect',
-      value: 'Disponible uniquement sur Android',
+      value: t('diagnostic.androidOnly'),
       status: 'warning',
     })
 
@@ -141,7 +144,7 @@ export async function getHealthConnectDiagnostic(): Promise<HealthConnectDiagnos
       value:
         error instanceof Error
           ? error.message
-          : 'Impossible de vérifier',
+          : t('diagnostic.cannotCheck'),
       status: 'error',
     })
   }
@@ -152,21 +155,21 @@ export async function getHealthConnectDiagnostic(): Promise<HealthConnectDiagnos
     initialized = await initialize()
 
     items.push({
-      label: 'Initialisation',
+      label: t('diagnostic.labels.initialization'),
       value: initialized
-        ? 'OK'
-        : 'Échec',
+        ? t('diagnostic.ok')
+        : t('diagnostic.failed'),
       status: initialized
         ? 'ok'
         : 'error',
     })
   } catch (error) {
     items.push({
-      label: 'Initialisation',
+      label: t('diagnostic.labels.initialization'),
       value:
         error instanceof Error
           ? error.message
-          : 'Erreur inconnue',
+          : t('diagnostic.unknownError'),
       status: 'error',
     })
   }
@@ -184,20 +187,20 @@ export async function getHealthConnectDiagnostic(): Promise<HealthConnectDiagnos
         )
 
       items.push({
-        label: 'Permission Steps',
+        label: t('diagnostic.labels.stepsPermission'),
         value: stepsPermission
-          ? 'Accordée'
-          : 'Non accordée',
+          ? t('diagnostic.granted')
+          : t('diagnostic.notGranted'),
         status: stepsPermission
           ? 'ok'
           : 'error',
       })
 
       items.push({
-        label: 'Permissions accordées',
+        label: t('diagnostic.labels.grantedPermissions'),
         value:
           permissions.length === 0
-            ? 'Aucune'
+            ? t('diagnostic.none')
             : String(permissions.length),
         status:
           permissions.length > 0
@@ -206,18 +209,18 @@ export async function getHealthConnectDiagnostic(): Promise<HealthConnectDiagnos
       })
     } catch (error) {
       items.push({
-        label: 'Permissions',
+        label: t('diagnostic.labels.permissions'),
         value:
           error instanceof Error
             ? error.message
-            : 'Impossible de vérifier',
+            : t('diagnostic.cannotCheck'),
         status: 'error',
       })
     }
   } else {
     items.push({
-      label: 'Permission Steps',
-      value: 'Impossible à vérifier',
+      label: t('diagnostic.labels.stepsPermission'),
+      value: t('diagnostic.cannotCheck'),
       status: 'unknown',
     })
   }
@@ -247,7 +250,9 @@ export function formatDiagnostic(
 
   lines.push('')
   lines.push(
-    `Généré le: ${diagnostic.generatedAt}`,
+    t('diagnostic.generatedAt', {
+      date: getFormatters().formatDateTime(new Date(diagnostic.generatedAt)),
+    }),
   )
 
   return lines.join('\n')
