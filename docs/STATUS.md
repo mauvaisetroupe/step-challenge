@@ -112,6 +112,7 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
   - avec une montre Garmin : Garmin Connect et le téléphone apparaissent, le total retenu correspond à la source prioritaire ;
   - nom affiché pour les pas comptés par le téléphone (origine `android` supposée sur Android 14 et plus ; sinon le nom du paquet s'affiche, à ajouter à la table `KNOWN_SOURCES`) ;
   - appareils : dépend de ce que chaque application déclare.
+- [ ] **Client web** ([ADR 0008](adr/0008-web-client.md), proposé) : export web d'Expo sur `step-app.architech.lu`, session par cookie `HttpOnly` (`__Host-session`, `SameSite=Strict`), CORS en liste blanche, connexion Google Identity Services ; première version centrée sur le classement.
 - [ ] **Historique complet des pas** (ADR à écrire) : l'autorisation Santé Connect « lire les données passées » (`READ_HEALTH_DATA_HISTORY`) permettrait d'envoyer une fois tout l'historique à la base (séries et vue 1 an justes dès l'installation ; aujourd'hui, elles partent de l'arrivée sur Step Challenge). À évaluer : disponibilité selon les versions de Santé Connect, justification dans la déclaration des autorisations de santé de la Play Console, politique de confidentialité. Garmin et Xiaomi écrivent déjà dans Santé Connect ; Garmin n'ouvre son API qu'à des partenaires approuvés.
 - [ ] **Ménage des restes du modèle Expo**, à vérifier un par un avant suppression :
   - dépendances apparemment inutilisées : `expo-device`, `react-native-gesture-handler` (`expo-status-bar` sert désormais à la barre d'état claire ou sombre) ;
