@@ -42,7 +42,7 @@
     "sync": {
       "title": "Background sync",
       "detail": "Latest runs",
-      "description": "The sync regularly checks the last 30 days of data.",
+      "description": "The sync sends the steps of the last 30 days about every 6 hours, even when the app is not open (if Health Connect allows background access).",
       "empty": "No run recorded",
       "manual": "MANUAL",
       "automatic": "AUTOMATIC",

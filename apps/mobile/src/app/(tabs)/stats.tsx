@@ -25,7 +25,7 @@ import {
 } from 'react-native-health-connect'
 
 import { getMySteps } from '../../api/steps'
-import { syncTodaySteps } from '../../services/stepSync'
+import { HEALTH_PERMISSIONS, syncTodaySteps } from '../../services/stepSync'
 import { stepSourceLabel } from '@/services/healthConnectDiagnostic'
 import { getTodayStepSources } from '@/services/stepSources'
 import TabScreenHeader from '../../components/TabScreenHeader'
@@ -325,12 +325,7 @@ export default function StatsScreen() {
         try {
           await initialize()
 
-          await requestPermission([
-            {
-              accessType: 'read',
-              recordType: 'Steps',
-            },
-          ])
+          await requestPermission(HEALTH_PERMISSIONS)
 
           // Sends today's Health Connect total to the backend before
           // displaying: the 1-year view then includes today.

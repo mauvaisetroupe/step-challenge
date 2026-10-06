@@ -81,6 +81,11 @@ export default function SyncSettingsScreen() {
                     ? t('settings.sync.manual')
                     : t('settings.sync.automatic')}
                 </Text>
+                {run.error && (
+                  <Text style={styles.errorDetail} numberOfLines={3}>
+                    {run.error}
+                  </Text>
+                )}
               </View>
 
               <Text style={styles.days}>
@@ -137,6 +142,12 @@ const createStyles = (c: Colors) =>
     main: {
       flex: 1,
       justifyContent: 'center',
+    },
+
+    errorDetail: {
+      marginTop: 2,
+      fontSize: 12,
+      color: c.textMuted,
     },
 
     date: {

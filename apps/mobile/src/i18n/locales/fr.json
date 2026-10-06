@@ -42,7 +42,7 @@
     "sync": {
       "title": "Synchronisation en arrière-plan",
       "detail": "Dernières exécutions",
-      "description": "La synchronisation vérifie régulièrement les 30 derniers jours de données.",
+      "description": "La synchronisation envoie environ toutes les 6 heures les pas des 30 derniers jours, même quand l'application n'est pas ouverte (si Santé Connect l'autorise en arrière-plan).",
       "empty": "Aucune exécution enregistrée",
       "manual": "MANUEL",
       "automatic": "AUTOMATIQUE",

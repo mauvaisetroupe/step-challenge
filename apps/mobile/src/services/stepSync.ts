@@ -2,6 +2,8 @@ import {
   aggregateGroupByPeriod,
   initialize,
   requestPermission,
+  type BackgroundAccessPermission,
+  type Permission,
 } from 'react-native-health-connect'
 
 import { postMySteps, type DayStat } from '../api/steps'
@@ -9,6 +11,17 @@ import { postMySteps, type DayStat } from '../api/steps'
 export type { DayStat }
 
 const HISTORY_DAYS = 30
+
+/**
+ * Health Connect permissions of Step Challenge: read steps, also when
+ * the app is not on screen. Since Android 14, Health Connect refuses
+ * reads from an app in the background without the background access
+ * permission: the periodic sync (backgroundSync.ts) would always fail.
+ */
+export const HEALTH_PERMISSIONS: (Permission | BackgroundAccessPermission)[] = [
+  { accessType: 'read', recordType: 'Steps' },
+  { accessType: 'read', recordType: 'BackgroundAccessPermission' },
+]
 
 /**
  * Returns a copy of the given date set to the beginning of its day.
@@ -44,24 +57,32 @@ function getDaysAgo(date: Date, days: number) {
   return result
 }
 
+type ReadOptions = {
+  /**
+   * Ask the user for the permissions when missing. False in the
+   * background task: the permission dialog needs the app on screen.
+   */
+  requestPermissions?: boolean
+}
+
 /**
- * Initializes Health Connect and requests permission to read step data.
+ * Initializes Health Connect and, unless told otherwise, requests the
+ * permissions (only the missing ones are shown to the user).
  *
  * Throws an error if Health Connect is not available on the device.
  */
-async function initializeHealthConnect() {
+async function initializeHealthConnect({
+  requestPermissions = true,
+}: ReadOptions = {}) {
   const initialized = await initialize()
 
   if (!initialized) {
     throw new Error('Health Connect is not available')
   }
 
-  await requestPermission([
-    {
-      accessType: 'read',
-      recordType: 'Steps',
-    },
-  ])
+  if (requestPermissions) {
+    await requestPermission(HEALTH_PERMISSIONS)
+  }
 }
 
 /**
@@ -123,10 +144,10 @@ async function getHealthConnectDailyStats(
  * This function only reads local Health Connect data.
  * It does not access the backend and does not perform any synchronization.
  */
-export async function getHealthConnectLast30Days(): Promise<
-  DayStat[]
-> {
-  await initializeHealthConnect()
+export async function getHealthConnectLast30Days(
+  options: ReadOptions = {},
+): Promise<DayStat[]> {
+  await initializeHealthConnect(options)
 
   const now = new Date()
 
@@ -196,9 +217,9 @@ export async function syncStatsToServer(
  *
  * Health Connect → read 30 days → PostgreSQL
  */
-export async function syncLast30Days() {
+export async function syncLast30Days(options: ReadOptions = {}) {
   const healthConnectStats =
-    await getHealthConnectLast30Days()
+    await getHealthConnectLast30Days(options)
 
   return syncStatsToServer(
     healthConnectStats,

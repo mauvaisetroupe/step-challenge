@@ -16,11 +16,24 @@ const MANUAL_TEST_PENDING_KEY =
 
 const MAX_HISTORY = 10
 
+/**
+ * Minimum time between two background syncs, in minutes: the friends
+ * leaderboard stays fresh even when the app is not opened. Android may
+ * run the task later (battery, network).
+ */
+const SYNC_INTERVAL_MINUTES = 6 * 60
+
+/** Interval the task was registered with, to re-register it on change. */
+const REGISTERED_INTERVAL_KEY =
+  '@step-challenge/background-sync-interval'
+
 export type BackgroundSyncRun = {
   timestamp: string
   status: 'success' | 'failed'
   syncedDays?: number
   trigger: 'background' | 'manual'
+  /** Cause of a failure (Health Connect permission, network…). */
+  error?: string
 }
 
 async function saveSyncRun(
@@ -108,7 +121,10 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
   }
 
   try {
-    const syncedDates = await syncLast30Days()
+    // No permission dialog in the background: it needs the app on
+    // screen. Without the background access permission, Health Connect
+    // refuses the read and the run is recorded as failed, with the cause.
+    const syncedDates = await syncLast30Days({ requestPermissions: false })
 
     const timestamp =
       new Date().toISOString()
@@ -137,6 +153,7 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
       timestamp,
       status: 'failed',
       trigger,
+      error: error instanceof Error ? error.message : String(error),
     })
 
     console.error(
@@ -169,15 +186,31 @@ export async function registerBackgroundStepSync() {
     isRegistered,
   )
 
-  if (isRegistered) {
+  // Registered with the current interval: nothing to do. Registered
+  // with another one (an older version of the app): register again, so
+  // that installed apps pick up the new interval.
+  const registeredInterval = await AsyncStorage.getItem(
+    REGISTERED_INTERVAL_KEY,
+  )
+
+  if (isRegistered && registeredInterval === String(SYNC_INTERVAL_MINUTES)) {
     return
+  }
+
+  if (isRegistered) {
+    await BackgroundTask.unregisterTaskAsync(STEP_SYNC_TASK)
   }
 
   await BackgroundTask.registerTaskAsync(
     STEP_SYNC_TASK,
     {
-      minimumInterval: 24 * 60,
+      minimumInterval: SYNC_INTERVAL_MINUTES,
     },
+  )
+
+  await AsyncStorage.setItem(
+    REGISTERED_INTERVAL_KEY,
+    String(SYNC_INTERVAL_MINUTES),
   )
 
   console.log(

@@ -21,7 +21,8 @@
       "predictiveBackGestureEnabled": false,
       "package": "lu.architech.stepchallenge",
       "permissions": [
-        "android.permission.health.READ_STEPS"
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
       ],
       "intentFilters": [
         {
