@@ -2,7 +2,7 @@
 title: Privacy Policy — Step Challenge
 linkTitle: Privacy policy
 description: What data Step Challenge collects, why, and how to delete it.
-updated: 5 October 2026
+updated: 7 October 2026
 ---
 
 Step Challenge is a step-counting and challenge application that allows
@@ -40,7 +40,10 @@ from the health platform available on the user's device.
 On Android, Step Challenge uses **Health Connect** to read step counts
 recorded by the phone or by compatible devices and applications (for
 example Garmin, Samsung or Xiaomi). Step Challenge only requests read
-access to step data.
+access to step data. With the user's permission ("Access data in the
+background"), it also reads them about every 6 hours when the app is not
+open, so that friends see up-to-date steps in the leaderboard. This
+permission can be withdrawn at any time in the Health Connect settings.
 
 On Huawei devices, Step Challenge uses **Huawei Health Kit** to access
 step-count data made available by Huawei Health and compatible devices.
