@@ -12,8 +12,7 @@ Step Challenge est une application Android de défi de pas entre amis : gratuite
 |---|---|---|
 | Backend | Node.js, Fastify 5, PostgreSQL 18 | `backend/` |
 | Application | Expo SDK 57, expo-router, React Native | `apps/mobile/` |
-| Pages publiques (actuelles) | HTML statique servi par le backend, jusqu'à la bascule de l'ADR 0005 | `backend/public/` |
-| Site public (à publier) | Hugo, bilingue, déployé chez OVH par une GitHub Action | `site/` |
+| Site public (`step.architech.lu`) | Hugo, bilingue, déployé chez OVH par une GitHub Action : présentation, aide, pages légales, page d'invitation `/i/<code>`, `assetlinks.json` | `site/` |
 | Icônes et visuels du Store | SVG (Inkscape) et script d'export | `icons/` |
 | Décisions d'architecture | ADR | `docs/adr/` |
 | Intégration Huawei (en pause) | Notes et plan | `huawei/README.md` |
@@ -40,7 +39,7 @@ Installation, lancement en local, tests, déploiement et build : voir le [README
 
 | Élément | État |
 |---|---|
-| API | https://step-api.architech.lu, derrière un tunnel Cloudflare (ADR 0005). Le backend n'écoute que sur `127.0.0.1` (`HOST`). Jusqu'à la bascule vers OVH, `step.architech.lu` mène aussi au backend |
+| API | https://step-api.architech.lu, derrière un tunnel Cloudflare (ADR 0005). Le backend n'écoute que sur `127.0.0.1` (`HOST`). Depuis la bascule du 2026-10-06, `step.architech.lu` est le site public chez OVH : le home lab ne sert plus que l'API |
 | Base | PostgreSQL, migrations 001 à 003 appliquées. Pas encore de sauvegarde automatique |
 | Authentification ([ADR 0001](adr/0001-authentication.md)) | En production : connexion Google (OIDC), sessions de l'application |
 | Amis ([ADR 0002](adr/0002-friends.md)) | En production : invitations par lien ou code, classement entre amis, surnoms, limites de débit, App Links vérifiés |
@@ -64,7 +63,7 @@ Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migratio
   - l'offre OVH ne permet pas d'utilisateur FTP dédié : l'utilisateur des secrets GitHub voit tous les sites de l'hébergement. Le script refuse d'écrire dans un dossier non marqué ; à envisager en plus : environnement GitHub protégé (validation de chaque déploiement) et actions tierces figées par empreinte de commit ;
   - relire les traductions françaises des pages légales (conditions d'utilisation, confidentialité et suppression de compte mises à jour le 2026-10-05 pour les ADR 0002 et 0004) ;
   - régler la mise en cache Cloudflare du site (point ouvert de l'ADR 0005) ;
-  - poursuivre la bascule (ADR 0005, étapes 3 à 7 ; `step-api.architech.lu` est en place depuis le 2026-10-05) : version de l'application avec la nouvelle URL d'API, puis `step.architech.lu` vers OVH (même dossier `step`) et vérification des App Links.
+  - bascule faite le 2026-10-06 : `step.architech.lu` pointe vers OVH (même dossier `step` que la préversion), App Links revérifiés sur téléphone, liens d'invitation testés ; backend nettoyé (plus de pages statiques ni de routes `/i/` et `assetlinks.json`). Reste éventuellement : filtrer `step-api.architech.lu` par pays (ADR 0005, points ouverts), supprimer la préversion `step-preview` ;
 - [ ] **Accès de démonstration** ([ADR 0006](adr/0006-review-demo-access.md)), testé en dev sur téléphone le 2026-10-05 (connexion, code faux, compte supprimé puis recréé, ami bloqué rétabli). Mise en production :
   1. générer le code (`openssl rand -base64 30`), le garder dans le gestionnaire de mots de passe et l'ajouter au `.env` de production (`DEMO_ACCESS_CODE`) ;
   2. appliquer la migration 005 (`backend/migrations/005_demo_credential.sql`), puis déployer le backend : le journal doit indiquer « Demo access enabled » ;
@@ -82,7 +81,7 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
   - la mise en production : migration 004, déploiement du backend, puis nouvelle version de l'application (avec la nouvelle URL d'API, ADR 0005) ;
   - le formulaire Data safety (signalements), à vérifier.
 - [x] **Liste des invitations actives** dans l'écran Amis, avec révocation (date de création, expiration, nombre d'acceptations). Testée sur téléphone le 2026-10-05, livrée avec la prochaine version.
-- [x] **Site public Hugo** ([ADR 0005](adr/0005-public-site-and-domains.md)) : développé le 2026-10-05 dans `site/` (voir [`site/README.md`](../site/README.md)), pas encore publié. Squelette bilingue (anglais à la racine, français sous `/fr/`, adresses en `.html` : `/privacy.html` reste l'URL de la page, sans redirection ; drapeau vers la même page), pages légales reprises de `backend/public/` et traduites (contact provisoire d'`agreement.html` remplacé par `support@architech.lu`), accueil, aide Santé Connect et Huawei (« pas encore disponible »), FAQ, page `/i/<code>`, `assetlinks.json` (identique à celui du backend), `.htaccess`, GitHub Action `deploy-site.yml` (Hugo 0.167.0, envoi en SFTP par `site/scripts/deploy-sftp.sh`, sauté tant que la configuration manque). Le `.htaccess` de l'ADR bouclait sur `/i/` (erreur 500) : corrigé, et l'ADR précisé. La section « Contenus et comportement » de l'[ADR 0004](adr/0004-user-reporting-and-blocking.md) n'est pas encore dans les conditions d'utilisation : elle sera publiée avec la version de l'application qui contient le signalement et le blocage.
+- [x] **Site public Hugo** ([ADR 0005](adr/0005-public-site-and-domains.md)) : développé le 2026-10-05 dans `site/` (voir [`site/README.md`](../site/README.md)), publié sur `step.architech.lu` le 2026-10-06. Squelette bilingue (anglais à la racine, français sous `/fr/`, adresses en `.html` : `/privacy.html` reste l'URL de la page, sans redirection ; drapeau vers la même page), pages légales reprises de `backend/public/` et traduites (contact provisoire d'`agreement.html` remplacé par `support@architech.lu`), accueil, aide Santé Connect et Huawei (« pas encore disponible »), FAQ, page `/i/<code>`, `assetlinks.json` (identique à celui du backend), `.htaccess`, GitHub Action `deploy-site.yml` (Hugo 0.167.0, envoi en SFTP par `site/scripts/deploy-sftp.sh`, sauté tant que la configuration manque). Le `.htaccess` de l'ADR bouclait sur `/i/` (erreur 500) : corrigé, et l'ADR précisé. La section « Contenus et comportement » de l'[ADR 0004](adr/0004-user-reporting-and-blocking.md) est dans les conditions d'utilisation depuis le 2026-10-05.
 
 - [x] **Accès de démonstration pour les examinateurs** ([ADR 0006](adr/0006-review-demo-access.md), accepté) : développé le 2026-10-05. Backend (migration 005, `POST /api/auth/demo`, compte et amis fictifs recréés et rafraîchis à chaque connexion, tests), lien « Accès démonstration » sur l'écran de connexion, [`exposure.md`](exposure.md) et [`moderation.md`](moderation.md) (signalements venant du compte de démonstration). Mise en production : voir la liste du mainteneur.
 - [x] **Données de démonstration** pour les captures d'écran : `npm run seed:demo` (voir le [README](../README.md)), pour la base de **développement** uniquement, avec le même code que l'accès de démonstration : 6 amis aux prénoms fictifs, pas crédibles sur plusieurs semaines, et en option les pas du compte lui-même.
@@ -114,7 +113,7 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
   - dépendances apparemment inutilisées : `expo-device`, `react-native-gesture-handler` (`expo-status-bar` sert désormais à la barre d'état claire ou sombre) ;
   - `AnimatedIcon` dans `components/animated-icon.tsx` (seul `AnimatedSplashOverlay` est utilisé), `expo-logo.png`, `logo-glow.png` ;
   - `themed-text`, `themed-view`, `hint-row`, `external-link`, `web-badge`, `ui/collapsible`, `hooks/use-theme`, `constants/theme.ts`, `scripts/reset-project.js`.
-- [ ] **Plus tard** : sauvegardes automatiques de la base ou base managée. Mettre à jour `backend/public/delete-account.html`, qui indique aujourd'hui qu'il n'y a pas de sauvegarde.
+- [ ] **Plus tard** : sauvegardes automatiques de la base ou base managée. Mettre à jour la page de suppression de compte du site (`site/content/delete-account.*.md`), qui indique aujourd'hui qu'il n'y a pas de sauvegarde.
 
 ## Pièges connus
 

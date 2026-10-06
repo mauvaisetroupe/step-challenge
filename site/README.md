@@ -51,7 +51,7 @@ hugo --minify      # construction complète dans site/public/ (ignoré par git)
 
 ### Fichiers particuliers de `static/`
 
-- **`.well-known/assetlinks.json`** : vérification des App Links par Android. Package et empreintes SHA-256 des clés Google Play et d'importation (voir [`docs/signing.md`](../docs/signing.md)). Doit rester identique à ce que servait `backend/src/routes/appLinks.ts`, et être servi en `application/json`, sans redirection.
+- **`.well-known/assetlinks.json`** : vérification des App Links par Android. Package et empreintes SHA-256 des clés Google Play et d'importation (voir [`docs/signing.md`](../docs/signing.md)). Doit être servi en `application/json`, sans redirection.
 - **`.htaccess`** : règles Apache (réécriture de `/i/<code>` vers `/i/index.html`, type JSON pour `assetlinks.json`).
 - **`i/index.html`** : page d'un invité qui n'a pas l'application. Un script lit le code dans l'adresse ; aucune ressource externe, `noindex`, `no-referrer`, et une `Content-Security-Policy` qui interdit tout appel extérieur : le code d'invitation ne doit fuiter vers personne. Page bilingue, langue choisie d'après le navigateur.
 - **`images/logo.svg`** : dérivé de `icons/app-icon-foreground.svg` (chaussure blanche agrandie sur le fond bleu `#1389FC`). À régénérer si l'icône change.

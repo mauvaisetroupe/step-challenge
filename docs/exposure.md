@@ -32,11 +32,6 @@ Toutes les routes `/api/*` exigent une session (`requireAuth`), **sauf** :
 
 Réponses génériques, inévitables pour tout serveur HTTP : `404` pour une route inconnue, réponses CORS aux requêtes `OPTIONS`.
 
-## État actuel (avant la bascule de l'ADR 0005)
+## Historique
 
-Tant que la bascule n'est pas faite, le home lab sert aussi, sans authentification, le contenu qui doit partir sur l'hébergement public :
-
-- les pages de `backend/public/` (`index.html`, pages légales), via `@fastify/static` ;
-- `GET /.well-known/assetlinks.json` et `GET /i/:code` (`backend/src/routes/appLinks.ts`).
-
-Après la bascule, ces routes et ce dossier sont supprimés du backend.
+Jusqu'à la bascule du 2026-10-06, le home lab servait aussi, sans authentification, les pages publiques (`backend/public/`, via `@fastify/static`), `GET /i/:code` et `GET /.well-known/assetlinks.json`. Ils ont été supprimés du backend : ce contenu est servi par le site public.
