@@ -6,6 +6,7 @@ import type { WeekRank } from '@/services/insights'
 import { useThemedStyles, type Colors } from '@/theme'
 
 import HomeCard, { CardText } from './HomeCard'
+import WeekTrack from './WeekTrack'
 
 type Props = {
   rank: WeekRank | null
@@ -49,16 +50,14 @@ export default function WeekRankCard({
     )
   }
 
+  const rankTitle = t('home.weekRank.titleRank', {
+    rank: t('home.weekRank.rank', { count: rank.rank, ordinal: true }),
+    total: rank.total,
+  })
+
   return (
-    <HomeCard icon="🏆" title={title} onPress={onOpenLeaderboard}>
-      <View style={styles.rankRow}>
-        <Text style={styles.rank}>
-          {t('home.weekRank.rank', { count: rank.rank, ordinal: true })}
-        </Text>
-        <Text style={styles.total}>
-          {t('home.weekRank.total', { total: rank.total })}
-        </Text>
-      </View>
+    <HomeCard icon="🏆" title={rankTitle} onPress={onOpenLeaderboard}>
+      <WeekTrack rank={rank} />
 
       {rank.ahead ? (
         <CardText
@@ -97,24 +96,8 @@ export default function WeekRankCard({
 
 const createStyles = (c: Colors) =>
   StyleSheet.create({
-    rankRow: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      gap: 8,
-      marginBottom: 6,
-    },
 
-    rank: {
-      fontSize: 40,
-      fontWeight: '800',
-      color: c.primary,
-    },
 
-    total: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: c.textSecondary,
-    },
 
     text: {
       fontSize: 16,

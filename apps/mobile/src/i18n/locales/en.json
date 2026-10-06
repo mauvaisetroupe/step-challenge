@@ -221,7 +221,9 @@
       "toPass_other": "Only <b>{{steps}} steps</b> to pass <b>{{name}}</b> 🏃",
       "lead_one": "You're in the lead, <b>{{steps}} step</b> ahead of <b>{{name}}</b> 🥇",
       "lead_other": "You're in the lead, <b>{{steps}} steps</b> ahead of <b>{{name}}</b> 🥇",
-      "tie": "Tied with <b>{{name}}</b>: every step counts! 🤝"
+      "tie": "Tied with <b>{{name}}</b>: every step counts! 🤝",
+      "you": "You",
+      "titleRank": "This week: {{rank}} of {{total}}"
     },
     "streak": {
       "title": "Streak",
@@ -229,14 +231,17 @@
       "daysInARow_one": "day in a row",
       "daysInARow_other": "days in a row",
       "aboveGoal": "at {{goal}} steps or more",
-      "extend": "Reach {{goal}} steps today to extend it.",
-      "isRecord": "That's your record!",
+      "extend": "Reach {{goal}} steps today to get to {{next}} days.",
       "none": "No streak in progress.",
       "start": "Reach {{goal}} steps today to start one.",
       "record_one": "Record: <b>{{days}} day</b>",
       "record_other": "Record: <b>{{days}} days</b>",
       "noRecord": "Record: <b>no day at {{goal}} steps yet</b>",
-      "since": "since you joined Step Challenge"
+      "since": "since you joined Step Challenge",
+      "titleDays_one": "Streak: {{days}} day in a row",
+      "titleDays_other": "Streak: {{days}} days in a row",
+      "isRecord_one": "Current streak of {{days}} day: it's your record!",
+      "isRecord_other": "Current streak of {{days}} days: it's your record!"
     }
   },
   "common": {

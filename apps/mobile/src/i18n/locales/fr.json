@@ -227,7 +227,9 @@
       "lead_one": "Tu es en tête, avec <b>{{steps}} pas</b> d'avance sur <b>{{name}}</b> 🥇",
       "lead_many": "Tu es en tête, avec <b>{{steps}} pas</b> d'avance sur <b>{{name}}</b> 🥇",
       "lead_other": "Tu es en tête, avec <b>{{steps}} pas</b> d'avance sur <b>{{name}}</b> 🥇",
-      "tie": "À égalité avec <b>{{name}}</b> : chaque pas compte ! 🤝"
+      "tie": "À égalité avec <b>{{name}}</b> : chaque pas compte ! 🤝",
+      "you": "Toi",
+      "titleRank": "Cette semaine : {{rank}} sur {{total}}"
     },
     "streak": {
       "title": "Série",
@@ -236,15 +238,20 @@
       "daysInARow_many": "jours d'affilée",
       "daysInARow_other": "jours d'affilée",
       "aboveGoal": "au-dessus de {{goal}} pas",
-      "extend": "Atteins {{goal}} pas aujourd'hui pour la prolonger.",
-      "isRecord": "C'est ton record !",
+      "extend": "Atteins {{goal}} pas aujourd'hui pour passer à {{next}} jours.",
       "none": "Pas de série en cours.",
       "start": "Atteins {{goal}} pas aujourd'hui pour en lancer une.",
       "record_one": "Record : <b>{{days}} jour</b>",
       "record_many": "Record : <b>{{days}} jours</b>",
       "record_other": "Record : <b>{{days}} jours</b>",
       "noRecord": "Record : <b>aucun jour à {{goal}} pas</b>",
-      "since": "depuis ton arrivée sur Step Challenge"
+      "since": "depuis ton arrivée sur Step Challenge",
+      "titleDays_one": "Série : {{days}} jour d'affilée",
+      "titleDays_many": "Série : {{days}} jours d'affilée",
+      "titleDays_other": "Série : {{days}} jours d'affilée",
+      "isRecord_one": "Série actuelle de {{days}} jour, c'est ton record !",
+      "isRecord_many": "Série actuelle de {{days}} jours, c'est ton record !",
+      "isRecord_other": "Série actuelle de {{days}} jours, c'est ton record !"
     }
   },
   "common": {

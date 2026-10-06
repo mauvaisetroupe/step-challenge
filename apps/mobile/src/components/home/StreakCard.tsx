@@ -2,10 +2,11 @@ import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 
 import { useFormatters } from '@/i18n'
-import type { Streaks } from '@/services/insights'
+import { computeStreakTrack, type Streaks } from '@/services/insights'
 import { useThemedStyles, type Colors } from '@/theme'
 
 import HomeCard, { CardText } from './HomeCard'
+import StreakTrack from './StreakTrack'
 
 type Props = {
   streaks: Streaks | null
@@ -33,44 +34,60 @@ export default function StreakCard({ streaks, goal, error }: Props) {
   }
 
   const isRecord = streaks.current >= 2 && streaks.current === streaks.best
+  const track = computeStreakTrack(streaks.current)
+  const trackView = (
+    <StreakTrack
+      track={track}
+      current={streaks.current}
+      includesToday={streaks.includesToday}
+      best={streaks.best}
+    />
+  )
+
+  const streakTitle =
+    streaks.current > 0
+      ? t('home.streak.titleDays', {
+          count: streaks.current,
+          days: formatNumber(streaks.current),
+        })
+      : title
 
   return (
-    <HomeCard icon="🔥" title={title}>
+    <HomeCard icon="🔥" title={streakTitle}>
       {streaks.current > 0 ? (
         <>
-          <View style={styles.valueRow}>
-            <Text style={styles.value}>{formatNumber(streaks.current)}</Text>
-            <Text style={styles.unit}>
-              {t('home.streak.daysInARow', { count: streaks.current })}
-            </Text>
-          </View>
+          {trackView}
 
-          <Text style={styles.text}>
-            {t('home.streak.aboveGoal', goalValues)}
-          </Text>
-
+          {/* The track shows the next milestone; a sentence only when the
+              streak is at stake today. */}
           {!streaks.includesToday && (
             <Text style={styles.hint}>
-              {t('home.streak.extend', goalValues)}
+              {t('home.streak.extend', {
+                ...goalValues,
+                next: formatNumber(streaks.current + 1),
+              })}
             </Text>
-          )}
-
-          {isRecord && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{t('home.streak.isRecord')}</Text>
-            </View>
           )}
         </>
       ) : (
         <>
           <Text style={styles.text}>{t('home.streak.none')}</Text>
+          {trackView}
           <Text style={styles.hint}>{t('home.streak.start', goalValues)}</Text>
         </>
       )}
 
       <View style={styles.separator} />
 
-      {streaks.best > 0 ? (
+      {isRecord ? (
+        <Text style={styles.recordNow}>
+          🏆{' '}
+          {t('home.streak.isRecord', {
+            count: streaks.current,
+            days: formatNumber(streaks.current),
+          })}
+        </Text>
+      ) : streaks.best > 0 ? (
         <CardText
           style={styles.text}
           text={t('home.streak.record', {
@@ -93,23 +110,8 @@ export default function StreakCard({ streaks, goal, error }: Props) {
 
 const createStyles = (c: Colors) =>
   StyleSheet.create({
-    valueRow: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      gap: 8,
-    },
 
-    value: {
-      fontSize: 40,
-      fontWeight: '800',
-      color: c.primary,
-    },
 
-    unit: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: c.text,
-    },
 
     text: {
       fontSize: 16,
@@ -123,17 +125,10 @@ const createStyles = (c: Colors) =>
       color: c.textMuted,
     },
 
-    badge: {
-      alignSelf: 'flex-start',
-      marginTop: 10,
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-      borderRadius: 999,
-      backgroundColor: c.primarySoft,
-    },
 
-    badgeText: {
-      fontSize: 13,
+
+    recordNow: {
+      fontSize: 16,
       fontWeight: '700',
       color: c.primary,
     },
