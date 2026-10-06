@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -56,7 +57,8 @@ export default function LeaderboardScreen() {
   }, [loadLeaderboard])
 
   // Sending the last 30 days is idempotent (the backend keeps the
-  // highest value per day), so the button is always available.
+  // highest value per day), so the button is always available. Also
+  // run by pulling the list down.
   const handleRefresh = async () => {
     if (refreshing) {
       return
@@ -116,6 +118,14 @@ export default function LeaderboardScreen() {
         style={styles.screen}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
       >
         <View style={styles.periodSelector}>
           <Pressable
