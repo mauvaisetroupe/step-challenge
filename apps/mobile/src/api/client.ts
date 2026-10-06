@@ -2,12 +2,14 @@ import {
   clearSessionToken,
   getSessionToken,
 } from '../auth/session'
+import { i18n } from '@/i18n'
+
 import { API_URL } from './config'
 
 /** The session is missing, expired or revoked: sign in again. */
 export class UnauthenticatedError extends Error {
   constructor() {
-    super('Session expirée, reconnecte-toi')
+    super(i18n.t('errors.sessionExpired'))
     this.name = 'UnauthenticatedError'
   }
 }

@@ -1,5 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router'
+import type { TFunction } from 'i18next'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
   Pressable,
@@ -31,21 +33,21 @@ type State =
   | { name: 'accepted'; friendName: string }
   | { name: 'blocked'; inviterName: string }
 
-function errorMessage(error: unknown) {
+function errorMessage(error: unknown, t: TFunction) {
   if (error instanceof ApiError) {
     switch (error.code) {
       case 'friend_limit_reached':
-        return "La limite d'amis est atteinte."
+        return t('invitation.errors.friendLimit')
     }
 
     if (error.status === 429) {
-      return 'Trop de tentatives. Réessaie dans une minute.'
+      return t('invitation.errors.tooManyAttempts')
     }
   }
 
   console.error('Invitation error:', error)
 
-  return 'Impossible de traiter cette invitation. Vérifie ta connexion.'
+  return t('invitation.errors.generic')
 }
 
 /**
@@ -57,6 +59,7 @@ function errorMessage(error: unknown) {
  */
 export default function InvitationScreen() {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
 
   const { code } = useLocalSearchParams<{ code: string }>()
   const [state, setState] = useState<State>({ name: 'loading' })
@@ -79,9 +82,9 @@ export default function InvitationScreen() {
         return
       }
 
-      setState({ name: 'error', message: errorMessage(error) })
+      setState({ name: 'error', message: errorMessage(error, t) })
     }
-  }, [code])
+  }, [code, t])
 
   useEffect(() => {
     load()
@@ -104,7 +107,7 @@ export default function InvitationScreen() {
         return
       }
 
-      setState({ name: 'error', message: errorMessage(error) })
+      setState({ name: 'error', message: errorMessage(error, t) })
     }
   }
 
@@ -127,13 +130,12 @@ export default function InvitationScreen() {
   if (state.name === 'invalid') {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Lien d'invitation invalide</Text>
-        <Text style={styles.text}>
-          Ce lien a expiré ou a été désactivé. Demande un nouveau lien à la
-          personne qui t'a invité·e.
-        </Text>
+        <Text style={styles.title}>{t('invitation.invalid.title')}</Text>
+        <Text style={styles.text}>{t('invitation.invalid.text')}</Text>
         <Pressable style={styles.secondaryButton} onPress={goToLeaderboard}>
-          <Text style={styles.secondaryButtonText}>Retour au classement</Text>
+          <Text style={styles.secondaryButtonText}>
+            {t('invitation.backToLeaderboard')}
+          </Text>
         </Pressable>
       </View>
     )
@@ -144,7 +146,7 @@ export default function InvitationScreen() {
       <View style={styles.container}>
         <Text style={styles.error}>{state.message}</Text>
         <Pressable style={styles.primaryButton} onPress={load}>
-          <Text style={styles.primaryButtonText}>Réessayer</Text>
+          <Text style={styles.primaryButtonText}>{t('common.retry')}</Text>
         </Pressable>
       </View>
     )
@@ -153,13 +155,14 @@ export default function InvitationScreen() {
   if (state.name === 'blocked') {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>{state.inviterName} est bloqué·e</Text>
-        <Text style={styles.text}>
-          Cette personne ne pourra pas devenir ton amie. Tu peux la débloquer
-          depuis l'écran Amis.
+        <Text style={styles.title}>
+          {t('invitation.blocked.title', { name: state.inviterName })}
         </Text>
+        <Text style={styles.text}>{t('invitation.blocked.text')}</Text>
         <Pressable style={styles.secondaryButton} onPress={goToLeaderboard}>
-          <Text style={styles.secondaryButtonText}>Retour au classement</Text>
+          <Text style={styles.secondaryButtonText}>
+            {t('invitation.backToLeaderboard')}
+          </Text>
         </Pressable>
       </View>
     )
@@ -168,13 +171,14 @@ export default function InvitationScreen() {
   if (state.name === 'accepted') {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>C'est fait !</Text>
+        <Text style={styles.title}>{t('invitation.accepted.title')}</Text>
         <Text style={styles.text}>
-          {state.friendName} et toi êtes maintenant amis : vous apparaissez
-          dans le classement l'un de l'autre.
+          {t('invitation.accepted.text', { name: state.friendName })}
         </Text>
         <Pressable style={styles.primaryButton} onPress={goToLeaderboard}>
-          <Text style={styles.primaryButtonText}>Voir le classement</Text>
+          <Text style={styles.primaryButtonText}>
+            {t('invitation.seeLeaderboard')}
+          </Text>
         </Pressable>
       </View>
     )
@@ -196,28 +200,26 @@ export default function InvitationScreen() {
 
       {preview.isOwnInvitation ? (
         <>
-          <Text style={styles.text}>
-            C'est ta propre invitation : partage ce lien avec tes amis pour
-            qu'ils te rejoignent.
-          </Text>
+          <Text style={styles.text}>{t('invitation.own')}</Text>
           <Pressable style={styles.secondaryButton} onPress={goToLeaderboard}>
-            <Text style={styles.secondaryButtonText}>Retour au classement</Text>
+            <Text style={styles.secondaryButtonText}>
+            {t('invitation.backToLeaderboard')}
+          </Text>
           </Pressable>
         </>
       ) : preview.alreadyFriends ? (
         <>
-          <Text style={styles.text}>
-            Vous êtes déjà amis.
-          </Text>
+          <Text style={styles.text}>{t('invitation.alreadyFriends')}</Text>
           <Pressable style={styles.primaryButton} onPress={goToLeaderboard}>
-            <Text style={styles.primaryButtonText}>Voir le classement</Text>
+            <Text style={styles.primaryButtonText}>
+            {t('invitation.seeLeaderboard')}
+          </Text>
           </Pressable>
         </>
       ) : (
         <>
           <Text style={styles.text}>
-            {preview.inviter.name} t'invite à devenir amis. Vous verrez vos
-            pas respectifs dans le classement.
+            {t('invitation.invites', { name: preview.inviter.name })}
           </Text>
           <Pressable
             style={[styles.primaryButton, accepting && styles.disabled]}
@@ -225,11 +227,13 @@ export default function InvitationScreen() {
             disabled={accepting}
           >
             <Text style={styles.primaryButtonText}>
-              {accepting ? 'Un instant...' : 'Devenir amis'}
+              {accepting ? t('invitation.accepting') : t('invitation.accept')}
             </Text>
           </Pressable>
           <Pressable style={styles.secondaryButton} onPress={goToLeaderboard}>
-            <Text style={styles.secondaryButtonText}>Pas maintenant</Text>
+            <Text style={styles.secondaryButtonText}>
+              {t('invitation.notNow')}
+            </Text>
           </Pressable>
         </>
       )}
@@ -247,7 +251,9 @@ export default function InvitationScreen() {
           disabled={accepting}
           hitSlop={8}
         >
-          <Text style={styles.reportLinkText}>Signaler cette invitation</Text>
+          <Text style={styles.reportLinkText}>
+            {t('invitation.report')}
+          </Text>
         </Pressable>
       )}
 

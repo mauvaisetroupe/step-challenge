@@ -1,24 +1,17 @@
+import { useTranslation } from 'react-i18next'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { formatNumber } from '@/i18n'
 import type { WeekRank } from '@/services/insights'
 import { useThemedStyles, type Colors } from '@/theme'
 
-import HomeCard, { Strong } from './HomeCard'
+import HomeCard, { CardText } from './HomeCard'
 
 type Props = {
   rank: WeekRank | null
   error: boolean
   onOpenLeaderboard: () => void
   onInviteFriends: () => void
-}
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('fr-FR').format(value)
-}
-
-/** 1 → "1ᵉʳ", 3 → "3ᵉ". */
-function ordinal(rank: number) {
-  return rank === 1 ? '1ᵉʳ' : `${rank}ᵉ`
 }
 
 /**
@@ -32,52 +25,70 @@ export default function WeekRankCard({
   onInviteFriends,
 }: Props) {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
+  const title = t('home.weekRank.title')
 
   if (error || !rank) {
     return (
-      <HomeCard icon="🏆" title="Cette semaine">
-        <Text style={styles.text}>Classement indisponible pour le moment.</Text>
+      <HomeCard icon="🏆" title={title}>
+        <Text style={styles.text}>{t('home.weekRank.unavailable')}</Text>
       </HomeCard>
     )
   }
 
   if (rank.total === 1) {
     return (
-      <HomeCard icon="🏆" title="Cette semaine">
-        <Text style={styles.text}>
-          Le défi commence avec tes amis : invite-les pour comparer vos pas.
-        </Text>
+      <HomeCard icon="🏆" title={title}>
+        <Text style={styles.text}>{t('home.weekRank.alone')}</Text>
 
         <Pressable style={styles.button} onPress={onInviteFriends}>
-          <Text style={styles.buttonText}>Inviter des amis</Text>
+          <Text style={styles.buttonText}>{t('home.weekRank.invite')}</Text>
         </Pressable>
       </HomeCard>
     )
   }
 
   return (
-    <HomeCard icon="🏆" title="Cette semaine" onPress={onOpenLeaderboard}>
+    <HomeCard icon="🏆" title={title} onPress={onOpenLeaderboard}>
       <View style={styles.rankRow}>
-        <Text style={styles.rank}>{ordinal(rank.rank)}</Text>
-        <Text style={styles.total}>sur {rank.total}</Text>
+        <Text style={styles.rank}>
+          {t('home.weekRank.rank', { count: rank.rank, ordinal: true })}
+        </Text>
+        <Text style={styles.total}>
+          {t('home.weekRank.total', { total: rank.total })}
+        </Text>
       </View>
 
       {rank.ahead ? (
-        <Text style={styles.text}>
-          Plus que <Strong>{formatNumber(rank.ahead.stepsToPass)} pas</Strong>{' '}
-          pour dépasser <Strong>{rank.ahead.name}</Strong> 🏃
-        </Text>
+        <CardText
+          style={styles.text}
+          text={t('home.weekRank.toPass', {
+            count: rank.ahead.stepsToPass,
+            skipInterpolation: true,
+          })}
+          values={{
+            steps: formatNumber(rank.ahead.stepsToPass),
+            name: rank.ahead.name,
+          }}
+        />
       ) : rank.behind && rank.behind.lead > 0 ? (
-        <Text style={styles.text}>
-          Tu es en tête, avec{' '}
-          <Strong>{formatNumber(rank.behind.lead)} pas</Strong> d'avance sur{' '}
-          <Strong>{rank.behind.name}</Strong> 🥇
-        </Text>
+        <CardText
+          style={styles.text}
+          text={t('home.weekRank.lead', {
+            count: rank.behind.lead,
+            skipInterpolation: true,
+          })}
+          values={{
+            steps: formatNumber(rank.behind.lead),
+            name: rank.behind.name,
+          }}
+        />
       ) : rank.behind ? (
-        <Text style={styles.text}>
-          À égalité avec <Strong>{rank.behind.name}</Strong> : chaque pas
-          compte ! 🤝
-        </Text>
+        <CardText
+          style={styles.text}
+          text={t('home.weekRank.tie', { skipInterpolation: true })}
+          values={{ name: rank.behind.name }}
+        />
       ) : null}
     </HomeCard>
   )

@@ -3,6 +3,8 @@ import {
     HmsHealthAccount,
 } from '@hmscore/react-native-hms-health'
 
+import { i18n } from '@/i18n'
+
 import type { DiagnosticItem } from './healthConnectDiagnostic'
 
 const STEP_READ_SCOPE =
@@ -18,7 +20,7 @@ export async function getHuaweiHealthDiagnostic(): Promise<
 
   items.push({
     label: 'Huawei Health Kit',
-    value: 'Module chargé',
+    value: i18n.t('diagnostic.huawei.moduleLoaded'),
     status: 'ok',
   })
 
@@ -29,7 +31,7 @@ export async function getHuaweiHealthDiagnostic(): Promise<
       ])
 
     items.push({
-      label: 'Autorisation Huawei',
+      label: i18n.t('diagnostic.huawei.authorization'),
       value: JSON.stringify(signInResult),
       status: 'ok',
     })
@@ -53,7 +55,7 @@ export async function getHuaweiHealthDiagnostic(): Promise<
       )
 
     items.push({
-      label: 'Pas aujourd’hui',
+      label: i18n.t('diagnostic.huawei.todaySteps'),
       value: JSON.stringify(todayResult),
       status: 'ok',
     })

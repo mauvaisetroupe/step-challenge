@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   KeyboardAvoidingView,
   Modal,
@@ -49,6 +50,7 @@ export default function ReportUserModal({
 }: ReportUserModalProps) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const [reason, setReason] = useState<ReportReason | null>(null)
   const [comment, setComment] = useState('')
@@ -77,7 +79,7 @@ export default function ReportUserModal({
       onClose()
     } catch (err) {
       console.error('Block error:', err)
-      setError('Impossible de bloquer cette personne.')
+      setError(t('friends.block.error'))
     } finally {
       setBlocking(false)
     }
@@ -101,7 +103,7 @@ export default function ReportUserModal({
       setSent(true)
     } catch (err) {
       console.error('Report error:', err)
-      setError("Impossible d'envoyer le signalement. Réessaie plus tard.")
+      setError(t('report.error'))
     } finally {
       setSending(false)
     }
@@ -121,14 +123,10 @@ export default function ReportUserModal({
         <View style={styles.card}>
           {sent ? (
             <View>
-              <Text style={styles.title}>Merci</Text>
-              <Text style={styles.hint}>
-                Ton signalement a bien été envoyé.
-              </Text>
+              <Text style={styles.title}>{t('report.thanks')}</Text>
+              <Text style={styles.hint}>{t('report.sent')}</Text>
               <Text style={styles.body}>
-                Veux-tu aussi bloquer {target?.name} ? Vous ne serez plus
-                amis, et cette personne ne pourra plus devenir ton amie, même
-                avec un lien d'invitation. Elle n'est pas prévenue.
+                {t('report.offerBlock', { name: target?.name ?? '' })}
               </Text>
 
               {error && <Text style={styles.error}>{error}</Text>}
@@ -139,7 +137,9 @@ export default function ReportUserModal({
                 disabled={blocking}
               >
                 <Text style={styles.primaryButtonText}>
-                  {blocking ? 'Blocage...' : `Bloquer ${target?.name ?? ''}`}
+                  {blocking
+                    ? t('report.blocking')
+                    : t('report.block', { name: target?.name ?? '' })}
                 </Text>
               </Pressable>
 
@@ -148,31 +148,34 @@ export default function ReportUserModal({
                 onPress={onClose}
                 disabled={blocking}
               >
-                <Text style={styles.secondaryButtonText}>Fermer</Text>
+                <Text style={styles.secondaryButtonText}>
+                  {t('common.close')}
+                </Text>
               </Pressable>
             </View>
           ) : (
             <ScrollView keyboardShouldPersistTaps="handled">
-              <Text style={styles.title}>Signaler {target?.name}</Text>
-              <Text style={styles.hint}>
-                Ton signalement est lu par l'équipe de Step Challenge. La
-                personne signalée n'est pas prévenue.
+              <Text style={styles.title}>
+                {t('report.title', { name: target?.name ?? '' })}
               </Text>
+              <Text style={styles.hint}>{t('report.hint')}</Text>
 
               {REPORT_REASONS.map((option) => (
                 <Pressable
-                  key={option.value}
+                  key={option}
                   style={styles.reason}
-                  onPress={() => setReason(option.value)}
+                  onPress={() => setReason(option)}
                   disabled={sending}
                 >
                   <View
                     style={[
                       styles.radio,
-                      reason === option.value && styles.radioSelected,
+                      reason === option && styles.radioSelected,
                     ]}
                   />
-                  <Text style={styles.reasonText}>{option.label}</Text>
+                  <Text style={styles.reasonText}>
+                    {t(`report.reasons.${option}`)}
+                  </Text>
                 </Pressable>
               ))}
 
@@ -180,7 +183,7 @@ export default function ReportUserModal({
                 style={styles.input}
                 value={comment}
                 onChangeText={setComment}
-                placeholder="Précisions (facultatif)"
+                placeholder={t('report.comment')}
                 placeholderTextColor={colors.textMuted}
                 multiline
                 maxLength={MAX_COMMENT_LENGTH}
@@ -198,12 +201,12 @@ export default function ReportUserModal({
                 disabled={!reason || sending}
               >
                 <Text style={styles.primaryButtonText}>
-                  {sending ? 'Envoi...' : 'Envoyer le signalement'}
+                  {sending ? t('report.sending') : t('report.send')}
                 </Text>
               </Pressable>
 
               <Pressable style={styles.secondaryButton} onPress={onClose}>
-                <Text style={styles.secondaryButtonText}>Annuler</Text>
+                <Text style={styles.secondaryButtonText}>{t('common.cancel')}</Text>
               </Pressable>
             </ScrollView>
           )}

@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
 import Svg, {
   Line,
   Rect,
@@ -25,6 +26,7 @@ import {
 import { getMySteps } from '../../api/steps'
 import { syncTodaySteps } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import { formatDate, formatNumber } from '@/i18n'
 import DayTimeline from '@/components/stats/DayTimeline'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
@@ -47,12 +49,7 @@ type MonthStat = {
   steps: number
 }
 
-const PERIODS: { key: Period; label: string }[] = [
-  { key: '1d', label: '1j' },
-  { key: '7d', label: '7j' },
-  { key: '30d', label: '30j' },
-  { key: '1y', label: '1a' },
-]
+const PERIODS: Period[] = ['1d', '7d', '30d', '1y']
 
 function getStartOfDay(date: Date) {
   const result = new Date(date)
@@ -73,25 +70,25 @@ function parseDateKey(value: string) {
   return new Date(year, month - 1, day)
 }
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('fr-FR').format(Math.round(value))
+function formatSteps(value: number) {
+  return formatNumber(Math.round(value))
 }
 
 function formatShortDate(date: Date) {
-  return date.toLocaleDateString('fr-FR', {
+  return formatDate(date, {
     day: 'numeric',
     month: 'short',
   })
 }
 
 function formatMonth(date: Date) {
-  return date.toLocaleDateString('fr-FR', {
+  return formatDate(date, {
     month: 'short',
   })
 }
 
 function formatWeekDay(date: Date) {
-  return date.toLocaleDateString('fr-FR', {
+  return formatDate(date, {
     weekday: 'long',
   })
 }
@@ -287,6 +284,7 @@ async function getDatabaseMonthlyStats(
 
 export default function StatsScreen() {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
 
   const [period, setPeriod] = useState<Period>('7d')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
@@ -428,12 +426,12 @@ export default function StatsScreen() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Impossible de charger les statistiques',
+          : t('stats.loadError'),
       )
     } finally {
       setLoading(false)
     }
-  }, [period])
+  }, [period, t])
 
   useEffect(() => {
     loadStats()
@@ -461,7 +459,7 @@ export default function StatsScreen() {
     // Top edge only: keeps the content below the status bar (camera,
     // clock, battery); the tab bar handles the bottom.
     <SafeAreaView edges={['top']} style={styles.container}>
-      <TabScreenHeader title="Statistiques" />
+      <TabScreenHeader title={t('stats.title')} />
 
       <ScrollView
         style={styles.container}
@@ -470,22 +468,22 @@ export default function StatsScreen() {
         <View style={styles.periodSelector}>
           {PERIODS.map((item) => (
             <Pressable
-              key={item.key}
+              key={item}
               style={[
                 styles.periodButton,
-                period === item.key &&
+                period === item &&
                   styles.periodButtonActive,
               ]}
-              onPress={() => setPeriod(item.key)}
+              onPress={() => setPeriod(item)}
             >
               <Text
                 style={[
                   styles.periodButtonText,
-                  period === item.key &&
+                  period === item &&
                     styles.periodButtonTextActive,
                 ]}
               >
-                {item.label}
+                {t(`stats.periods.${item}`)}
               </Text>
             </Pressable>
           ))}
@@ -504,7 +502,7 @@ export default function StatsScreen() {
               onPress={loadStats}
             >
               <Text style={styles.retryText}>
-                Réessayer
+                {t('common.retry')}
               </Text>
             </Pressable>
           </View>
@@ -516,8 +514,8 @@ export default function StatsScreen() {
               now={new Date()}
               emptyMessage={
                 Platform.OS === 'web'
-                  ? "Le détail heure par heure n'est disponible que sur Android."
-                  : "Aucun pas enregistré aujourd'hui."
+                  ? t('stats.hourlyAndroidOnly')
+                  : t('stats.noStepsToday')
               }
             />
           </>
@@ -525,11 +523,11 @@ export default function StatsScreen() {
           <>
             <View style={styles.totalContainer}>
               <Text style={styles.totalValue}>
-                {formatNumber(totalSteps)}
+                {formatSteps(totalSteps)}
               </Text>
 
               <Text style={styles.totalLabel}>
-                pas
+                {t('stats.stepsUnit', { count: Math.round(totalSteps) })}
               </Text>
             </View>
 
@@ -575,6 +573,7 @@ function DailyStatsList({
   stats: DayStat[]
 }) {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
 
   return (
     <View style={styles.statsList}>
@@ -598,7 +597,7 @@ function DailyStatsList({
 
                 <View style={styles.stepsStatus}>
                   <Text style={styles.stepsValue}>
-                    {formatNumber(item.steps)}
+                    {formatSteps(item.steps)}
                   </Text>
 
                   <View
@@ -629,7 +628,7 @@ function DailyStatsList({
                 </Text>
 
                 <Text style={styles.percentText}>
-                  {percent} %
+                  {t('stats.percent', { percent: formatNumber(percent) })}
                 </Text>
               </View>
             </View>
@@ -645,6 +644,7 @@ function MonthlyStatsList({
   stats: MonthStat[]
 }) {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
 
   return (
     <View style={styles.statsList}>
@@ -667,14 +667,14 @@ function MonthlyStatsList({
             >
               <View style={styles.statMainRow}>
                 <Text style={styles.dayName}>
-                  {date.toLocaleDateString('fr-FR', {
+                  {formatDate(date, {
                     month: 'long',
                   })}
                 </Text>
 
                 <View style={styles.stepsStatus}>
                   <Text style={styles.stepsValue}>
-                    {formatNumber(item.steps)}
+                    {formatSteps(item.steps)}
                   </Text>
 
                   <View
@@ -705,7 +705,7 @@ function MonthlyStatsList({
                 </Text>
 
                 <Text style={styles.percentText}>
-                  {percent} %
+                  {t('stats.percent', { percent: formatNumber(percent) })}
                 </Text>
               </View>
             </View>
@@ -721,13 +721,14 @@ function BarChart({
   data: ChartPoint[]
 }) {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
   const { colors } = useTheme()
 
   if (data.length === 0) {
     return (
       <View style={styles.emptyChart}>
         <Text style={styles.emptyText}>
-          Aucune donnée
+          {t('stats.noData')}
         </Text>
       </View>
     )

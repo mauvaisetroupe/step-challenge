@@ -1,5 +1,6 @@
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
   Platform,
@@ -44,6 +45,7 @@ function localDateKey(date: Date) {
 export default function HomeScreen() {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const [todaySteps, setTodaySteps] = useState<number | null>(null)
   const [stepsError, setStepsError] = useState<string | null>(null)
@@ -87,7 +89,7 @@ export default function HomeScreen() {
           setStepsError(
             err instanceof Error
               ? err.message
-              : 'Unable to read steps from Health Connect',
+              : t('home.healthConnectError'),
           )
         }
       }
@@ -129,7 +131,7 @@ export default function HomeScreen() {
       loading.current = false
       setLoaded(true)
     }
-  }, [])
+  }, [t])
 
   useFocusEffect(
     useCallback(() => {
@@ -163,7 +165,7 @@ export default function HomeScreen() {
             />
           }
         >
-          <Text style={styles.subtitle}>Aujourd'hui</Text>
+          <Text style={styles.subtitle}>{t('home.today')}</Text>
 
           {stepsError && todaySteps === null ? (
             <Text style={styles.error}>{stepsError}</Text>

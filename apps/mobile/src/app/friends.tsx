@@ -1,5 +1,6 @@
 import { router, useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
   Alert,
@@ -37,6 +38,7 @@ import ReportUserModal, {
   type ReportTarget,
 } from '../components/ReportUserModal'
 import UserBadge from '../components/UserBadge'
+import { formatDate } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 /**
@@ -48,6 +50,7 @@ import { useTheme, useThemedStyles, type Colors } from '@/theme'
 export default function FriendsScreen() {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const [friends, setFriends] = useState<Friend[]>([])
   const [invitations, setInvitations] = useState<ActiveInvitation[]>([])
@@ -95,11 +98,11 @@ export default function FriendsScreen() {
       setFriends(await listFriends())
     } catch (err) {
       console.error('Friends load error:', err)
-      setError('Impossible de charger tes amis.')
+      setError(t('friends.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [loadInvitations, loadBlocks])
+  }, [loadInvitations, loadBlocks, t])
 
   // Reload when coming back, e.g. after accepting an invitation.
   useFocusEffect(
@@ -116,18 +119,14 @@ export default function FriendsScreen() {
       const invitation = await createInvitation()
 
       await Share.share({
-        message:
-          'Rejoins-moi sur Step Challenge pour comparer nos pas ! ' +
-          `Ouvre ce lien (valable 7 jours) : ${invitation.url}`,
+        message: t('friends.invite.message', { url: invitation.url }),
       })
     } catch (err) {
       if (err instanceof ApiError && err.code === 'too_many_invitations') {
-        setError(
-          "Tu as déjà trop de liens d'invitation actifs. Désactives-en un ci-dessous, ou attends qu'il expire.",
-        )
+        setError(t('friends.invite.tooMany'))
       } else {
         console.error('Invitation error:', err)
-        setError("Impossible de créer un lien d'invitation.")
+        setError(t('friends.invite.error'))
       }
     } finally {
       setInviting(false)
@@ -138,12 +137,12 @@ export default function FriendsScreen() {
 
   const confirmRevoke = (invitation: ActiveInvitation) => {
     Alert.alert(
-      'Désactiver ce lien ?',
-      "Plus personne ne pourra l'utiliser pour devenir ton ami. Les amis qui l'ont déjà accepté restent tes amis.",
+      t('friends.revoke.title'),
+      t('friends.revoke.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Désactiver',
+          text: t('friends.revoke.confirm'),
           style: 'destructive',
           onPress: async () => {
             setRevokingId(invitation.id)
@@ -155,7 +154,7 @@ export default function FriendsScreen() {
               // link is inactive anyway, the reload removes it.
               if (!(err instanceof ApiError && err.status === 404)) {
                 console.error('Revoke invitation error:', err)
-                setError('Impossible de désactiver ce lien.')
+                setError(t('friends.revoke.error'))
               }
             } finally {
               await loadInvitations()
@@ -179,12 +178,12 @@ export default function FriendsScreen() {
 
   const confirmRemove = (friend: Friend) => {
     Alert.alert(
-      `Retirer ${displayName(friend)} ?`,
-      'Vous ne verrez plus vos pas respectifs. Tes liens d\'invitation encore actifs seront désactivés.',
+      t('friends.remove.title', { name: displayName(friend) }),
+      t('friends.remove.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Retirer',
+          text: t('friends.remove.confirm'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -192,7 +191,7 @@ export default function FriendsScreen() {
               await load()
             } catch (err) {
               console.error('Remove friend error:', err)
-              setError('Impossible de retirer cet ami.')
+              setError(t('friends.remove.error'))
             }
           },
         },
@@ -202,12 +201,12 @@ export default function FriendsScreen() {
 
   const confirmBlock = (target: { id: string; name: string }) => {
     Alert.alert(
-      `Bloquer ${target.name} ?`,
-      `Vous ne serez plus amis, et ${target.name} ne pourra plus devenir ton ami, même avec un lien d'invitation. ${target.name} n'est pas prévenu.`,
+      t('friends.block.title', { name: target.name }),
+      t('friends.block.message', { name: target.name }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Bloquer',
+          text: t('friends.block.confirm'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -215,7 +214,7 @@ export default function FriendsScreen() {
               await load()
             } catch (err) {
               console.error('Block error:', err)
-              setError('Impossible de bloquer cette personne.')
+              setError(t('friends.block.error'))
             }
           },
         },
@@ -231,12 +230,12 @@ export default function FriendsScreen() {
 
   const confirmUnblock = (user: BlockedUser) => {
     Alert.alert(
-      `Débloquer ${user.name} ?`,
-      'Vous ne redevenez pas amis automatiquement : il faudra un nouveau lien d\'invitation.',
+      t('friends.unblock.title', { name: user.name }),
+      t('friends.unblock.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Débloquer',
+          text: t('friends.unblock.confirm'),
           onPress: async () => {
             setUnblockingId(user.userId)
 
@@ -246,7 +245,7 @@ export default function FriendsScreen() {
               // Already unblocked (double tap): the reload shows it.
               if (!(err instanceof ApiError && err.status === 404)) {
                 console.error('Unblock error:', err)
-                setError('Impossible de débloquer cette personne.')
+                setError(t('friends.unblock.error'))
               }
             } finally {
               await loadBlocks()
@@ -260,25 +259,25 @@ export default function FriendsScreen() {
 
   const friendActions = (friend: Friend) => [
     {
-      label: 'Renommer',
+      label: t('friends.actions.rename'),
       onPress: () => {
         setRenameError(null)
         setRenaming(friend)
       },
     },
     {
-      label: 'Signaler',
+      label: t('friends.actions.report'),
       onPress: () =>
         setReporting({ id: friend.id, name: displayName(friend) }),
     },
     {
-      label: 'Bloquer',
+      label: t('friends.block.confirm'),
       destructive: true,
       onPress: () =>
         confirmBlock({ id: friend.id, name: displayName(friend) }),
     },
     {
-      label: 'Retirer',
+      label: t('friends.remove.confirm'),
       destructive: true,
       onPress: () => confirmRemove(friend),
     },
@@ -300,7 +299,7 @@ export default function FriendsScreen() {
       await load()
     } catch (err) {
       console.error('Alias error:', err)
-      setRenameError("Impossible d'enregistrer.")
+      setRenameError(t('friends.rename.error'))
     } finally {
       setRenameSaving(false)
     }
@@ -308,9 +307,7 @@ export default function FriendsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.intro}>
-        Seuls tes amis voient tes pas, et tu ne vois que les leurs.
-      </Text>
+      <Text style={styles.intro}>{t('friends.intro')}</Text>
 
       <Pressable
         style={[styles.primaryButton, inviting && styles.disabled]}
@@ -318,7 +315,7 @@ export default function FriendsScreen() {
         disabled={inviting}
       >
         <Text style={styles.primaryButtonText}>
-          {inviting ? 'Création du lien...' : 'Inviter des amis'}
+          {inviting ? t('friends.invite.creating') : t('friends.invite.button')}
         </Text>
       </Pressable>
 
@@ -342,7 +339,7 @@ export default function FriendsScreen() {
             onPress={handleCode}
             disabled={!code.trim()}
           >
-            <Text style={styles.primaryButtonText}>OK</Text>
+            <Text style={styles.primaryButtonText}>{t('common.ok')}</Text>
           </Pressable>
         </View>
       ) : (
@@ -350,23 +347,24 @@ export default function FriendsScreen() {
           style={styles.secondaryButton}
           onPress={() => setCodeInputVisible(true)}
         >
-          <Text style={styles.secondaryButtonText}>J'ai un code</Text>
+          <Text style={styles.secondaryButtonText}>
+            {t('friends.haveCode')}
+          </Text>
         </Pressable>
       )}
 
       {error && <Text style={styles.error}>{error}</Text>}
 
       <Text style={styles.sectionTitle}>
-        {friends.length > 0 ? `Mes amis (${friends.length})` : 'Mes amis'}
+        {friends.length > 0
+          ? t('friends.listCount', { count: friends.length })
+          : t('friends.list')}
       </Text>
 
       {loading ? (
         <ActivityIndicator style={styles.loader} />
       ) : friends.length === 0 ? (
-        <Text style={styles.empty}>
-          Pas encore d'amis. Partage un lien d'invitation : chaque personne
-          qui l'ouvre et accepte rejoint ta liste d'amis.
-        </Text>
+        <Text style={styles.empty}>{t('friends.empty')}</Text>
       ) : (
         <View style={styles.list}>
           {friends.map((friend) => (
@@ -395,22 +393,29 @@ export default function FriendsScreen() {
       {!loading && invitations.length > 0 && (
         <>
           <Text style={styles.sectionTitle}>
-            {`Liens d'invitation actifs (${invitations.length})`}
+            {t('friends.invitations.title', { count: invitations.length })}
           </Text>
-          <Text style={styles.hint}>
-            Par sécurité, l'appli ne garde pas les liens : pour inviter
-            quelqu'un d'autre, crée un nouveau lien.
-          </Text>
+          <Text style={styles.hint}>{t('friends.invitations.hint')}</Text>
 
           <View style={styles.list}>
             {invitations.map((invitation) => (
               <View key={invitation.id} style={styles.row}>
                 <View style={styles.names}>
                   <Text style={styles.name} numberOfLines={1}>
-                    {`Créé le ${formatDate(invitation.createdAt)}`}
+                    {t('friends.invitations.created', {
+                      date: formatShortDate(invitation.createdAt),
+                    })}
                   </Text>
                   <Text style={styles.realName} numberOfLines={1}>
-                    {`Expire le ${formatDate(invitation.expiresAt)} · ${formatUseCount(invitation.useCount)}`}
+                    {t('friends.invitations.expires', {
+                      date: formatShortDate(invitation.expiresAt),
+                    })}
+                    {' · '}
+                    {invitation.useCount === 0
+                      ? t('friends.invitations.unused')
+                      : t('friends.invitations.accepted', {
+                          count: invitation.useCount,
+                        })}
                   </Text>
                 </View>
                 <Pressable
@@ -422,7 +427,9 @@ export default function FriendsScreen() {
                   disabled={revokingId === invitation.id}
                   hitSlop={8}
                 >
-                  <Text style={styles.revokeButtonText}>Désactiver</Text>
+                  <Text style={styles.revokeButtonText}>
+                    {t('friends.revoke.confirm')}
+                  </Text>
                 </Pressable>
               </View>
             ))}
@@ -433,12 +440,9 @@ export default function FriendsScreen() {
       {!loading && blocked.length > 0 && (
         <>
           <Text style={styles.sectionTitle}>
-            {`Personnes bloquées (${blocked.length})`}
+            {t('friends.blocked.title', { count: blocked.length })}
           </Text>
-          <Text style={styles.hint}>
-            Elles ne peuvent plus devenir tes amies et ne savent pas qu'elles
-            sont bloquées.
-          </Text>
+          <Text style={styles.hint}>{t('friends.blocked.hint')}</Text>
 
           <View style={styles.list}>
             {blocked.map((user) => (
@@ -448,7 +452,9 @@ export default function FriendsScreen() {
                     {user.name}
                   </Text>
                   <Text style={styles.realName} numberOfLines={1}>
-                    {`Bloqué le ${formatDate(user.since)}`}
+                    {t('friends.blocked.since', {
+                      date: formatShortDate(user.since),
+                    })}
                   </Text>
                 </View>
                 <Pressable
@@ -460,7 +466,9 @@ export default function FriendsScreen() {
                   disabled={unblockingId === user.userId}
                   hitSlop={8}
                 >
-                  <Text style={styles.unblockButtonText}>Débloquer</Text>
+                  <Text style={styles.unblockButtonText}>
+                    {t('friends.unblock.confirm')}
+                  </Text>
                 </Pressable>
               </View>
             ))}
@@ -492,21 +500,11 @@ export default function FriendsScreen() {
   )
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('fr-FR', {
+function formatShortDate(value: string) {
+  return formatDate(new Date(value), {
     day: 'numeric',
     month: 'short',
   })
-}
-
-function formatUseCount(count: number) {
-  if (count === 0) {
-    return 'pas encore utilisé'
-  }
-
-  return count === 1
-    ? 'accepté par 1 personne'
-    : `accepté par ${count} personnes`
 }
 
 const createStyles = (c: Colors) =>

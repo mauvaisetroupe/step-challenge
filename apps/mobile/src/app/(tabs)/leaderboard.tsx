@@ -1,5 +1,6 @@
 import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
   Pressable,
@@ -18,6 +19,7 @@ import { displayName } from '../../api/friends'
 import UserBadge from '../../components/UserBadge'
 import { syncLast30Days } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import { formatNumber } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Period = 'week' | 'month'
@@ -25,6 +27,7 @@ type Period = 'week' | 'month'
 export default function LeaderboardScreen() {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const [period, setPeriod] = useState<Period>('week')
   const [results, setResults] = useState<LeaderboardEntry[]>([])
@@ -41,11 +44,11 @@ export default function LeaderboardScreen() {
 
       setResults(data.results)
     } catch {
-      setError('Impossible de charger le classement.')
+      setError(t('leaderboard.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [period])
+  }, [period, t])
 
   useEffect(() => {
     loadLeaderboard()
@@ -76,7 +79,7 @@ export default function LeaderboardScreen() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Impossible de mettre à jour les pas.',
+          : t('leaderboard.syncError'),
       )
     } finally {
       setRefreshing(false)
@@ -85,8 +88,8 @@ export default function LeaderboardScreen() {
 
   const periodLabel =
     period === 'week'
-      ? 'Cette semaine'
-      : 'Ce mois-ci'
+      ? t('leaderboard.thisWeek')
+      : t('leaderboard.thisMonth')
 
   const refreshDisabled = refreshing
 
@@ -95,13 +98,15 @@ export default function LeaderboardScreen() {
     // clock, battery); the tab bar handles the bottom.
     <SafeAreaView edges={['top']} style={styles.screen}>
       <TabScreenHeader
-        title="Classement"
+        title={t('tabs.leaderboard')}
         right={
           <Pressable
             style={styles.friendsButton}
             onPress={() => router.push('/friends')}
           >
-            <Text style={styles.friendsButtonText}>👥 Amis</Text>
+            <Text style={styles.friendsButtonText}>
+              👥 {t('friends.title')}
+            </Text>
           </Pressable>
         }
       />
@@ -127,7 +132,7 @@ export default function LeaderboardScreen() {
                   styles.periodTextActive,
               ]}
             >
-              Semaine
+              {t('leaderboard.week')}
             </Text>
           </Pressable>
 
@@ -146,7 +151,7 @@ export default function LeaderboardScreen() {
                   styles.periodTextActive,
               ]}
             >
-              Mois
+              {t('leaderboard.month')}
             </Text>
           </Pressable>
         </View>
@@ -173,7 +178,7 @@ export default function LeaderboardScreen() {
                 </Text>
 
                 <Text style={styles.refreshText}>
-                  Actualiser
+                  {t('leaderboard.refresh')}
                 </Text>
               </>
             )}
@@ -199,7 +204,7 @@ export default function LeaderboardScreen() {
               onPress={loadLeaderboard}
             >
               <Text style={styles.retryText}>
-                Réessayer
+                {t('common.retry')}
               </Text>
             </Pressable>
           </View>
@@ -211,13 +216,14 @@ export default function LeaderboardScreen() {
                 onPress={() => router.push('/friends')}
               >
                 <Text style={styles.emptyTitle}>
-                  Le classement se joue entre amis
+                  {t('leaderboard.emptyTitle')}
                 </Text>
                 <Text style={styles.emptyText}>
-                  Invite tes amis avec un lien : vous verrez vos pas
-                  respectifs ici.
+                  {t('leaderboard.emptyText')}
                 </Text>
-                <Text style={styles.emptyAction}>Inviter des amis →</Text>
+                <Text style={styles.emptyAction}>
+                  {t('leaderboard.emptyAction')}
+                </Text>
               </Pressable>
             )}
 
@@ -253,7 +259,7 @@ export default function LeaderboardScreen() {
                   >
                     {displayName(user)}
                     {user.isMe && (
-                      <Text style={styles.me}> · toi</Text>
+                      <Text style={styles.me}> · {t('leaderboard.me')}</Text>
                     )}
                   </Text>
                   {user.alias && user.alias !== user.name && (
@@ -264,7 +270,10 @@ export default function LeaderboardScreen() {
                 </View>
 
                 <Text style={styles.steps}>
-                  {user.steps.toLocaleString('fr-FR')} pas
+                  {t('leaderboard.steps', {
+                    count: user.steps,
+                    steps: formatNumber(user.steps),
+                  })}
                 </Text>
               </View>
             ))}

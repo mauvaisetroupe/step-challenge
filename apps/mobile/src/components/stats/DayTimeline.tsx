@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 import Svg, {
   Circle,
@@ -7,6 +8,7 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg'
 
+import { getFormatLocale } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Props = {
@@ -30,7 +32,7 @@ const CHART_HEIGHT = HEIGHT - TOP - BOTTOM
 
 const HOUR_LABELS = [0, 4, 8, 12, 16, 20, 24]
 
-/** 3500 → "3,5k", 10000 → "10k". */
+/** 3500 → "3,5k" in French, "3.5k" in English; 10000 → "10k". */
 function formatThousands(value: number) {
   if (value === 0) {
     return '0'
@@ -38,7 +40,7 @@ function formatThousands(value: number) {
 
   const thousands = value / 1000
 
-  return `${new Intl.NumberFormat('fr-FR', {
+  return `${new Intl.NumberFormat(getFormatLocale(), {
     maximumFractionDigits: 1,
   }).format(thousands)}k`
 }
@@ -55,6 +57,7 @@ export default function DayTimeline({
 }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   if (hourlySteps.length === 0) {
     return (
@@ -202,7 +205,7 @@ export default function DayTimeline({
 
       <View style={styles.legend}>
         <View style={styles.legendDash} />
-        <Text style={styles.legendText}>Objectif</Text>
+        <Text style={styles.legendText}>{t('stats.goal')}</Text>
       </View>
     </View>
   )

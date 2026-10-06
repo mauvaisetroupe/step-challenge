@@ -1,5 +1,6 @@
 import { router } from 'expo-router'
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
   Alert,
@@ -23,6 +24,7 @@ const MAX_DISPLAY_NAME_LENGTH = 50
  */
 export default function AccountSection() {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
 
   const [user, setUser] = useState<User | null>(null)
   const [displayName, setDisplayName] = useState('')
@@ -43,11 +45,11 @@ export default function AccountSection() {
       setDisplayName(me.name)
     } catch (err) {
       console.error('Account load error:', err)
-      setError('Impossible de charger ton compte.')
+      setError(t('account.loadError'))
     } finally {
       setBusy(null)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     load()
@@ -70,10 +72,10 @@ export default function AccountSection() {
 
       setUser(updated)
       setDisplayName(updated.name)
-      setMessage('Nom mis à jour.')
+      setMessage(t('account.nameSaved'))
     } catch (err) {
       console.error('Display name update error:', err)
-      setError("Impossible d'enregistrer le nom.")
+      setError(t('account.nameError'))
     } finally {
       setBusy(null)
     }
@@ -97,15 +99,12 @@ export default function AccountSection() {
 
   const confirmDeleteAccount = () => {
     Alert.alert(
-      'Supprimer ton compte ?',
-      'Ton compte, ton nom et tout ton historique de pas seront ' +
-        'définitivement supprimés du serveur Step Challenge. ' +
-        'Les données de Health Connect sur ton téléphone ne sont pas ' +
-        'touchées.\n\nCette action est irréversible.',
+      t('account.delete.title'),
+      t('account.delete.message'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('account.delete.confirm'),
           style: 'destructive',
           onPress: handleDeleteAccount,
         },
@@ -122,7 +121,7 @@ export default function AccountSection() {
       await leave()
     } catch (err) {
       console.error('Account deletion error:', err)
-      setError('La suppression a échoué. Réessaie plus tard.')
+      setError(t('account.delete.error'))
     } finally {
       setBusy(null)
     }
@@ -142,7 +141,7 @@ export default function AccountSection() {
         <Text style={styles.error}>{error}</Text>
 
         <Pressable style={styles.secondaryButton} onPress={load}>
-          <Text style={styles.secondaryButtonText}>Réessayer</Text>
+          <Text style={styles.secondaryButtonText}>{t('common.retry')}</Text>
         </Pressable>
       </View>
     )
@@ -151,7 +150,7 @@ export default function AccountSection() {
   return (
     <View>
       <View style={styles.card}>
-        <Text style={styles.label}>Nom affiché</Text>
+        <Text style={styles.label}>{t('account.displayName')}</Text>
 
         <TextInput
           style={styles.input}
@@ -169,9 +168,7 @@ export default function AccountSection() {
           editable={busy === null}
         />
 
-        <Text style={styles.hint}>
-          Visible par les autres participants.
-        </Text>
+        <Text style={styles.hint}>{t('account.displayNameHint')}</Text>
 
         {nameChanged && (
           <Pressable
@@ -183,7 +180,7 @@ export default function AccountSection() {
             disabled={!trimmedName || busy !== null}
           >
             <Text style={styles.primaryButtonText}>
-              {busy === 'saving' ? 'Enregistrement...' : 'Enregistrer'}
+              {busy === 'saving' ? t('common.saving') : t('common.save')}
             </Text>
           </Pressable>
         )}
@@ -198,7 +195,9 @@ export default function AccountSection() {
         disabled={busy !== null}
       >
         <Text style={styles.secondaryButtonText}>
-          {busy === 'signing-out' ? 'Déconnexion...' : 'Se déconnecter'}
+          {busy === 'signing-out'
+            ? t('account.signingOut')
+            : t('account.signOut')}
         </Text>
       </Pressable>
 
@@ -208,7 +207,9 @@ export default function AccountSection() {
         disabled={busy !== null}
       >
         <Text style={styles.dangerButtonText}>
-          {busy === 'deleting' ? 'Suppression...' : 'Supprimer mon compte'}
+          {busy === 'deleting'
+            ? t('account.delete.deleting')
+            : t('account.delete.button')}
         </Text>
       </Pressable>
     </View>

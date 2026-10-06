@@ -80,9 +80,301 @@
     }
   },
   "friends": {
-    "title": "Amis"
+    "title": "Amis",
+    "intro": "Seuls tes amis voient tes pas, et tu ne vois que les leurs.",
+    "loadError": "Impossible de charger tes amis.",
+    "haveCode": "J'ai un code",
+    "list": "Mes amis",
+    "listCount_one": "Mes amis ({{count}})",
+    "listCount_many": "Mes amis ({{count}})",
+    "listCount_other": "Mes amis ({{count}})",
+    "empty": "Pas encore d'amis. Partage un lien d'invitation : chaque personne qui l'ouvre et accepte rejoint ta liste d'amis.",
+    "invite": {
+      "button": "Inviter des amis",
+      "creating": "Création du lien...",
+      "message": "Rejoins-moi sur Step Challenge pour comparer nos pas ! Ouvre ce lien (valable 7 jours) : {{url}}",
+      "tooMany": "Tu as déjà trop de liens d'invitation actifs. Désactives-en un ci-dessous, ou attends qu'il expire.",
+      "error": "Impossible de créer un lien d'invitation."
+    },
+    "invitations": {
+      "title_one": "Lien d'invitation actif ({{count}})",
+      "title_many": "Liens d'invitation actifs ({{count}})",
+      "title_other": "Liens d'invitation actifs ({{count}})",
+      "hint": "Par sécurité, l'appli ne garde pas les liens : pour inviter quelqu'un d'autre, crée un nouveau lien.",
+      "created": "Créé le {{date}}",
+      "expires": "Expire le {{date}}",
+      "unused": "pas encore utilisé",
+      "accepted_one": "accepté par {{count}} personne",
+      "accepted_many": "accepté par {{count}} personnes",
+      "accepted_other": "accepté par {{count}} personnes"
+    },
+    "revoke": {
+      "title": "Désactiver ce lien ?",
+      "message": "Plus personne ne pourra l'utiliser pour devenir ton ami. Les amis qui l'ont déjà accepté restent tes amis.",
+      "confirm": "Désactiver",
+      "error": "Impossible de désactiver ce lien."
+    },
+    "remove": {
+      "title": "Retirer {{name}} ?",
+      "message": "Vous ne verrez plus vos pas respectifs. Tes liens d'invitation encore actifs seront désactivés.",
+      "confirm": "Retirer",
+      "error": "Impossible de retirer cet ami."
+    },
+    "block": {
+      "title": "Bloquer {{name}} ?",
+      "message": "Vous ne serez plus amis, et {{name}} ne pourra plus devenir ton ami, même avec un lien d'invitation. {{name}} n'est pas prévenu.",
+      "confirm": "Bloquer",
+      "error": "Impossible de bloquer cette personne."
+    },
+    "unblock": {
+      "title": "Débloquer {{name}} ?",
+      "message": "Vous ne redevenez pas amis automatiquement : il faudra un nouveau lien d'invitation.",
+      "confirm": "Débloquer",
+      "error": "Impossible de débloquer cette personne."
+    },
+    "blocked": {
+      "title_one": "Personne bloquée ({{count}})",
+      "title_many": "Personnes bloquées ({{count}})",
+      "title_other": "Personnes bloquées ({{count}})",
+      "hint": "Elles ne peuvent plus devenir tes amies et ne savent pas qu'elles sont bloquées.",
+      "since": "Bloqué le {{date}}"
+    },
+    "actions": {
+      "rename": "Renommer",
+      "report": "Signaler"
+    },
+    "rename": {
+      "error": "Impossible d'enregistrer.",
+      "hint": "Ce nom n'est visible que par toi.",
+      "realName": "Son nom : {{name}}.",
+      "reset": "Revenir à « {{name}} »"
+    }
   },
   "invitation": {
-    "title": "Invitation"
+    "title": "Invitation",
+    "errors": {
+      "friendLimit": "La limite d'amis est atteinte.",
+      "tooManyAttempts": "Trop de tentatives. Réessaie dans une minute.",
+      "generic": "Impossible de traiter cette invitation. Vérifie ta connexion."
+    },
+    "invalid": {
+      "title": "Lien d'invitation invalide",
+      "text": "Ce lien a expiré ou a été désactivé. Demande un nouveau lien à la personne qui t'a invité·e."
+    },
+    "blocked": {
+      "title": "{{name}} est bloqué·e",
+      "text": "Cette personne ne pourra pas devenir ton amie. Tu peux la débloquer depuis l'écran Amis."
+    },
+    "accepted": {
+      "title": "C'est fait !",
+      "text": "{{name}} et toi êtes maintenant amis : vous apparaissez dans le classement l'un de l'autre."
+    },
+    "own": "C'est ta propre invitation : partage ce lien avec tes amis pour qu'ils te rejoignent.",
+    "alreadyFriends": "Vous êtes déjà amis.",
+    "invites": "{{name}} t'invite à devenir amis. Vous verrez vos pas respectifs dans le classement.",
+    "accept": "Devenir amis",
+    "accepting": "Un instant...",
+    "notNow": "Pas maintenant",
+    "report": "Signaler cette invitation",
+    "backToLeaderboard": "Retour au classement",
+    "seeLeaderboard": "Voir le classement"
+  },
+  "stats": {
+    "goal": "Objectif",
+    "title": "Statistiques",
+    "periods": {
+      "1d": "1j",
+      "7d": "7j",
+      "30d": "30j",
+      "1y": "1a"
+    },
+    "loadError": "Impossible de charger les statistiques",
+    "hourlyAndroidOnly": "Le détail heure par heure n'est disponible que sur Android.",
+    "noStepsToday": "Aucun pas enregistré aujourd'hui.",
+    "stepsUnit_one": "pas",
+    "stepsUnit_many": "pas",
+    "stepsUnit_other": "pas",
+    "percent": "{{percent}} %",
+    "noData": "Aucune donnée"
+  },
+  "home": {
+    "today": "Aujourd'hui",
+    "healthConnectError": "Impossible de lire les pas de Santé Connect",
+    "ring": {
+      "percentOfGoal": "{{percent}} % de l'objectif"
+    },
+    "weekRank": {
+      "title": "Cette semaine",
+      "unavailable": "Classement indisponible pour le moment.",
+      "alone": "Le défi commence avec tes amis : invite-les pour comparer vos pas.",
+      "invite": "Inviter des amis",
+      "rank_ordinal_one": "{{count}}ᵉʳ",
+      "rank_ordinal_other": "{{count}}ᵉ",
+      "total": "sur {{total}}",
+      "toPass_one": "Plus que <b>{{steps}} pas</b> pour dépasser <b>{{name}}</b> 🏃",
+      "toPass_many": "Plus que <b>{{steps}} pas</b> pour dépasser <b>{{name}}</b> 🏃",
+      "toPass_other": "Plus que <b>{{steps}} pas</b> pour dépasser <b>{{name}}</b> 🏃",
+      "lead_one": "Tu es en tête, avec <b>{{steps}} pas</b> d'avance sur <b>{{name}}</b> 🥇",
+      "lead_many": "Tu es en tête, avec <b>{{steps}} pas</b> d'avance sur <b>{{name}}</b> 🥇",
+      "lead_other": "Tu es en tête, avec <b>{{steps}} pas</b> d'avance sur <b>{{name}}</b> 🥇",
+      "tie": "À égalité avec <b>{{name}}</b> : chaque pas compte ! 🤝"
+    },
+    "streak": {
+      "title": "Série",
+      "unavailable": "Série indisponible pour le moment.",
+      "daysInARow_one": "jour d'affilée",
+      "daysInARow_many": "jours d'affilée",
+      "daysInARow_other": "jours d'affilée",
+      "aboveGoal": "au-dessus de {{goal}} pas",
+      "extend": "Atteins {{goal}} pas aujourd'hui pour la prolonger.",
+      "isRecord": "C'est ton record !",
+      "none": "Pas de série en cours.",
+      "start": "Atteins {{goal}} pas aujourd'hui pour en lancer une.",
+      "record_one": "Record : <b>{{days}} jour</b>",
+      "record_many": "Record : <b>{{days}} jours</b>",
+      "record_other": "Record : <b>{{days}} jours</b>",
+      "noRecord": "Record : <b>aucun jour à {{goal}} pas</b>",
+      "since": "depuis ton arrivée sur Step Challenge"
+    }
+  },
+  "common": {
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "ok": "OK",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "close": "Fermer",
+    "back": "Retour"
+  },
+  "leaderboard": {
+    "loadError": "Impossible de charger le classement.",
+    "syncError": "Impossible de mettre à jour les pas.",
+    "thisWeek": "Cette semaine",
+    "thisMonth": "Ce mois-ci",
+    "week": "Semaine",
+    "month": "Mois",
+    "refresh": "Actualiser",
+    "emptyTitle": "Le classement se joue entre amis",
+    "emptyText": "Invite tes amis avec un lien : vous verrez vos pas respectifs ici.",
+    "emptyAction": "Inviter des amis →",
+    "me": "toi",
+    "steps_one": "{{steps}} pas",
+    "steps_many": "{{steps}} pas",
+    "steps_other": "{{steps}} pas"
+  },
+  "report": {
+    "title": "Signaler {{name}}",
+    "hint": "Ton signalement est lu par l'équipe de Step Challenge. La personne signalée n'est pas prévenue.",
+    "reasons": {
+      "offensive_name": "Nom offensant",
+      "impersonation": "Se fait passer pour quelqu'un d'autre",
+      "harassment": "Harcèlement",
+      "other": "Autre"
+    },
+    "comment": "Précisions (facultatif)",
+    "send": "Envoyer le signalement",
+    "sending": "Envoi...",
+    "error": "Impossible d'envoyer le signalement. Réessaie plus tard.",
+    "thanks": "Merci",
+    "sent": "Ton signalement a bien été envoyé.",
+    "offerBlock": "Veux-tu aussi bloquer {{name}} ? Vous ne serez plus amis, et cette personne ne pourra plus devenir ton amie, même avec un lien d'invitation. Elle n'est pas prévenue.",
+    "block": "Bloquer {{name}}",
+    "blocking": "Blocage..."
+  },
+  "account": {
+    "loadError": "Impossible de charger ton compte.",
+    "displayName": "Nom affiché",
+    "displayNameHint": "Visible par les autres participants.",
+    "nameSaved": "Nom mis à jour.",
+    "nameError": "Impossible d'enregistrer le nom.",
+    "signOut": "Se déconnecter",
+    "signingOut": "Déconnexion...",
+    "delete": {
+      "button": "Supprimer mon compte",
+      "deleting": "Suppression...",
+      "title": "Supprimer ton compte ?",
+      "message": "Ton compte, ton nom et tout ton historique de pas seront définitivement supprimés du serveur Step Challenge. Les données de Santé Connect sur ton téléphone ne sont pas touchées.\n\nCette action est irréversible.",
+      "confirm": "Supprimer",
+      "error": "La suppression a échoué. Réessaie plus tard."
+    }
+  },
+  "signIn": {
+    "welcome": "BIENVENUE",
+    "explanation": "Connecte-toi avec ton compte Google. Step Challenge ne conserve qu'un identifiant technique : ni ton e-mail, ni ta photo.",
+    "google": "Se connecter avec Google",
+    "signingIn": "Connexion...",
+    "networkError": "Connexion impossible. Vérifie ta connexion internet et réessaie.",
+    "nameRequired": "Entre ton prénom",
+    "googleErrors": {
+      "configuration": "Configuration Google invalide (client OAuth Android, package ou SHA-1).",
+      "play-services": "Les services Google Play sont absents ou à mettre à jour.",
+      "unavailable": "La connexion n'est disponible que dans l'application Android.",
+      "unknown": "Connexion Google impossible ({{code}})."
+    },
+    "demo": {
+      "title": "Accès démonstration",
+      "hint": "Réservé aux examinateurs des boutiques d'applications : saisis le code d'accès fourni avec les instructions d'examen.",
+      "code": "Code d'accès",
+      "enter": "Entrer"
+    },
+    "demoErrors": {
+      "invalid-code": "Code d'accès incorrect.",
+      "unavailable": "L'accès démonstration n'est pas disponible.",
+      "too-many-attempts": "Trop de tentatives. Réessaie dans une heure."
+    },
+    "name": {
+      "question": "Comment tu t'appelles ?",
+      "hint": "C'est le nom que verront les autres participants. Tu pourras le changer plus tard.",
+      "placeholder": "Ton prénom",
+      "continue": "Continuer",
+      "creating": "Création..."
+    },
+    "terms": {
+      "before": "En créant ton compte, tu acceptes les ",
+      "link": "conditions d'utilisation",
+      "after": "."
+    }
+  },
+  "errors": {
+    "sessionExpired": "Session expirée, reconnecte-toi"
+  },
+  "diagnostic": {
+    "description": "Vérifie la connexion à Santé Connect, les autorisations et l'accès au serveur.",
+    "run": "Lancer le diagnostic",
+    "copy": "Copier le diagnostic",
+    "copied": "✓ Diagnostic copié",
+    "generatedAt": "Diagnostic généré le {{date}}",
+    "labels": {
+      "app": "Application",
+      "platform": "Plateforme",
+      "device": "Appareil",
+      "initialization": "Initialisation",
+      "stepsPermission": "Permission Steps",
+      "grantedPermissions": "Permissions accordées",
+      "permissions": "Permissions"
+    },
+    "sdk": {
+      "unavailable": "Non disponible",
+      "updateRequired": "Disponible après mise à jour",
+      "available": "Disponible"
+    },
+    "httpError": "Erreur HTTP {{status}}",
+    "reachable": "Accessible",
+    "connectionFailed": "Connexion impossible",
+    "unknown": "Inconnu",
+    "notApplicable": "Non applicable",
+    "androidOnly": "Disponible uniquement sur Android",
+    "cannotCheck": "Impossible de vérifier",
+    "ok": "OK",
+    "failed": "Échec",
+    "unknownError": "Erreur inconnue",
+    "granted": "Accordée",
+    "notGranted": "Non accordée",
+    "none": "Aucune",
+    "huawei": {
+      "moduleLoaded": "Module chargé",
+      "authorization": "Autorisation Huawei",
+      "todaySteps": "Pas aujourd'hui"
+    }
   }
 }

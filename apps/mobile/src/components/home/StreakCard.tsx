@@ -1,22 +1,16 @@
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 
+import { formatNumber } from '@/i18n'
 import type { Streaks } from '@/services/insights'
 import { useThemedStyles, type Colors } from '@/theme'
 
-import HomeCard, { Strong } from './HomeCard'
+import HomeCard, { CardText } from './HomeCard'
 
 type Props = {
   streaks: Streaks | null
   goal: number
   error: boolean
-}
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('fr-FR').format(value)
-}
-
-function days(count: number) {
-  return count > 1 ? 'jours' : 'jour'
 }
 
 /**
@@ -25,12 +19,14 @@ function days(count: number) {
  */
 export default function StreakCard({ streaks, goal, error }: Props) {
   const styles = useThemedStyles(createStyles)
-  const goalText = `${formatNumber(goal)} pas`
+  const { t } = useTranslation()
+  const title = t('home.streak.title')
+  const goalValues = { goal: formatNumber(goal) }
 
   if (error || !streaks) {
     return (
-      <HomeCard icon="🔥" title="Série">
-        <Text style={styles.text}>Série indisponible pour le moment.</Text>
+      <HomeCard icon="🔥" title={title}>
+        <Text style={styles.text}>{t('home.streak.unavailable')}</Text>
       </HomeCard>
     )
   }
@@ -38,50 +34,58 @@ export default function StreakCard({ streaks, goal, error }: Props) {
   const isRecord = streaks.current >= 2 && streaks.current === streaks.best
 
   return (
-    <HomeCard icon="🔥" title="Série">
+    <HomeCard icon="🔥" title={title}>
       {streaks.current > 0 ? (
         <>
           <View style={styles.valueRow}>
-            <Text style={styles.value}>{streaks.current}</Text>
-            <Text style={styles.unit}>{days(streaks.current)} d'affilée</Text>
+            <Text style={styles.value}>{formatNumber(streaks.current)}</Text>
+            <Text style={styles.unit}>
+              {t('home.streak.daysInARow', { count: streaks.current })}
+            </Text>
           </View>
 
-          <Text style={styles.text}>au-dessus de {goalText}</Text>
+          <Text style={styles.text}>
+            {t('home.streak.aboveGoal', goalValues)}
+          </Text>
 
           {!streaks.includesToday && (
             <Text style={styles.hint}>
-              Atteins {goalText} aujourd'hui pour la prolonger.
+              {t('home.streak.extend', goalValues)}
             </Text>
           )}
 
           {isRecord && (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>C'est ton record !</Text>
+              <Text style={styles.badgeText}>{t('home.streak.isRecord')}</Text>
             </View>
           )}
         </>
       ) : (
         <>
-          <Text style={styles.text}>Pas de série en cours.</Text>
-          <Text style={styles.hint}>
-            Atteins {goalText} aujourd'hui pour en lancer une.
-          </Text>
+          <Text style={styles.text}>{t('home.streak.none')}</Text>
+          <Text style={styles.hint}>{t('home.streak.start', goalValues)}</Text>
         </>
       )}
 
       <View style={styles.separator} />
 
-      <Text style={styles.text}>
-        Record :{' '}
-        {streaks.best > 0 ? (
-          <Strong>
-            {streaks.best} {days(streaks.best)}
-          </Strong>
-        ) : (
-          <Strong>aucun jour à {goalText}</Strong>
-        )}
-      </Text>
-      <Text style={styles.since}>depuis ton arrivée sur Step Challenge</Text>
+      {streaks.best > 0 ? (
+        <CardText
+          style={styles.text}
+          text={t('home.streak.record', {
+            count: streaks.best,
+            skipInterpolation: true,
+          })}
+          values={{ days: formatNumber(streaks.best) }}
+        />
+      ) : (
+        <CardText
+          style={styles.text}
+          text={t('home.streak.noRecord', { skipInterpolation: true })}
+          values={goalValues}
+        />
+      )}
+      <Text style={styles.since}>{t('home.streak.since')}</Text>
     </HomeCard>
   )
 }

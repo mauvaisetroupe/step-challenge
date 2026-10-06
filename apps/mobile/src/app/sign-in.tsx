@@ -1,5 +1,7 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import {
   KeyboardAvoidingView,
   Platform,
@@ -26,20 +28,15 @@ type Step =
   | { name: 'display-name'; idToken: string }
   | { name: 'demo' }
 
-const DEMO_ERRORS = {
-  'invalid-code': "Code d'accès incorrect.",
-  unavailable: "L'accès démonstration n'est pas disponible.",
-  'too-many-attempts': 'Trop de tentatives. Réessaie dans une heure.',
-} as const
-
-function describeError(error: unknown) {
+function describeError(error: unknown, t: TFunction) {
   if (error instanceof GoogleSignInFailure) {
-    return error.message
+    console.error('Google sign-in error:', error.message)
+    return t(`signIn.googleErrors.${error.reason}`, { code: error.code ?? '' })
   }
 
   console.error('Sign-in error:', error)
 
-  return 'Connexion impossible. Vérifie ta connexion internet et réessaie.'
+  return t('signIn.networkError')
 }
 
 /**
@@ -51,7 +48,7 @@ function describeError(error: unknown) {
  *    with the Google given name) and the same ID token is sent again.
  *
  * Store reviewers, who cannot sign in with Google from their test
- * devices, use the discreet "Accès démonstration" link and the access
+ * devices, use the discreet demo access link and the access
  * code given in the Play Console (ADR 0006).
  */
 /**
@@ -68,6 +65,7 @@ function destinationAfterSignIn(next: string | undefined): Href {
 export default function SignInScreen() {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
+  const { t } = useTranslation()
 
   const { next } = useLocalSearchParams<{ next?: string }>()
 
@@ -98,7 +96,7 @@ export default function SignInScreen() {
       setDisplayName(credential.givenName ?? '')
       setStep({ name: 'display-name', idToken: credential.idToken })
     } catch (err) {
-      setError(describeError(err))
+      setError(describeError(err, t))
     } finally {
       setLoading(false)
     }
@@ -112,7 +110,7 @@ export default function SignInScreen() {
     const name = displayName.trim()
 
     if (!name) {
-      setError('Entre ton prénom')
+      setError(t('signIn.nameRequired'))
       return
     }
 
@@ -126,7 +124,7 @@ export default function SignInScreen() {
         router.replace(destinationAfterSignIn(next))
       }
     } catch (err) {
-      setError(describeError(err))
+      setError(describeError(err, t))
     } finally {
       setLoading(false)
     }
@@ -148,9 +146,9 @@ export default function SignInScreen() {
         return
       }
 
-      setError(DEMO_ERRORS[result.status])
+      setError(t(`signIn.demoErrors.${result.status}`))
     } catch (err) {
-      setError(describeError(err))
+      setError(describeError(err, t))
     } finally {
       setLoading(false)
     }
@@ -167,17 +165,13 @@ export default function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.content}>
-        <Text style={styles.eyebrow}>BIENVENUE</Text>
+        <Text style={styles.eyebrow}>{t('signIn.welcome')}</Text>
 
         <Text style={styles.title}>Step Challenge</Text>
 
         {step.name === 'google' ? (
           <>
-            <Text style={styles.explanation}>
-              Connecte-toi avec ton compte Google. Step Challenge ne
-              conserve qu'un identifiant technique : ni ton e-mail, ni
-              ta photo.
-            </Text>
+            <Text style={styles.explanation}>{t('signIn.explanation')}</Text>
 
             {isGoogleSignInSupported ? (
               <TouchableOpacity
@@ -187,24 +181,20 @@ export default function SignInScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={styles.buttonText}>
-                  {loading ? 'Connexion...' : 'Se connecter avec Google'}
+                  {loading ? t('signIn.signingIn') : t('signIn.google')}
                 </Text>
               </TouchableOpacity>
             ) : (
               <Text style={styles.explanation}>
-                La connexion n'est disponible que dans l'application
-                Android.
+                {t('signIn.googleErrors.unavailable')}
               </Text>
             )}
           </>
         ) : step.name === 'demo' ? (
           <>
-            <Text style={styles.question}>Accès démonstration</Text>
+            <Text style={styles.question}>{t('signIn.demo.title')}</Text>
 
-            <Text style={styles.hint}>
-              Réservé aux examinateurs des boutiques d'applications : saisis
-              le code d'accès fourni avec les instructions d'examen.
-            </Text>
+            <Text style={styles.hint}>{t('signIn.demo.hint')}</Text>
 
             <TextInput
               style={styles.input}
@@ -213,7 +203,7 @@ export default function SignInScreen() {
                 setDemoCode(value)
                 setError(null)
               }}
-              placeholder="Code d'accès"
+              placeholder={t('signIn.demo.code')}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -234,7 +224,7 @@ export default function SignInScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.buttonText}>
-                {loading ? 'Connexion...' : 'Entrer'}
+                {loading ? t('signIn.signingIn') : t('signIn.demo.enter')}
               </Text>
             </TouchableOpacity>
 
@@ -243,17 +233,14 @@ export default function SignInScreen() {
               onPress={() => showStep({ name: 'google' })}
               disabled={loading}
             >
-              <Text style={styles.secondaryLinkText}>Retour</Text>
+              <Text style={styles.secondaryLinkText}>{t('common.back')}</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <Text style={styles.question}>Comment tu t'appelles ?</Text>
+            <Text style={styles.question}>{t('signIn.name.question')}</Text>
 
-            <Text style={styles.hint}>
-              C'est le nom que verront les autres participants. Tu pourras
-              le changer plus tard.
-            </Text>
+            <Text style={styles.hint}>{t('signIn.name.hint')}</Text>
 
             <TextInput
               style={styles.input}
@@ -262,7 +249,7 @@ export default function SignInScreen() {
                 setDisplayName(value)
                 setError(null)
               }}
-              placeholder="Ton prénom"
+              placeholder={t('signIn.name.placeholder')}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="words"
               autoCorrect={false}
@@ -283,21 +270,21 @@ export default function SignInScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.buttonText}>
-                {loading ? 'Création...' : 'Continuer'}
+                {loading ? t('signIn.name.creating') : t('signIn.name.continue')}
               </Text>
             </TouchableOpacity>
 
             {/* Terms accepted before the display name, the only content a
                 user creates, is visible to others (ADR 0004). */}
             <Text style={styles.terms}>
-              En créant ton compte, tu acceptes les{' '}
+              {t('signIn.terms.before')}
               <Text
                 style={styles.termsLink}
                 onPress={() => openPublicPage(TERMS_URL)}
               >
-                conditions d'utilisation
+                {t('signIn.terms.link')}
               </Text>
-              .
+              {t('signIn.terms.after')}
             </Text>
           </>
         )}
@@ -311,7 +298,7 @@ export default function SignInScreen() {
           onPress={() => showStep({ name: 'demo' })}
           disabled={loading}
         >
-          <Text style={styles.demoLinkText}>Accès démonstration</Text>
+          <Text style={styles.demoLinkText}>{t('signIn.demo.title')}</Text>
         </TouchableOpacity>
       )}
     </KeyboardAvoidingView>

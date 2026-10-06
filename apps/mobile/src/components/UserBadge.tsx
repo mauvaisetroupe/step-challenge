@@ -46,7 +46,7 @@ export function getUserColor(userId: string) {
 function getInitial(name: string) {
   // Array.from splits by code point, so accented letters and emoji are
   // not cut in half.
-  return Array.from(name.trim())[0]?.toLocaleUpperCase('fr-FR') ?? '?'
+  return Array.from(name.trim())[0]?.toLocaleUpperCase() ?? '?'
 }
 
 type UserBadgeProps = {

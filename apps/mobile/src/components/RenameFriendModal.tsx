@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   KeyboardAvoidingView,
   Modal,
@@ -37,6 +38,7 @@ export default function RenameFriendModal({
   onClose,
 }: RenameFriendModalProps) {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
 
   const [alias, setAlias] = useState('')
 
@@ -58,10 +60,10 @@ export default function RenameFriendModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.card}>
-          <Text style={styles.title}>Renommer</Text>
+          <Text style={styles.title}>{t('friends.actions.rename')}</Text>
           <Text style={styles.hint}>
-            Ce nom n'est visible que par toi.
-            {friend ? ` Son nom : ${friend.name}.` : ''}
+            {t('friends.rename.hint')}
+            {friend ? ` ${t('friends.rename.realName', { name: friend.name })}` : ''}
           </Text>
 
           <TextInput
@@ -85,7 +87,7 @@ export default function RenameFriendModal({
             disabled={!trimmed || saving}
           >
             <Text style={styles.primaryButtonText}>
-              {saving ? 'Enregistrement...' : 'Enregistrer'}
+              {saving ? t('common.saving') : t('common.save')}
             </Text>
           </Pressable>
 
@@ -96,13 +98,13 @@ export default function RenameFriendModal({
               disabled={saving}
             >
               <Text style={styles.secondaryButtonText}>
-                Revenir à « {friend.name} »
+                {t('friends.rename.reset', { name: friend.name })}
               </Text>
             </Pressable>
           )}
 
           <Pressable style={styles.secondaryButton} onPress={onClose}>
-            <Text style={styles.secondaryButtonText}>Annuler</Text>
+            <Text style={styles.secondaryButtonText}>{t('common.cancel')}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

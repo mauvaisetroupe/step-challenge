@@ -1,5 +1,6 @@
 import * as Clipboard from 'expo-clipboard'
 import { useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 
 import {
@@ -15,11 +16,13 @@ import {
   type HealthConnectDiagnostic,
 } from '@/services/healthConnectDiagnostic'
 import { getHuaweiHealthDiagnostic } from '@/services/huaweiHealthDiagnostic'
+import { formatDateTime } from '@/i18n'
 import { useThemedStyles, type Colors } from '@/theme'
 
 /** Checks Health Connect, permissions, Huawei Health and the server. */
 export default function DiagnosticSettingsScreen() {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
   const [diagnostic, setDiagnostic] =
     useState<HealthConnectDiagnostic | null>(null)
   const [loading, setLoading] = useState(false)
@@ -43,8 +46,11 @@ export default function DiagnosticSettingsScreen() {
       setDiagnostic({
         items: [
           {
-            label: 'Diagnostic',
-            value: error instanceof Error ? error.message : 'Erreur inconnue',
+            label: t('settings.diagnostic.title'),
+            value:
+              error instanceof Error
+                ? error.message
+                : t('diagnostic.unknownError'),
             status: 'error',
           },
         ],
@@ -53,7 +59,7 @@ export default function DiagnosticSettingsScreen() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   const copy = async () => {
     if (!diagnostic) {
@@ -67,13 +73,10 @@ export default function DiagnosticSettingsScreen() {
 
   return (
     <SettingsPage>
-      <Description>
-        Vérifie la connexion à Santé Connect, les autorisations et l'accès au
-        serveur.
-      </Description>
+      <Description>{t('diagnostic.description')}</Description>
 
       <PrimaryButton
-        title="Lancer le diagnostic"
+        title={t('diagnostic.run')}
         onPress={run}
         loading={loading}
       />
@@ -87,12 +90,13 @@ export default function DiagnosticSettingsScreen() {
           <View style={styles.separator} />
 
           <Text style={styles.generatedAt}>
-            Diagnostic généré le{' '}
-            {new Date(diagnostic.generatedAt).toLocaleString('fr-FR')}
+            {t('diagnostic.generatedAt', {
+              date: formatDateTime(new Date(diagnostic.generatedAt)),
+            })}
           </Text>
 
           <SecondaryButton
-            title={copied ? '✓ Diagnostic copié' : 'Copier le diagnostic'}
+            title={copied ? t('diagnostic.copied') : t('diagnostic.copy')}
             onPress={copy}
           />
         </View>

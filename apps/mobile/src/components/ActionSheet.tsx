@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useThemedStyles, type Colors } from '@/theme'
@@ -30,6 +31,7 @@ export default function ActionSheet({
   onClose,
 }: ActionSheetProps) {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
 
   const insets = useSafeAreaInsets()
 
@@ -73,7 +75,7 @@ export default function ActionSheet({
           <View style={styles.separator} />
 
           <Pressable style={styles.action} onPress={onClose}>
-            <Text style={styles.cancelText}>Annuler</Text>
+            <Text style={styles.cancelText}>{t('common.cancel')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
