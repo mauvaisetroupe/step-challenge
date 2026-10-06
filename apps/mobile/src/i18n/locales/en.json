@@ -1,0 +1,87 @@
+{
+  "tabs": {
+    "home": "Home",
+    "stats": "Stats",
+    "leaderboard": "Leaderboard",
+    "settings": "Settings"
+  },
+  "settings": {
+    "groups": {
+      "general": "General",
+      "steps": "Step data",
+      "information": "Information"
+    },
+    "account": {
+      "title": "Account",
+      "detail": "Display name, sign-out, deletion"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "description": "Choose how the app looks. This choice is kept on this phone.",
+      "options": {
+        "system": {
+          "label": "System",
+          "hint": "Follows the phone setting"
+        },
+        "light": {
+          "label": "Light",
+          "hint": "Always light"
+        },
+        "dark": {
+          "label": "Dark",
+          "hint": "Always dark"
+        }
+      }
+    },
+    "language": {
+      "title": "Language",
+      "description": "Choose the language of the app. This choice is kept on this phone.",
+      "system": "System",
+      "systemHint": "Follows the phone language ({{language}})"
+    },
+    "sync": {
+      "title": "Background sync",
+      "detail": "Latest runs",
+      "description": "The sync regularly checks the last 30 days of data.",
+      "empty": "No run recorded",
+      "manual": "MANUAL",
+      "automatic": "AUTOMATIC",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "failed": "Failed",
+      "refresh": "Refresh",
+      "test": "Test the sync"
+    },
+    "huawei": {
+      "title": "Huawei Health",
+      "detail": "Huawei watches",
+      "description": "Connect Step Challenge to Huawei Health so that it can read your steps.",
+      "configure": "Set up Huawei Health",
+      "configured": "Huawei Health is set up.",
+      "error": "Huawei Health setup error"
+    },
+    "diagnostic": {
+      "title": "Diagnostics",
+      "detail": "Health Connect, permissions, server"
+    },
+    "about": {
+      "title": "About",
+      "versionDetail": "Version {{version}}",
+      "unknown": "unknown",
+      "app": "App",
+      "version": "Version"
+    },
+    "legal": {
+      "title": "Legal",
+      "detail": "Terms of use, privacy",
+      "terms": "Terms of use",
+      "privacy": "Privacy policy"
+    }
+  },
+  "friends": {
+    "title": "Friends"
+  },
+  "invitation": {
+    "title": "Invitation"
+  }
+}

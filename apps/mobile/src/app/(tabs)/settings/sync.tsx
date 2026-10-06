@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 
 import {
@@ -12,11 +13,13 @@ import {
   triggerBackgroundStepSyncForTesting,
   type BackgroundSyncRun,
 } from '@/services/backgroundSync'
+import { formatDateTime } from '@/i18n'
 import { useThemedStyles, type Colors } from '@/theme'
 
 /** History of the background step sync, and a manual test run. */
 export default function SyncSettingsScreen() {
   const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
   const [history, setHistory] = useState<BackgroundSyncRun[]>([])
 
   const load = useCallback(async () => {
@@ -39,16 +42,13 @@ export default function SyncSettingsScreen() {
 
   return (
     <SettingsPage>
-      <Description>
-        La synchronisation vérifie régulièrement les 30 derniers jours de
-        données.
-      </Description>
+      <Description>{t('settings.sync.description')}</Description>
 
-      <Subtitle>Dernières exécutions</Subtitle>
+      <Subtitle>{t('settings.sync.detail')}</Subtitle>
 
       {history.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>Aucune exécution enregistrée</Text>
+          <Text style={styles.emptyText}>{t('settings.sync.empty')}</Text>
         </View>
       ) : (
         <View style={styles.card}>
@@ -68,7 +68,7 @@ export default function SyncSettingsScreen() {
 
               <View style={styles.main}>
                 <Text style={styles.date}>
-                  {new Date(run.timestamp).toLocaleString('fr-FR')}
+                  {formatDateTime(new Date(run.timestamp))}
                 </Text>
                 <Text
                   style={[
@@ -76,20 +76,24 @@ export default function SyncSettingsScreen() {
                     run.trigger === 'manual' ? styles.manual : styles.automatic,
                   ]}
                 >
-                  {run.trigger === 'manual' ? 'MANUEL' : 'AUTOMATIQUE'}
+                  {run.trigger === 'manual'
+                    ? t('settings.sync.manual')
+                    : t('settings.sync.automatic')}
                 </Text>
               </View>
 
               <Text style={styles.days}>
-                {run.status === 'success' ? `${run.syncedDays ?? 0} j` : 'Échec'}
+                {run.status === 'success'
+                  ? t('settings.sync.days', { count: run.syncedDays ?? 0 })
+                  : t('settings.sync.failed')}
               </Text>
             </View>
           ))}
         </View>
       )}
 
-      <SecondaryButton title="Actualiser" onPress={load} />
-      <SecondaryButton title="Tester la synchronisation" onPress={triggerSync} />
+      <SecondaryButton title={t('settings.sync.refresh')} onPress={load} />
+      <SecondaryButton title={t('settings.sync.test')} onPress={triggerSync} />
     </SettingsPage>
   )
 }

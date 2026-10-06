@@ -1,0 +1,88 @@
+{
+  "tabs": {
+    "home": "Accueil",
+    "stats": "Stats",
+    "leaderboard": "Classement",
+    "settings": "Paramètres"
+  },
+  "settings": {
+    "groups": {
+      "general": "Général",
+      "steps": "Données de pas",
+      "information": "Informations"
+    },
+    "account": {
+      "title": "Compte",
+      "detail": "Nom affiché, déconnexion, suppression"
+    },
+    "appearance": {
+      "title": "Apparence",
+      "description": "Choisis l'apparence de l'application. Ce choix est gardé sur ce téléphone.",
+      "options": {
+        "system": {
+          "label": "Système",
+          "hint": "Suit le réglage du téléphone"
+        },
+        "light": {
+          "label": "Clair",
+          "hint": "Toujours clair"
+        },
+        "dark": {
+          "label": "Sombre",
+          "hint": "Toujours sombre"
+        }
+      }
+    },
+    "language": {
+      "title": "Langue",
+      "description": "Choisis la langue de l'application. Ce choix est gardé sur ce téléphone.",
+      "system": "Système",
+      "systemHint": "Suit la langue du téléphone ({{language}})"
+    },
+    "sync": {
+      "title": "Synchronisation en arrière-plan",
+      "detail": "Dernières exécutions",
+      "description": "La synchronisation vérifie régulièrement les 30 derniers jours de données.",
+      "empty": "Aucune exécution enregistrée",
+      "manual": "MANUEL",
+      "automatic": "AUTOMATIQUE",
+      "days_one": "{{count}} j",
+      "days_many": "{{count}} j",
+      "days_other": "{{count}} j",
+      "failed": "Échec",
+      "refresh": "Actualiser",
+      "test": "Tester la synchronisation"
+    },
+    "huawei": {
+      "title": "Huawei Health",
+      "detail": "Montres Huawei",
+      "description": "Connecte Step Challenge à Huawei Health pour permettre la lecture de tes pas.",
+      "configure": "Configurer Huawei Health",
+      "configured": "Huawei Health est configuré.",
+      "error": "Erreur de configuration Huawei Health"
+    },
+    "diagnostic": {
+      "title": "Diagnostic",
+      "detail": "Santé Connect, autorisations, serveur"
+    },
+    "about": {
+      "title": "À propos",
+      "versionDetail": "Version {{version}}",
+      "unknown": "inconnue",
+      "app": "Application",
+      "version": "Version"
+    },
+    "legal": {
+      "title": "Informations légales",
+      "detail": "Conditions d'utilisation, confidentialité",
+      "terms": "Conditions d'utilisation",
+      "privacy": "Politique de confidentialité"
+    }
+  },
+  "friends": {
+    "title": "Amis"
+  },
+  "invitation": {
+    "title": "Invitation"
+  }
+}

@@ -65,6 +65,12 @@
         }
       ],
       "expo-background-task",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": ["en", "fr"]
+        }
+      ],
       "./plugins/withHuaweiMavenRepo",
       "./plugins/withAGConnect",
       "./plugins/withHuaweiHealthManifest",
