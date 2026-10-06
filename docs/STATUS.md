@@ -69,7 +69,7 @@ Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migratio
   2. appliquer la migration 005 (`backend/migrations/005_demo_credential.sql`), puis déployer le backend : le journal doit indiquer « Demo access enabled » ;
   3. publier la version de l'application qui contient le lien « Accès démonstration » ;
   4. Play Console → Contenu de l'application → Accès à l'application : remplacer le compte Gmail par les instructions de l'ADR 0006 et le code ;
-  5. ~~une fois un examen passé, supprimer le compte Gmail de démonstration et son compte Step Challenge~~ : un examinateur Google s'est connecté par l'accès de démonstration le 2026-10-06 (examen de la 1.4.0), première connexion réussie d'un examinateur ; le compte Gmail et son compte Step Challenge sont à supprimer ;
+  5. ~~une fois un examen passé, supprimer le compte Gmail de démonstration et son compte Step Challenge~~ : un examinateur Google s'est connecté par l'accès de démonstration le 2026-10-06 (examen de la 1.4.0), première connexion réussie d'un examinateur ; le compte Gmail et son compte Step Challenge ont été supprimés le 2026-10-06 ;
   6. vérifier qu'AppGallery Connect permet de fournir un code d'accès de la même façon (point ouvert de l'ADR).
 - [x] Huawei : variable d'environnement EAS `AGCONNECT_SERVICES_JSON` (type texte, contenu du fichier) créée ; la configuration AppGallery Connect est vérifiée dans l'`.aab` de la 1.2.2 (voir `huawei/README.md`, section 14).
 
