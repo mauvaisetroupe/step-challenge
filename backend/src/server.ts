@@ -1,13 +1,10 @@
 import cors from '@fastify/cors'
-import fastifyStatic from '@fastify/static'
 import Fastify from 'fastify'
-import path from 'node:path'
 import { createRequireAuth } from './auth/authenticate.js'
 import { createGoogleIdTokenVerifier } from './auth/google.js'
 import { checkDatabase, pool } from './db.js'
 import { parseDemoAccessCode } from './demo/demoAccount.js'
 import { registerRateLimit } from './rateLimit.js'
-import appLinkRoutes from './routes/appLinks.js'
 import authRoutes from './routes/auth.js'
 import blockRoutes from './routes/blocks.js'
 import friendRoutes from './routes/friends.js'
@@ -31,23 +28,15 @@ if (!GOOGLE_CLIENT_ID) {
 // Demo access for store reviewers (ADR 0006): disabled when absent.
 const DEMO_ACCESS_CODE = parseDemoAccessCode(process.env.DEMO_ACCESS_CODE)
 
-// Base of the invitation links shared by users (ADR 0002).
+// Base of the invitation links shared by users (ADR 0002). The links and
+// their landing page are served by the public site (ADR 0005), not here.
 const PUBLIC_BASE_URL =
   process.env.PUBLIC_BASE_URL ?? 'https://step.architech.lu'
-
-await app.register(fastifyStatic, {
-  root: path.join(process.cwd(), 'public'),
-  prefix: '/',
-})
 
 await registerRateLimit(app)
 
 await app.register(cors, {
   origin: true,
-})
-
-await app.register(appLinkRoutes, {
-  host: new URL(PUBLIC_BASE_URL).host,
 })
 
 await app.register(healthRoutes, {
