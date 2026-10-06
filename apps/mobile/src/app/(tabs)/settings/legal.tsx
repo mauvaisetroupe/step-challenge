@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { Card, NavRow, SettingsPage } from '@/components/settings/ui'
-import { openPublicPage, PRIVACY_URL, TERMS_URL } from '@/constants/links'
+import { openPublicPage } from '@/constants/links'
 
 /** Terms of use and privacy policy, on the public site (ADR 0004). */
 export default function LegalSettingsScreen() {
@@ -12,11 +12,11 @@ export default function LegalSettingsScreen() {
       <Card>
         <NavRow
           title={t('settings.legal.terms')}
-          onPress={() => openPublicPage(TERMS_URL)}
+          onPress={() => openPublicPage('agreement')}
         />
         <NavRow
           title={t('settings.legal.privacy')}
-          onPress={() => openPublicPage(PRIVACY_URL)}
+          onPress={() => openPublicPage('privacy')}
           last
         />
       </Card>

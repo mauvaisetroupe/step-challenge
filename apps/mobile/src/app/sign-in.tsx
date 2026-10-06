@@ -18,7 +18,7 @@ import {
   isGoogleSignInSupported,
   signInWithGoogle,
 } from '../auth/google'
-import { openPublicPage, TERMS_URL } from '../constants/links'
+import { openPublicPage } from '../constants/links'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const MAX_DISPLAY_NAME_LENGTH = 50
@@ -280,7 +280,7 @@ export default function SignInScreen() {
               {t('signIn.terms.before')}
               <Text
                 style={styles.termsLink}
-                onPress={() => openPublicPage(TERMS_URL)}
+                onPress={() => openPublicPage('agreement')}
               >
                 {t('signIn.terms.link')}
               </Text>
