@@ -366,6 +366,14 @@
       "moduleLoaded": "Module loaded",
       "authorization": "Huawei authorization",
       "todaySteps": "Steps today"
+    },
+    "sources": {
+      "title": "Step sources (today)",
+      "phone": "Phone (Android)",
+      "none": "No app has recorded steps in Health Connect in the last 30 days.",
+      "kept": "Total kept by Health Connect",
+      "total": "Total kept by Health Connect: {{steps}}",
+      "hint": "Health Connect merges every source and removes duplicates according to the priority order set in its settings (Health Connect → Data and access → Activity → Steps): the total is not the sum of the sources. Step Challenge uses this total."
     }
   }
 }

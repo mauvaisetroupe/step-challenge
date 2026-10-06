@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, Text, View } from 'react-native'
+import { Platform, StyleSheet, Text, View } from 'react-native'
 
 import {
   Description,
@@ -12,10 +12,15 @@ import {
 import {
   formatDiagnostic,
   getHealthConnectDiagnostic,
+  stepSourceLabel,
   type DiagnosticItem,
   type HealthConnectDiagnostic,
 } from '@/services/healthConnectDiagnostic'
 import { getHuaweiHealthDiagnostic } from '@/services/huaweiHealthDiagnostic'
+import {
+  getTodayStepSources,
+  type StepSourcesReport,
+} from '@/services/stepSources'
 import { useFormatters } from '@/i18n'
 import { useThemedStyles, type Colors } from '@/theme'
 
@@ -36,10 +41,23 @@ export default function DiagnosticSettingsScreen() {
     try {
       const result = await getHealthConnectDiagnostic()
       const huaweiItems = await getHuaweiHealthDiagnostic()
+      const stepSources =
+        Platform.OS === 'android'
+          ? await getTodayStepSources().catch((error) => {
+              console.error('Step sources error:', error)
+              return {
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : t('diagnostic.unknownError'),
+              }
+            })
+          : undefined
 
       setDiagnostic({
         ...result,
         items: [...result.items, ...huaweiItems],
+        stepSources,
       })
     } catch (error) {
       console.error('Diagnostic error:', error)
@@ -88,6 +106,13 @@ export default function DiagnosticSettingsScreen() {
             <DiagnosticRow key={`${item.label}-${index}`} item={item} />
           ))}
 
+          {diagnostic.stepSources && (
+            <>
+              <View style={styles.separator} />
+              <StepSources sources={diagnostic.stepSources} />
+            </>
+          )}
+
           <View style={styles.separator} />
 
           <Text style={styles.generatedAt}>
@@ -103,6 +128,61 @@ export default function DiagnosticSettingsScreen() {
         </View>
       )}
     </SettingsPage>
+  )
+}
+
+/**
+ * Today's steps per app writing to Health Connect, and the total it
+ * keeps after removing duplicates (the one Step Challenge uses).
+ */
+function StepSources({
+  sources,
+}: {
+  sources: StepSourcesReport | { error: string }
+}) {
+  const styles = useThemedStyles(createStyles)
+  const { t } = useTranslation()
+  const { formatNumber } = useFormatters()
+
+  return (
+    <View>
+      <Text style={styles.sectionTitle}>{t('diagnostic.sources.title')}</Text>
+
+      {'error' in sources ? (
+        <Text style={styles.sourceHint}>{sources.error}</Text>
+      ) : sources.sources.length === 0 ? (
+        <Text style={styles.sourceHint}>{t('diagnostic.sources.none')}</Text>
+      ) : (
+        <>
+          {sources.sources.map((source) => (
+            <View key={source.packageName} style={styles.sourceRow}>
+              <View style={styles.sourceNames}>
+                <Text style={styles.sourceName}>{stepSourceLabel(source)}</Text>
+                <Text style={styles.sourceDetail} numberOfLines={2}>
+                  {source.devices.length > 0
+                    ? source.devices.join(', ')
+                    : source.packageName}
+                </Text>
+              </View>
+              <Text style={styles.sourceSteps}>
+                {formatNumber(source.steps)}
+              </Text>
+            </View>
+          ))}
+
+          <View style={styles.sourceRow}>
+            <Text style={[styles.sourceName, styles.sourceNames]}>
+              {t('diagnostic.sources.kept')}
+            </Text>
+            <Text style={[styles.sourceSteps, styles.sourceTotal]}>
+              {formatNumber(sources.total)}
+            </Text>
+          </View>
+
+          <Text style={styles.sourceHint}>{t('diagnostic.sources.hint')}</Text>
+        </>
+      )}
+    </View>
   )
 }
 
@@ -201,6 +281,57 @@ const createStyles = (c: Colors) =>
       height: StyleSheet.hairlineWidth,
       backgroundColor: c.border,
       marginVertical: 12,
+    },
+
+    sectionTitle: {
+      fontSize: 13,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+      color: c.textSecondary,
+      marginBottom: 6,
+    },
+
+    sourceRow: {
+      minHeight: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+
+    sourceNames: {
+      flex: 1,
+    },
+
+    sourceName: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: c.text,
+    },
+
+    sourceDetail: {
+      marginTop: 2,
+      fontSize: 12,
+      color: c.textMuted,
+    },
+
+    sourceSteps: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: c.text,
+      fontVariant: ['tabular-nums'],
+    },
+
+    sourceTotal: {
+      color: c.primary,
+      fontWeight: '700',
+    },
+
+    sourceHint: {
+      marginTop: 6,
+      fontSize: 12,
+      lineHeight: 17,
+      color: c.textSecondary,
     },
 
     generatedAt: {

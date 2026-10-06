@@ -9,6 +9,12 @@ import {
 import { API_URL } from '../api/config'
 import { getFormatters, i18n } from '@/i18n'
 
+import {
+  isPhoneSource,
+  type StepSource,
+  type StepSourcesReport,
+} from './stepSources'
+
 const t = i18n.t
 
 export type DiagnosticStatus =
@@ -25,7 +31,20 @@ export interface DiagnosticItem {
 
 export interface HealthConnectDiagnostic {
   items: DiagnosticItem[]
+  /** Today's steps per source (Android only). */
+  stepSources?: StepSourcesReport | { error: string }
   generatedAt: string
+}
+
+/** App name of a step source, or its package name when unknown. */
+export function stepSourceLabel(source: StepSource) {
+  if (source.name) {
+    return source.name
+  }
+
+  return isPhoneSource(source.packageName)
+    ? t('diagnostic.sources.phone')
+    : source.packageName
 }
 
 function formatSdkStatus(status: number | string) {
@@ -246,6 +265,31 @@ export function formatDiagnostic(
     lines.push(
       `${item.label}: ${item.value}`,
     )
+  }
+
+  const sources = diagnostic.stepSources
+
+  if (sources) {
+    const { formatNumber } = getFormatters()
+
+    lines.push('', t('diagnostic.sources.title'))
+
+    if ('error' in sources) {
+      lines.push(sources.error)
+    } else {
+      for (const source of sources.sources) {
+        const devices =
+          source.devices.length > 0 ? ` (${source.devices.join(', ')})` : ''
+
+        lines.push(
+          `- ${stepSourceLabel(source)} [${source.packageName}]${devices}: ${formatNumber(source.steps)}`,
+        )
+      }
+
+      lines.push(
+        t('diagnostic.sources.total', { steps: formatNumber(sources.total) }),
+      )
+    }
   }
 
   lines.push('')

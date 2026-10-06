@@ -375,6 +375,14 @@
       "moduleLoaded": "Module chargé",
       "authorization": "Autorisation Huawei",
       "todaySteps": "Pas aujourd'hui"
+    },
+    "sources": {
+      "title": "Sources des pas (aujourd'hui)",
+      "phone": "Téléphone (Android)",
+      "none": "Aucune application n'a enregistré de pas dans Santé Connect ces 30 derniers jours.",
+      "kept": "Total retenu par Santé Connect",
+      "total": "Total retenu par Santé Connect : {{steps}}",
+      "hint": "Santé Connect fusionne toutes les sources et retire les doublons selon l'ordre de priorité réglé dans ses paramètres (Santé Connect → Données et accès → Activité → Pas) : le total n'est pas la somme des sources. C'est ce total que Step Challenge utilise."
     }
   }
 }
