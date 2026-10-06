@@ -49,8 +49,10 @@
       "days_one": "{{count}} day",
       "days_other": "{{count}} days",
       "failed": "Failed",
-      "refresh": "Refresh",
-      "test": "Test the sync"
+      "syncNow": "Sync now",
+      "syncedNow_one": "✓ Synced: {{count}} day updated",
+      "syncedNow_other": "✓ Synced: {{count}} days updated",
+      "failedNow": "✕ Sync failed: {{error}}"
     },
     "huawei": {
       "title": "Huawei Health",

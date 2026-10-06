@@ -125,7 +125,11 @@ export function PrimaryButton({
 
   return (
     <Pressable
-      style={[styles.primaryButton, (loading || disabled) && styles.disabled]}
+      style={({ pressed }) => [
+        styles.primaryButton,
+        pressed && styles.buttonPressed,
+        (loading || disabled) && styles.disabled,
+      ]}
       onPress={onPress}
       disabled={loading || disabled}
     >
@@ -148,7 +152,11 @@ export function SecondaryButton({
 
   return (
     <Pressable
-      style={[styles.secondaryButton, disabled && styles.disabled]}
+      style={({ pressed }) => [
+        styles.secondaryButton,
+        pressed && styles.pressedSecondary,
+        disabled && styles.disabled,
+      ]}
       onPress={onPress}
       disabled={disabled}
     >
@@ -280,6 +288,16 @@ const createStyles = (c: Colors) =>
       fontSize: 14,
       fontWeight: '600',
       color: c.text,
+    },
+
+    // Visible feedback when a button is pressed.
+    buttonPressed: {
+      opacity: 0.75,
+      transform: [{ scale: 0.98 }],
+    },
+
+    pressedSecondary: {
+      backgroundColor: c.surfaceAlt,
     },
 
     disabled: {

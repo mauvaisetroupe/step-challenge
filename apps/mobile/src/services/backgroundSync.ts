@@ -11,9 +11,6 @@ const STEP_SYNC_TASK = 'step-challenge-sync'
 const SYNC_HISTORY_KEY =
   '@step-challenge/background-sync-history'
 
-const MANUAL_TEST_PENDING_KEY =
-  '@step-challenge/background-sync-manual-test-pending'
-
 const MAX_HISTORY = 10
 
 /**
@@ -31,86 +28,67 @@ export type BackgroundSyncRun = {
   timestamp: string
   status: 'success' | 'failed'
   syncedDays?: number
+  /** Run by Android in the background, or by "Sync now" in Settings. */
   trigger: 'background' | 'manual'
   /** Cause of a failure (Health Connect permission, network…). */
   error?: string
 }
 
-async function saveSyncRun(
-  run: BackgroundSyncRun,
-) {
-  const raw = await AsyncStorage.getItem(
-    SYNC_HISTORY_KEY,
-  )
-
-  const history: BackgroundSyncRun[] =
-    raw ? JSON.parse(raw) : []
+async function saveSyncRun(run: BackgroundSyncRun) {
+  const raw = await AsyncStorage.getItem(SYNC_HISTORY_KEY)
+  const history: BackgroundSyncRun[] = raw ? JSON.parse(raw) : []
 
   history.unshift(run)
 
   await AsyncStorage.setItem(
     SYNC_HISTORY_KEY,
-    JSON.stringify(
-      history.slice(0, MAX_HISTORY),
-    ),
+    JSON.stringify(history.slice(0, MAX_HISTORY)),
   )
 }
 
 /**
- * Mark the next task execution as a manual test.
- *
- * This marker is consumed by the background task,
- * so it cannot affect a later automatic execution.
+ * Sends the last 30 days of Health Connect steps to the server and
+ * records the run in the history shown in Settings → Sync.
  */
-export async function markManualBackgroundSyncTest() {
-  await AsyncStorage.setItem(
-    MANUAL_TEST_PENDING_KEY,
-    new Date().toISOString(),
-  )
-}
+async function runSync(
+  trigger: BackgroundSyncRun['trigger'],
+): Promise<BackgroundSyncRun> {
+  let run: BackgroundSyncRun
 
-/**
- * The actual task executed by Android.
- */
-TaskManager.defineTask(STEP_SYNC_TASK, async () => {
-  const startedAt = new Date().toISOString()
+  try {
+    // In the background, no permission dialog: it needs the app on
+    // screen. Without the background access permission, Health Connect
+    // refuses the read and the run is recorded as failed, with the cause.
+    const syncedDates = await syncLast30Days({
+      requestPermissions: trigger === 'manual',
+    })
 
-  console.log(
-    'BACKGROUND TASK STARTED:',
-    startedAt,
-  )
-
-  /*
-   * If Settings requested a manual test immediately
-   * before this task execution, classify this run as
-   * manual. Otherwise it is an automatic background run.
-   */
-  const manualTestRequestedAt =
-    await AsyncStorage.getItem(
-      MANUAL_TEST_PENDING_KEY,
-    )
-
-  const trigger: 'background' | 'manual' =
-    manualTestRequestedAt
-      ? 'manual'
-      : 'background'
-
-  /*
-   * Consume the marker immediately.
-   *
-   * This is important: a later automatic execution
-   * must not inherit the "manual" classification.
-   */
-  if (manualTestRequestedAt) {
-    await AsyncStorage.removeItem(
-      MANUAL_TEST_PENDING_KEY,
-    )
+    run = {
+      timestamp: new Date().toISOString(),
+      status: 'success',
+      syncedDays: syncedDates.length,
+      trigger,
+    }
+  } catch (error) {
+    run = {
+      timestamp: new Date().toISOString(),
+      status: 'failed',
+      trigger,
+      error: error instanceof Error ? error.message : String(error),
+    }
   }
 
-  console.log(
-    'BACKGROUND TASK TRIGGER:',
-    trigger,
-  )
+  await saveSyncRun(run)
+  console.log('Step sync', trigger, run.status, run.syncedDays ?? run.error)
+
+  return run
+}
+
+/**
+ * The task run by Android in the background.
+ */
+TaskManager.defineTask(STEP_SYNC_TASK, async () => {
+  console.log('BACKGROUND TASK STARTED:', new Date().toISOString())
 
   // Not signed in (new install, signed out, account deleted): nothing
   // to sync. Not recorded as a failure.
@@ -120,71 +98,25 @@ TaskManager.defineTask(STEP_SYNC_TASK, async () => {
     return BackgroundTask.BackgroundTaskResult.Success
   }
 
-  try {
-    // No permission dialog in the background: it needs the app on
-    // screen. Without the background access permission, Health Connect
-    // refuses the read and the run is recorded as failed, with the cause.
-    const syncedDates = await syncLast30Days({ requestPermissions: false })
+  const run = await runSync('background')
 
-    const timestamp =
-      new Date().toISOString()
-
-    await saveSyncRun({
-      timestamp,
-      status: 'success',
-      syncedDays: syncedDates.length,
-      trigger,
-    })
-
-    console.log(
-      'BACKGROUND TASK COMPLETED:',
-      syncedDates.length,
-      'days synced',
-      'trigger:',
-      trigger,
-    )
-
-    return BackgroundTask.BackgroundTaskResult.Success
-  } catch (error) {
-    const timestamp =
-      new Date().toISOString()
-
-    await saveSyncRun({
-      timestamp,
-      status: 'failed',
-      trigger,
-      error: error instanceof Error ? error.message : String(error),
-    })
-
-    console.error(
-      'BACKGROUND TASK FAILED:',
-      error,
-      'trigger:',
-      trigger,
-    )
-
-    return BackgroundTask.BackgroundTaskResult.Failed
-  }
+  return run.status === 'success'
+    ? BackgroundTask.BackgroundTaskResult.Success
+    : BackgroundTask.BackgroundTaskResult.Failed
 })
 
-console.log(
-  'Background task definition loaded',
-)
+/**
+ * "Sync now" in Settings: the same sync as the background task, run
+ * immediately, with the app on screen.
+ */
+export function syncNow() {
+  return runSync('manual')
+}
 
 export async function registerBackgroundStepSync() {
-  console.log(
-    'Registering background step sync',
-  )
+  console.log('Registering background step sync')
 
-  const isRegistered =
-    await TaskManager.isTaskRegisteredAsync(
-      STEP_SYNC_TASK,
-    )
-
-  console.log(
-    'Already registered:',
-    isRegistered,
-  )
+  const isRegistered = await TaskManager.isTaskRegisteredAsync(STEP_SYNC_TASK)
 
   // Registered with the current interval: nothing to do. Registered
   // with another one (an older version of the app): register again, so
@@ -201,67 +133,21 @@ export async function registerBackgroundStepSync() {
     await BackgroundTask.unregisterTaskAsync(STEP_SYNC_TASK)
   }
 
-  await BackgroundTask.registerTaskAsync(
-    STEP_SYNC_TASK,
-    {
-      minimumInterval: SYNC_INTERVAL_MINUTES,
-    },
-  )
+  await BackgroundTask.registerTaskAsync(STEP_SYNC_TASK, {
+    minimumInterval: SYNC_INTERVAL_MINUTES,
+  })
 
   await AsyncStorage.setItem(
     REGISTERED_INTERVAL_KEY,
     String(SYNC_INTERVAL_MINUTES),
   )
 
-  console.log(
-    'Background step sync registered',
-  )
-}
-
-export async function triggerBackgroundStepSyncForTesting() {
-  console.log(
-    'MANUAL BACKGROUND TASK TEST STARTED',
-  )
-
-  try {
-    await markManualBackgroundSyncTest()
-
-    await BackgroundTask.triggerTaskWorkerForTestingAsync()
-
-    console.log(
-      'MANUAL BACKGROUND TASK TEST COMPLETED',
-    )
-  } catch (error) {
-    /*
-     * If the worker could not be triggered, remove the
-     * marker so it cannot incorrectly classify a future
-     * automatic execution as manual.
-     */
-    await AsyncStorage.removeItem(
-      MANUAL_TEST_PENDING_KEY,
-    )
-
-    console.error(
-      'Manual background task test failed:',
-      error,
-    )
-
-    throw error
-  }
+  console.log('Background step sync registered')
 }
 
 export async function getBackgroundSyncStatus() {
-  const rawHistory =
-    await AsyncStorage.getItem(
-      SYNC_HISTORY_KEY,
-    )
+  const raw = await AsyncStorage.getItem(SYNC_HISTORY_KEY)
+  const history: BackgroundSyncRun[] = raw ? JSON.parse(raw) : []
 
-  const history: BackgroundSyncRun[] =
-    rawHistory
-      ? JSON.parse(rawHistory)
-      : []
-
-  return {
-    history,
-  }
+  return { history }
 }

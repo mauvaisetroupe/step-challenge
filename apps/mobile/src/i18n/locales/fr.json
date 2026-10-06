@@ -50,8 +50,11 @@
       "days_many": "{{count}} j",
       "days_other": "{{count}} j",
       "failed": "Échec",
-      "refresh": "Actualiser",
-      "test": "Tester la synchronisation"
+      "syncNow": "Synchroniser maintenant",
+      "syncedNow_one": "✓ Synchronisé : {{count}} jour mis à jour",
+      "syncedNow_many": "✓ Synchronisé : {{count}} jours mis à jour",
+      "syncedNow_other": "✓ Synchronisé : {{count}} jours mis à jour",
+      "failedNow": "✕ Échec de la synchronisation : {{error}}"
     },
     "huawei": {
       "title": "Huawei Health",

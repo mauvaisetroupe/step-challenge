@@ -1,49 +1,78 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, Text, View } from 'react-native'
 
 import {
   Description,
-  SecondaryButton,
+  PrimaryButton,
   SettingsPage,
   Subtitle,
 } from '@/components/settings/ui'
 import {
   getBackgroundSyncStatus,
-  triggerBackgroundStepSyncForTesting,
+  syncNow,
   type BackgroundSyncRun,
 } from '@/services/backgroundSync'
 import { useFormatters } from '@/i18n'
 import { useThemedStyles, type Colors } from '@/theme'
 
-/** History of the background step sync, and a manual test run. */
+/** History of the background step sync, and a "Sync now" button. */
 export default function SyncSettingsScreen() {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
   const { formatDateTime } = useFormatters()
   const [history, setHistory] = useState<BackgroundSyncRun[]>([])
+  const [syncing, setSyncing] = useState(false)
+  const [result, setResult] = useState<BackgroundSyncRun | null>(null)
 
   const load = useCallback(async () => {
     const status = await getBackgroundSyncStatus()
     setHistory(status.history)
   }, [])
 
-  useEffect(() => {
-    load()
-  }, [load])
+  // Reloaded each time the screen is shown: the background task may have
+  // run meanwhile.
+  useFocusEffect(
+    useCallback(() => {
+      load()
+    }, [load]),
+  )
 
-  const triggerSync = useCallback(async () => {
+  const sync = useCallback(async () => {
+    setSyncing(true)
+    setResult(null)
+
     try {
-      await triggerBackgroundStepSyncForTesting()
+      setResult(await syncNow())
       await load()
-    } catch (error) {
-      console.error('Background task test failed:', error)
+    } finally {
+      setSyncing(false)
     }
   }, [load])
 
   return (
     <SettingsPage>
       <Description>{t('settings.sync.description')}</Description>
+
+      <PrimaryButton
+        title={t('settings.sync.syncNow')}
+        onPress={sync}
+        loading={syncing}
+      />
+
+      {result && (
+        <Text
+          style={[
+            styles.result,
+            result.status === 'success' ? styles.success : styles.error,
+          ]}
+        >
+          {result.status === 'success'
+            ? t('settings.sync.syncedNow', { count: result.syncedDays ?? 0 })
+            : t('settings.sync.failedNow', { error: result.error ?? '' })}
+        </Text>
+      )}
 
       <Subtitle>{t('settings.sync.detail')}</Subtitle>
 
@@ -98,8 +127,6 @@ export default function SyncSettingsScreen() {
         </View>
       )}
 
-      <SecondaryButton title={t('settings.sync.refresh')} onPress={load} />
-      <SecondaryButton title={t('settings.sync.test')} onPress={triggerSync} />
     </SettingsPage>
   )
 }
@@ -142,6 +169,13 @@ const createStyles = (c: Colors) =>
     main: {
       flex: 1,
       justifyContent: 'center',
+    },
+
+    result: {
+      marginBottom: 16,
+      fontSize: 14,
+      fontWeight: '600',
+      textAlign: 'center',
     },
 
     errorDetail: {
