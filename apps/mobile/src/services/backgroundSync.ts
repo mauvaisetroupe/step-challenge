@@ -1,28 +1,34 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-import * as BackgroundTask from 'expo-background-task'
-import * as TaskManager from 'expo-task-manager'
-
-import { getSessionToken } from '../auth/session'
+import {
+  getNativeSyncHistory,
+  scheduleNativeSync,
+} from '../../modules/step-sync'
 import { syncLast30Days } from './stepSync'
 
-const STEP_SYNC_TASK = 'step-challenge-sync'
+/**
+ * Step sync outside the screens:
+ *
+ * - in the background, by the native worker of modules/step-sync
+ *   (ADR 0009), about every 6 hours, without JavaScript;
+ * - "Sync now" in Settings → Sync, here in TypeScript.
+ *
+ * Settings → Sync shows both histories together.
+ */
 
-const SYNC_HISTORY_KEY =
-  '@step-challenge/background-sync-history'
+const MANUAL_HISTORY_KEY = '@step-challenge/background-sync-history'
 
 const MAX_HISTORY = 10
 
 /**
  * Minimum time between two background syncs, in minutes: the friends
  * leaderboard stays fresh even when the app is not opened. Android may
- * run the task later (battery, network).
+ * run the sync later (battery, network).
+ *
+ * In development: 15 minutes, the minimum Android allows, to test the
+ * sync with the app closed without waiting hours.
  */
-const SYNC_INTERVAL_MINUTES = 6 * 60
-
-/** Interval the task was registered with, to re-register it on change. */
-const REGISTERED_INTERVAL_KEY =
-  '@step-challenge/background-sync-interval'
+const SYNC_INTERVAL_MINUTES = __DEV__ ? 15 : 6 * 60
 
 export type BackgroundSyncRun = {
   timestamp: string
@@ -34,120 +40,63 @@ export type BackgroundSyncRun = {
   error?: string
 }
 
-async function saveSyncRun(run: BackgroundSyncRun) {
-  const raw = await AsyncStorage.getItem(SYNC_HISTORY_KEY)
-  const history: BackgroundSyncRun[] = raw ? JSON.parse(raw) : []
+async function readManualHistory(): Promise<BackgroundSyncRun[]> {
+  const raw = await AsyncStorage.getItem(MANUAL_HISTORY_KEY)
+
+  return raw ? JSON.parse(raw) : []
+}
+
+async function saveManualRun(run: BackgroundSyncRun) {
+  const history = await readManualHistory()
 
   history.unshift(run)
 
   await AsyncStorage.setItem(
-    SYNC_HISTORY_KEY,
+    MANUAL_HISTORY_KEY,
     JSON.stringify(history.slice(0, MAX_HISTORY)),
   )
 }
 
+/** Schedules the native background sync. Called at each app start. */
+export function scheduleBackgroundSync() {
+  scheduleNativeSync(SYNC_INTERVAL_MINUTES)
+}
+
 /**
- * Sends the last 30 days of Health Connect steps to the server and
- * records the run in the history shown in Settings → Sync.
+ * "Sync now" in Settings: sends the last 30 days now, with the app on
+ * screen, and records the run.
  */
-async function runSync(
-  trigger: BackgroundSyncRun['trigger'],
-): Promise<BackgroundSyncRun> {
+export async function syncNow(): Promise<BackgroundSyncRun> {
   let run: BackgroundSyncRun
 
   try {
-    // In the background, no permission dialog: it needs the app on
-    // screen. Without the background access permission, Health Connect
-    // refuses the read and the run is recorded as failed, with the cause.
-    const syncedDates = await syncLast30Days({
-      requestPermissions: trigger === 'manual',
-    })
+    const syncedDates = await syncLast30Days()
 
     run = {
       timestamp: new Date().toISOString(),
       status: 'success',
       syncedDays: syncedDates.length,
-      trigger,
+      trigger: 'manual',
     }
   } catch (error) {
     run = {
       timestamp: new Date().toISOString(),
       status: 'failed',
-      trigger,
+      trigger: 'manual',
       error: error instanceof Error ? error.message : String(error),
     }
   }
 
-  await saveSyncRun(run)
-  console.log('Step sync', trigger, run.status, run.syncedDays ?? run.error)
+  await saveManualRun(run)
 
   return run
 }
 
-/**
- * The task run by Android in the background.
- */
-TaskManager.defineTask(STEP_SYNC_TASK, async () => {
-  console.log('BACKGROUND TASK STARTED:', new Date().toISOString())
-
-  // Not signed in (new install, signed out, account deleted): nothing
-  // to sync. Not recorded as a failure.
-  if (!(await getSessionToken())) {
-    console.log('BACKGROUND TASK SKIPPED: no session')
-
-    return BackgroundTask.BackgroundTaskResult.Success
-  }
-
-  const run = await runSync('background')
-
-  return run.status === 'success'
-    ? BackgroundTask.BackgroundTaskResult.Success
-    : BackgroundTask.BackgroundTaskResult.Failed
-})
-
-/**
- * "Sync now" in Settings: the same sync as the background task, run
- * immediately, with the app on screen.
- */
-export function syncNow() {
-  return runSync('manual')
-}
-
-export async function registerBackgroundStepSync() {
-  console.log('Registering background step sync')
-
-  const isRegistered = await TaskManager.isTaskRegisteredAsync(STEP_SYNC_TASK)
-
-  // Registered with the current interval: nothing to do. Registered
-  // with another one (an older version of the app): register again, so
-  // that installed apps pick up the new interval.
-  const registeredInterval = await AsyncStorage.getItem(
-    REGISTERED_INTERVAL_KEY,
-  )
-
-  if (isRegistered && registeredInterval === String(SYNC_INTERVAL_MINUTES)) {
-    return
-  }
-
-  if (isRegistered) {
-    await BackgroundTask.unregisterTaskAsync(STEP_SYNC_TASK)
-  }
-
-  await BackgroundTask.registerTaskAsync(STEP_SYNC_TASK, {
-    minimumInterval: SYNC_INTERVAL_MINUTES,
-  })
-
-  await AsyncStorage.setItem(
-    REGISTERED_INTERVAL_KEY,
-    String(SYNC_INTERVAL_MINUTES),
-  )
-
-  console.log('Background step sync registered')
-}
-
+/** Background and manual runs, most recent first. */
 export async function getBackgroundSyncStatus() {
-  const raw = await AsyncStorage.getItem(SYNC_HISTORY_KEY)
-  const history: BackgroundSyncRun[] = raw ? JSON.parse(raw) : []
+  const history = [...getNativeSyncHistory(), ...(await readManualHistory())]
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+    .slice(0, MAX_HISTORY)
 
   return { history }
 }

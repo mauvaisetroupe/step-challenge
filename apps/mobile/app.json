@@ -72,7 +72,6 @@
           "imageWidth": 240
         }
       ],
-      "expo-background-task",
       [
         "expo-localization",
         {

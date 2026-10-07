@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { onSignedOut } from '@/api/client'
 import { LanguageProvider } from '@/i18n'
 import { AnimatedSplashOverlay } from '@/components/animated-icon'
-import { registerBackgroundStepSync } from '@/services/backgroundSync'
+import { scheduleBackgroundSync } from '@/services/backgroundSync'
 import { ThemeProvider, useTheme } from '@/theme'
 
 SplashScreen.preventAutoHideAsync()
@@ -75,13 +75,13 @@ export default function RootLayout() {
     [],
   )
 
+  // Native background sync (ADR 0009): keeps the existing schedule.
   useEffect(() => {
-    registerBackgroundStepSync().catch((error) => {
-      console.error(
-        'Failed to register background step sync:',
-        error,
-      )
-    })
+    try {
+      scheduleBackgroundSync()
+    } catch (error) {
+      console.error('Failed to schedule background step sync:', error)
+    }
   }, [])
 
   return (
