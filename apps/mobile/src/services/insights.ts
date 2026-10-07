@@ -15,7 +15,7 @@ export type WeekRank = {
   ahead: { name: string; stepsToPass: number } | null
   /** When I am first: the next person, and my lead (0 when tied). */
   behind: { name: string; lead: number } | null
-  /** Everyone in the leaderboard, fewest steps first (for the track). */
+  /** Everyone, in the leaderboard order (most steps first). */
   people: { id: string; name: string; steps: number; isMe: boolean }[]
   /** Id of the person just ahead, if any. */
   aheadId: string | null
@@ -51,14 +51,13 @@ export function computeWeekRank(entries: LeaderboardEntry[]): WeekRank | null {
     null,
   )
 
-  const people = entries
-    .map((entry) => ({
-      id: entry.id,
-      name: nameOf(entry),
-      steps: entry.steps,
-      isMe: entry.isMe,
-    }))
-    .sort((a, b) => a.steps - b.steps)
+  // Same order as the leaderboard screen (the API sorts it).
+  const people = entries.map((entry) => ({
+    id: entry.id,
+    name: nameOf(entry),
+    steps: entry.steps,
+    isMe: entry.isMe,
+  }))
 
   return {
     rank,
@@ -73,6 +72,42 @@ export function computeWeekRank(entries: LeaderboardEntry[]): WeekRank | null {
         ? { name: nameOf(next), lead: me.steps - next.steps }
         : null,
   }
+}
+
+export type Neighbour = {
+  id: string
+  name: string
+  steps: number
+  isMe: boolean
+  /** Position in the leaderboard, 1 for the first. */
+  position: number
+  /** Their steps minus mine: positive when ahead of me. */
+  difference: number
+}
+
+/**
+ * The friend just ahead of me, me and the friend just behind: three
+ * rows at most. When I am first, me and the next two; when I am last,
+ * the two before me and me.
+ */
+export function computeNeighbours(rank: WeekRank): Neighbour[] {
+  const index = rank.people.findIndex((person) => person.isMe)
+
+  if (index < 0) {
+    return []
+  }
+
+  const me = rank.people[index]
+  const start = Math.max(
+    0,
+    Math.min(index - 1, rank.people.length - 3),
+  )
+
+  return rank.people.slice(start, start + 3).map((person, offset) => ({
+    ...person,
+    position: start + offset + 1,
+    difference: person.steps - me.steps,
+  }))
 }
 
 export type Streaks = {

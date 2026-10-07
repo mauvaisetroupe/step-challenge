@@ -6,7 +6,7 @@ import type { WeekRank } from '@/services/insights'
 import { useThemedStyles, type Colors } from '@/theme'
 
 import HomeCard, { CardText } from './HomeCard'
-import WeekTrack from './WeekTrack'
+import WeekNeighbours from './WeekNeighbours'
 
 type Props = {
   rank: WeekRank | null
@@ -57,7 +57,7 @@ export default function WeekRankCard({
 
   return (
     <HomeCard icon="🏆" title={rankTitle} onPress={onOpenLeaderboard}>
-      <WeekTrack rank={rank} />
+      <WeekNeighbours rank={rank} />
 
       {rank.ahead ? (
         <CardText
