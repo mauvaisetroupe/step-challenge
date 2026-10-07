@@ -175,17 +175,19 @@ export default function HomeScreen() {
             </View>
           )}
 
+          {/* From today to the week: the streak right under the ring
+              (today's goal keeps it going), then the friends. */}
+          <StreakCard
+            streaks={streaks}
+            goal={DAILY_GOAL}
+            error={historyError}
+          />
+
           <WeekRankCard
             rank={rank}
             error={rankError}
             onOpenLeaderboard={() => router.push('/leaderboard')}
             onInviteFriends={() => router.push('/friends')}
-          />
-
-          <StreakCard
-            streaks={streaks}
-            goal={DAILY_GOAL}
-            error={historyError}
           />
         </ScrollView>
       )}
