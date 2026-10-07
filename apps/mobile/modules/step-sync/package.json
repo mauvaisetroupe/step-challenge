@@ -1,0 +1,7 @@
+{
+  "name": "step-sync",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native background step sync (ADR 0009)",
+  "main": "index.ts"
+}

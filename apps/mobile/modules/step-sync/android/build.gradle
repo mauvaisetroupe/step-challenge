@@ -1,0 +1,22 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'lu.architech.stepchallenge'
+version = '1.0.0'
+
+android {
+  namespace "lu.architech.stepchallenge.stepsync"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}
+
+dependencies {
+  // Same versions as the libraries already in the app
+  // (expo-background-task, react-native-health-connect).
+  implementation 'androidx.work:work-runtime-ktx:2.9.1'
+  implementation 'androidx.health.connect:connect-client:1.1.0'
+}

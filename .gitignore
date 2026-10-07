@@ -39,6 +39,8 @@ yarn-error.*
 example
 
 # generated native folders
+# build output of the local Expo modules (ADR 0009)
+apps/mobile/modules/*/android/build/
 /ios
 /android
 backend/.env
