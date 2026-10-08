@@ -31,6 +31,12 @@ import { getTodayStepSources } from '@/services/stepSources'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import { useFormatters, type Formatters } from '@/i18n'
 import DayTimeline from '@/components/stats/DayTimeline'
+import {
+  findInactivePeriods,
+  hourlyStepsFromSlices,
+  SLICE_MINUTES,
+  type StepSlice,
+} from '@/services/inactivity'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const DAILY_GOAL = 10_000
@@ -178,10 +184,14 @@ async function getHealthConnectDailyStats(
  * Steps per hour since midnight, from Health Connect: one entry per hour
  * up to the current one, 0 when nothing was recorded.
  */
-async function getHealthConnectHourlySteps(
+/**
+ * Steps of the day in 5-minute slices, from midnight to now, 0 when
+ * Health Connect has nothing: the curve and the inactive periods.
+ */
+async function getHealthConnectStepSlices(
   startDate: Date,
   endDate: Date,
-): Promise<number[]> {
+): Promise<StepSlice[]> {
   const result = await aggregateGroupByDuration({
     recordType: 'Steps',
     timeRangeFilter: {
@@ -190,22 +200,29 @@ async function getHealthConnectHourlySteps(
       endTime: endDate.toISOString(),
     },
     timeRangeSlicer: {
-      duration: 'HOURS',
-      length: 1,
+      duration: 'MINUTES',
+      length: SLICE_MINUTES,
     },
   })
 
-  const hours = Array.from({ length: endDate.getHours() + 1 }, () => 0)
+  const sliceMs = SLICE_MINUTES * 60_000
+  const count = Math.ceil((endDate.getTime() - startDate.getTime()) / sliceMs)
+  const slices = Array.from({ length: count }, (_, index) => ({
+    start: new Date(startDate.getTime() + index * sliceMs),
+    steps: 0,
+  }))
 
   for (const bucket of result) {
-    const hour = new Date(bucket.startTime).getHours()
+    const index = Math.floor(
+      (new Date(bucket.startTime).getTime() - startDate.getTime()) / sliceMs,
+    )
 
-    if (hour < hours.length) {
-      hours[hour] += Number(bucket.result?.COUNT_TOTAL ?? 0)
+    if (index >= 0 && index < slices.length) {
+      slices[index].steps += Number(bucket.result?.COUNT_TOTAL ?? 0)
     }
   }
 
-  return hours
+  return slices
 }
 
 async function getDatabaseDailyStats(
@@ -293,8 +310,8 @@ export default function StatsScreen() {
   const [period, setPeriod] = useState<Period>('7d')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
-  // 1-day view: steps per hour (Android).
-  const [hourlySteps, setHourlySteps] = useState<number[]>([])
+  // 1-day view: steps in 5-minute slices (Android).
+  const [daySlices, setDaySlices] = useState<StepSlice[]>([])
   // Names of today's step sources, under the 1-day view (Android).
   const [sourceNames, setSourceNames] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -361,7 +378,7 @@ export default function StatsScreen() {
 
         setMonthlyStats(stats)
         setDailyStats([])
-        setHourlySteps([])
+        setDaySlices([])
 
         return
       }
@@ -381,13 +398,13 @@ export default function StatsScreen() {
 
           setDailyStats(stats)
           setMonthlyStats([])
-          setHourlySteps([])
+          setDaySlices([])
 
           return
         }
 
         // 1 day: no hourly detail on the web.
-        setHourlySteps([])
+        setDaySlices([])
         setDailyStats([])
         setMonthlyStats([])
 
@@ -395,12 +412,13 @@ export default function StatsScreen() {
       }
 
       if (period === '1d') {
-        const hours = await getHealthConnectHourlySteps(
+        const slices = await getHealthConnectStepSlices(
           getStartOfDay(now),
           now,
         )
 
-        setHourlySteps(hours)
+        setDaySlices(slices)
+
         setDailyStats([])
         setMonthlyStats([])
 
@@ -434,7 +452,7 @@ export default function StatsScreen() {
 
       setDailyStats(stats)
       setMonthlyStats([])
-      setHourlySteps([])
+      setDaySlices([])
     } catch (err) {
       console.error(err)
 
@@ -524,7 +542,12 @@ export default function StatsScreen() {
         ) : period === '1d' ? (
           <>
             <DayTimeline
-              hourlySteps={hourlySteps}
+              hourlySteps={
+                daySlices.length > 0
+                  ? hourlyStepsFromSlices(daySlices, new Date())
+                  : []
+              }
+              inactivePeriods={findInactivePeriods(daySlices)}
               goal={DAILY_GOAL}
               now={new Date()}
               emptyMessage={

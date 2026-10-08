@@ -192,6 +192,7 @@
   },
   "stats": {
     "goal": "Objectif",
+    "inactive": "Inactif",
     "title": "Statistiques",
     "periods": {
       "1d": "1j",

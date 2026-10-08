@@ -186,6 +186,7 @@
   },
   "stats": {
     "goal": "Goal",
+    "inactive": "Inactive",
     "title": "Statistics",
     "periods": {
       "1d": "1D",
