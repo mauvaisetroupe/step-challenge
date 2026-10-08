@@ -73,7 +73,9 @@
       "versionDetail": "Version {{version}}",
       "unknown": "inconnue",
       "app": "Application",
-      "version": "Version"
+      "version": "Version",
+      "update": "Mettre à jour",
+      "updateDetail": "Ouvre la page de Step Challenge dans le Play Store, qui propose la mise à jour s'il en existe une."
     },
     "legal": {
       "title": "Informations légales",

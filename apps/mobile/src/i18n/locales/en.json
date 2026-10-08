@@ -71,7 +71,9 @@
       "versionDetail": "Version {{version}}",
       "unknown": "unknown",
       "app": "App",
-      "version": "Version"
+      "version": "Version",
+      "update": "Update",
+      "updateDetail": "Opens the Step Challenge page in the Play Store, which offers the update if there is one."
     },
     "legal": {
       "title": "Legal",
