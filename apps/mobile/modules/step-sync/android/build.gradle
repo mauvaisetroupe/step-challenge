@@ -19,4 +19,9 @@ dependencies {
   // (expo-background-task, react-native-health-connect).
   implementation 'androidx.work:work-runtime-ktx:2.9.1'
   implementation 'androidx.health.connect:connect-client:1.1.0'
+
+  // ActivityCalculatorTest, on the JVM: a real org.json (Android's is a
+  // stub in unit tests).
+  testImplementation 'junit:junit:4.13.2'
+  testImplementation 'org.json:json:20240303'
 }

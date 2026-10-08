@@ -4,6 +4,13 @@ export type DayStat = {
   /** Local calendar date, YYYY-MM-DD. */
   date: string
   steps: number
+  /**
+   * Activity minutes (ADR 0010): computed for the last days only when
+   * sending; null in the history when never sent.
+   */
+  activeMinutes?: number | null
+  veryActiveMinutes?: number | null
+  inactiveMinutes?: number | null
 }
 
 /** Backend limit per request (MAX_DAYS_PER_REQUEST). */
@@ -13,8 +20,8 @@ const MAX_DAYS_PER_REQUEST = 31
  * Sends daily totals for the signed-in user.
  *
  * The backend keeps the highest value per day, so sending a day again
- * is harmless. Returns the dates it actually recorded (new day or
- * higher total).
+ * is harmless. Returns the dates it actually recorded (new day, higher
+ * total or new activity minutes).
  */
 export async function postMySteps(days: DayStat[]) {
   const updatedDates: string[] = []

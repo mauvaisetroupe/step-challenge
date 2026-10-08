@@ -1,4 +1,9 @@
-import { SLICE_MINUTES, type InactivePeriod, type StepSlice } from './inactivity'
+import {
+  findInactivePeriods,
+  SLICE_MINUTES,
+  type InactivePeriod,
+  type StepSlice,
+} from './inactivity'
 
 /**
  * Active minutes of the day, from the walking cadence.
@@ -63,4 +68,29 @@ export function summarizeDayActivity(
     inactiveMinutes,
     score: activeMinutes + 2 * veryActiveMinutes,
   }
+}
+
+/** Activity minutes of a whole day of slices, for the sync (ADR 0010). */
+export function computeDayActivity(slices: StepSlice[]) {
+  const { activeMinutes, veryActiveMinutes, inactiveMinutes } =
+    summarizeDayActivity(slices, findInactivePeriods(slices))
+
+  return { activeMinutes, veryActiveMinutes, inactiveMinutes }
+}
+
+/** Daily share of the WHO weekly goal, for the bars of one day. */
+export const DAILY_ACTIVITY_GOAL = Math.ceil(WEEKLY_ACTIVITY_GOAL / 7)
+
+type StoredMinutes = {
+  activeMinutes?: number | null
+  veryActiveMinutes?: number | null
+}
+
+/** Score of a stored day; null when its minutes were never sent. */
+export function storedDayScore(day: StoredMinutes) {
+  if (day.activeMinutes == null || day.veryActiveMinutes == null) {
+    return null
+  }
+
+  return day.activeMinutes + 2 * day.veryActiveMinutes
 }

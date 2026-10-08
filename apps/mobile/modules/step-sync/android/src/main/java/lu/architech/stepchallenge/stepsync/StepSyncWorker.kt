@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.request.AggregateGroupByDurationRequest
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.work.CoroutineWorker
@@ -15,10 +16,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Period
+import java.time.ZoneId
 
 /**
  * Background step sync (ADR 0009): reads the daily step totals of the
@@ -26,7 +29,8 @@ import java.time.Period
  * JavaScript. Run by WorkManager about every 6 hours.
  *
  * Same data as src/services/stepSync.ts: 30 days, days in local time,
- * the server keeps the highest total per day.
+ * the server keeps the highest total per day, and the activity minutes
+ * of the last 3 days (ADR 0010, ActivityCalculator).
  */
 class StepSyncWorker(context: Context, params: WorkerParameters) :
   CoroutineWorker(context, params) {
@@ -68,7 +72,13 @@ class StepSyncWorker(context: Context, params: WorkerParameters) :
     return Result.success()
   }
 
-  private suspend fun readLast30Days(): List<Pair<LocalDate, Long>> {
+  private class Day(
+    val date: LocalDate,
+    val steps: Long,
+    var activity: ActivityCalculator.DayActivity? = null,
+  )
+
+  private suspend fun readLast30Days(): List<Day> {
     if (HealthConnectClient.getSdkStatus(applicationContext) != HealthConnectClient.SDK_AVAILABLE) {
       throw IllegalStateException("Health Connect is not available")
     }
@@ -101,24 +111,62 @@ class StepSyncWorker(context: Context, params: WorkerParameters) :
     }
 
     // One entry per day, 0 when Health Connect has nothing for it.
-    return (0 until HISTORY_DAYS).map { offset ->
+    val days = (0 until HISTORY_DAYS).map { offset ->
       val day = firstDay.plusDays(offset)
-      day to (steps[day] ?: 0L)
+      Day(day, steps[day] ?: 0L)
     }
+
+    // A day that cannot be read minute by minute keeps its steps only.
+    for (day in days.takeLast(ACTIVITY_DAYS)) {
+      day.activity = runCatching { readActivity(client, day.date) }
+        .onFailure { Log.w(TAG, "Activity minutes of ${day.date} unavailable: ${it.message}") }
+        .getOrNull()
+    }
+
+    return days
+  }
+
+  /** Steps per minute of a day, up to now, into activity minutes. */
+  private suspend fun readActivity(
+    client: HealthConnectClient,
+    date: LocalDate,
+  ): ActivityCalculator.DayActivity {
+    val zone = ZoneId.systemDefault()
+    val start = date.atStartOfDay(zone).toInstant()
+    val end = minOf(date.plusDays(1).atStartOfDay(zone).toInstant(), Instant.now())
+
+    val buckets = client.aggregateGroupByDuration(
+      AggregateGroupByDurationRequest(
+        metrics = setOf(StepsRecord.COUNT_TOTAL),
+        timeRangeFilter = TimeRangeFilter.between(start, end),
+        timeRangeSlicer = Duration.ofMinutes(1),
+      ),
+    )
+
+    val minutes = LongArray(Duration.between(start, end).toMinutes().toInt().coerceAtLeast(0))
+
+    for (bucket in buckets) {
+      val index = Duration.between(start, bucket.startTime).toMinutes().toInt()
+      if (index in minutes.indices) {
+        minutes[index] += bucket.result[StepsRecord.COUNT_TOTAL] ?: 0L
+      }
+    }
+
+    return ActivityCalculator.compute(minutes)
   }
 
   /** Sends the days, 31 at most per request. Returns the days updated. */
   private suspend fun send(
     apiUrl: String,
     token: String,
-    days: List<Pair<LocalDate, Long>>,
+    days: List<Day>,
   ): Int = withContext(Dispatchers.IO) {
     var updated = 0
 
     for (chunk in days.chunked(MAX_DAYS_PER_REQUEST)) {
       val body = JSONObject().put(
         "days",
-        JSONArray(chunk.map { (date, steps) -> JSONObject().put("date", date.toString()).put("steps", steps) }),
+        JSONArray(chunk.map { day -> dayJson(day) }),
       )
 
       val connection = (URL("$apiUrl/api/me/steps").openConnection() as HttpURLConnection).apply {
@@ -149,11 +197,24 @@ class StepSyncWorker(context: Context, params: WorkerParameters) :
     updated
   }
 
+  private fun dayJson(day: Day): JSONObject {
+    val json = JSONObject().put("date", day.date.toString()).put("steps", day.steps)
+
+    day.activity?.let {
+      json.put("activeMinutes", it.activeMinutes)
+        .put("veryActiveMinutes", it.veryActiveMinutes)
+        .put("inactiveMinutes", it.inactiveMinutes)
+    }
+
+    return json
+  }
+
   private class SessionExpiredException : Exception("Session expired (HTTP 401): sign in again")
 
   private companion object {
     const val TAG = "StepSyncWorker"
     const val HISTORY_DAYS = 30L
+    const val ACTIVITY_DAYS = 3
     const val MAX_DAYS_PER_REQUEST = 31
     const val TIMEOUT_MS = 30_000
   }

@@ -70,7 +70,8 @@ export async function syncNow(): Promise<BackgroundSyncRun> {
   let run: BackgroundSyncRun
 
   try {
-    const syncedDates = await syncLast30Days()
+    // Also recomputes the activity minutes of the 30 days (ADR 0010).
+    const syncedDates = await syncLast30Days({ activityDays: 30 })
 
     run = {
       timestamp: new Date().toISOString(),

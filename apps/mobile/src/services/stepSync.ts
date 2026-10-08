@@ -7,10 +7,19 @@ import {
 } from 'react-native-health-connect'
 
 import { postMySteps, type DayStat } from '../api/steps'
+import { computeDayActivity } from './activity'
+import { getHealthConnectStepSlices } from './stepSlices'
 
 export type { DayStat }
 
 const HISTORY_DAYS = 30
+
+/**
+ * Days whose activity minutes are sent with the steps (ADR 0010): one
+ * Health Connect read per minute and per day, so only the last days,
+ * which can still change. "Sync now" recomputes the 30 days.
+ */
+const ACTIVITY_DAYS = 3
 
 /**
  * Health Connect permissions of Step Challenge: read steps, also when
@@ -63,6 +72,8 @@ type ReadOptions = {
    * background task: the permission dialog needs the app on screen.
    */
   requestPermissions?: boolean
+  /** Last days with activity minutes; ACTIVITY_DAYS by default. */
+  activityDays?: number
 }
 
 /**
@@ -73,7 +84,7 @@ type ReadOptions = {
  */
 async function initializeHealthConnect({
   requestPermissions = true,
-}: ReadOptions = {}) {
+}: Pick<ReadOptions, 'requestPermissions'> = {}) {
   const initialized = await initialize()
 
   if (!initialized) {
@@ -139,7 +150,33 @@ async function getHealthConnectDailyStats(
 }
 
 /**
- * Retrieves the last 30 days of steps from Health Connect.
+ * Adds the activity minutes (ADR 0010) to the last `count` days, read
+ * minute by minute. A day that cannot be read keeps its steps only.
+ */
+async function addActivityMinutes(days: DayStat[], count: number, now: Date) {
+  for (const day of days.slice(-count)) {
+    const [year, month, date] = day.date.split('-').map(Number)
+    const start = new Date(year, month - 1, date)
+    const end = new Date(year, month - 1, date + 1)
+
+    try {
+      const slices = await getHealthConnectStepSlices(
+        start,
+        end < now ? end : now,
+      )
+
+      Object.assign(day, computeDayActivity(slices))
+    } catch (error) {
+      console.error(`Activity minutes of ${day.date} unavailable:`, error)
+    }
+  }
+
+  return days
+}
+
+/**
+ * Retrieves the last 30 days of steps from Health Connect, with the
+ * activity minutes of the last days.
  *
  * This function only reads local Health Connect data.
  * It does not access the backend and does not perform any synchronization.
@@ -155,8 +192,14 @@ export async function getHealthConnectLast30Days(
     getDaysAgo(now, HISTORY_DAYS - 1),
   )
 
-  return getHealthConnectDailyStats(
+  const days = await getHealthConnectDailyStats(
     startDate,
+    now,
+  )
+
+  return addActivityMinutes(
+    days,
+    options.activityDays ?? ACTIVITY_DAYS,
     now,
   )
 }

@@ -9,7 +9,8 @@
  * - a period is inactive when it lasts at least 60 minutes without
  *   walking;
  * - walking means about 2 minutes of steps (200) within 15 minutes,
- *   even in several bits (a trip to the coffee machine and back);
+ *   even in several bits (a trip to the coffee machine and back); a
+ *   minute under 20 steps is not walking (shuffling at the desk);
  * - only between the first and the last step of the day, so that the
  *   night is not counted (no sleep data, which would be another Health
  *   Connect permission).
@@ -30,6 +31,9 @@ export const BREAK_STEPS = 200
 
 /** …within this window, in minutes. */
 export const BREAK_WINDOW_MINUTES = 15
+
+/** Below this, a minute is not walking, even next to a walk. */
+export const MIN_WALKING_STEPS_PER_MINUTE = 20
 
 export type StepSlice = {
   /** Start of the slice; the slice lasts SLICE_MINUTES. */
@@ -53,7 +57,7 @@ export function findInactivePeriods(slices: StepSlice[]): InactivePeriod[] {
     return []
   }
 
-  // A slice is active when it has steps and belongs to a window of
+  // A slice is active when it is walking and belongs to a window of
   // BREAK_WINDOW_MINUTES with at least BREAK_STEPS steps.
   const windowSlices = BREAK_WINDOW_MINUTES / SLICE_MINUTES
   const active = slices.map(() => false)
@@ -63,7 +67,7 @@ export function findInactivePeriods(slices: StepSlice[]): InactivePeriod[] {
 
     if (window.reduce((sum, slice) => sum + slice.steps, 0) >= BREAK_STEPS) {
       window.forEach((slice, offset) => {
-        if (slice.steps > 0) {
+        if (slice.steps >= MIN_WALKING_STEPS_PER_MINUTE * SLICE_MINUTES) {
           active[index + offset] = true
         }
       })

@@ -41,7 +41,9 @@
     "react-native-worklets": "0.10.1"
   },
   "devDependencies": {
+    "@types/node": "^26.6.4",
     "@types/react": "~19.2.2",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -51,6 +53,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test": "tsx --test 'src/**/*.test.ts'",
     "check:i18n": "node scripts/check-i18n.mjs",
     "start:dev": "APP_VARIANT=development expo start --dev-client",
     "android:dev": "APP_VARIANT=development expo run:android"
