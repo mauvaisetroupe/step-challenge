@@ -30,7 +30,9 @@ import { stepSourceLabel } from '@/services/healthConnectDiagnostic'
 import { getTodayStepSources } from '@/services/stepSources'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import { useFormatters, type Formatters } from '@/i18n'
+import DayActivitySummary from '@/components/stats/DayActivitySummary'
 import DayTimeline from '@/components/stats/DayTimeline'
+import { summarizeDayActivity } from '@/services/activity'
 import {
   findInactivePeriods,
   hourlyStepsFromSlices,
@@ -187,8 +189,9 @@ async function getHealthConnectDailyStats(
  * up to the current one, 0 when nothing was recorded.
  */
 /**
- * Steps of the day in 5-minute slices, from midnight to now, 0 when
- * Health Connect has nothing: the curve and the inactive periods.
+ * Steps of the day in 1-minute slices, from midnight to now, 0 when
+ * Health Connect has nothing: the curve, the inactive periods and the
+ * active minutes.
  */
 async function getHealthConnectStepSlices(
   startDate: Date,
@@ -312,8 +315,12 @@ export default function StatsScreen() {
   const [period, setPeriod] = useState<Period>('7d')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
-  // 1-day view: steps in 5-minute slices (Android).
+  // 1-day view: steps per minute (Android).
   const [daySlices, setDaySlices] = useState<StepSlice[]>([])
+  const inactivePeriods = useMemo(
+    () => findInactivePeriods(daySlices),
+    [daySlices],
+  )
   // Names of today's step sources, under the 1-day view (Android).
   const [sourceNames, setSourceNames] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -549,7 +556,7 @@ export default function StatsScreen() {
                   ? hourlyStepsFromSlices(daySlices, new Date())
                   : []
               }
-              inactivePeriods={findInactivePeriods(daySlices)}
+              inactivePeriods={inactivePeriods}
               goal={DAILY_GOAL}
               now={new Date()}
               emptyMessage={
@@ -558,6 +565,12 @@ export default function StatsScreen() {
                   : t('stats.noStepsToday')
               }
             />
+
+            {daySlices.length > 0 && (
+              <DayActivitySummary
+                activity={summarizeDayActivity(daySlices, inactivePeriods)}
+              />
+            )}
 
             {Platform.OS === 'android' && (
               <Pressable

@@ -193,6 +193,15 @@
     "seeLeaderboard": "Voir le classement"
   },
   "stats": {
+    "activity": {
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}} h {{minutes}}",
+      "veryActive": "Très actif",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "score": "score d'activité",
+      "detail": "D'après tes pas : 1 point par minute active (100 pas par minute ou plus), 2 par minute très active (130 ou plus). L'OMS recommande l'équivalent de {{goal}} par semaine."
+    },
     "goal": "Objectif",
     "inactive": "Inactif",
     "title": "Statistiques",

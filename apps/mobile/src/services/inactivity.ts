@@ -15,8 +15,12 @@
  *   Connect permission).
  */
 
-/** Length of a slice of steps, in minutes. */
-export const SLICE_MINUTES = 5
+/**
+ * Length of a slice of steps, in minutes: one minute, the precision of
+ * the watches and of the phone, needed for the walking cadence
+ * (services/activity).
+ */
+export const SLICE_MINUTES = 1
 
 /** Minimum length of an inactive period, in minutes. */
 export const INACTIVE_MINUTES = 60
@@ -94,7 +98,7 @@ export function findInactivePeriods(slices: StepSlice[]): InactivePeriod[] {
   return periods
 }
 
-/** Sums 5-minute slices into steps per hour since midnight. */
+/** Sums the slices into steps per hour since midnight. */
 export function hourlyStepsFromSlices(slices: StepSlice[], now: Date) {
   const hours = Array.from({ length: now.getHours() + 1 }, () => 0)
 

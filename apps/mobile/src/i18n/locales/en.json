@@ -187,6 +187,15 @@
     "seeLeaderboard": "See the leaderboard"
   },
   "stats": {
+    "activity": {
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}} h {{minutes}}",
+      "veryActive": "Very active",
+      "active": "Active",
+      "inactive": "Inactive",
+      "score": "activity score",
+      "detail": "From your steps: 1 point per active minute (100 steps per minute or more), 2 per very active minute (130 or more). WHO recommends the equivalent of {{goal}} per week."
+    },
     "goal": "Goal",
     "inactive": "Inactive",
     "title": "Statistics",
