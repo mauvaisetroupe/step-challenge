@@ -1,6 +1,6 @@
 # ADR 0010 — Minutes actives et score d'activité dans la base
 
-- **Statut** : Proposé
+- **Statut** : Accepté
 - **Date** : 2026-10-08
 - **Décideur** : mauvaisetroupe
 
