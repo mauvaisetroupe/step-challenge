@@ -257,6 +257,7 @@ async function getDatabaseMonthlyStats(
 
 export default function StatsScreen() {
   const styles = useThemedStyles(createStyles)
+  const { colors } = useTheme()
   const { t } = useTranslation()
   const formatters = useFormatters()
 
@@ -546,7 +547,15 @@ export default function StatsScreen() {
                   key={item}
                   style={[
                     styles.metricButton,
-                    metric === item && styles.periodButtonActive,
+                    metric === item && [
+                      styles.periodButtonActive,
+                      // Underlined with its chart color: steps blue,
+                      // activity teal.
+                      {
+                        borderBottomColor:
+                          item === 'steps' ? colors.primary : colors.activity,
+                      },
+                    ],
                   ]}
                   onPress={() => setMetric(item)}
                 >
@@ -853,6 +862,9 @@ const createStyles = (c: Colors) =>
       paddingVertical: 6,
       paddingHorizontal: 16,
       borderRadius: 8,
+      // Transparent when not selected: no shift on selection.
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent',
     },
 
     metricButtonText: {
