@@ -32,6 +32,12 @@ export type Colors = {
   /** Light background of a primary element (highlighted row, code). */
   primarySoft: string
 
+  /**
+   * Activity minutes and score (ADR 0010): their own color, apart from
+   * the blue of the steps and the red of inactivity.
+   */
+  activity: string
+
   danger: string
   dangerSoft: string
   success: string
@@ -66,6 +72,8 @@ export const lightColors: Colors = {
   onPrimary: '#FFFFFF',
   primarySoft: '#E8F3FF',
 
+  activity: '#0D9488',
+
   danger: '#DC2626',
   dangerSoft: '#FEE2E2',
   success: '#15803D',
@@ -96,6 +104,8 @@ export const darkColors: Colors = {
   primary: '#3D9DFF',
   onPrimary: '#FFFFFF',
   primarySoft: '#0F2A4A',
+
+  activity: '#2DD4BF',
 
   danger: '#F87171',
   dangerSoft: '#3A1717',
