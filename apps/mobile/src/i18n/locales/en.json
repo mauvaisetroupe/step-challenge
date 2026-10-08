@@ -194,7 +194,10 @@
       "active": "Active",
       "inactive": "Inactive",
       "score": "activity score",
-      "detail": "From your steps: 1 point per active minute (100 steps per minute or more), 2 per very active minute (130 or more). WHO recommends the equivalent of {{goal}} per week."
+      "detail": "From your steps: 1 point per active minute (100 steps per minute or more), 2 per very active minute (130 or more). WHO recommends the equivalent of {{goal}} per week.",
+      "noData": "No score recorded yet: it is sent with each sync from this version on.",
+      "weekTotal": "Over 7 days: {{score}} (WHO recommends {{goal}} per week)",
+      "weekAverage": "Weekly average: {{score}} (WHO recommends {{goal}})"
     },
     "goal": "Goal",
     "inactive": "Inactive",
@@ -213,7 +216,11 @@
     "percent": "{{percent}}%",
     "noData": "No data",
     "sources": "Sources: {{names}}",
-    "seeSources": "See sources"
+    "seeSources": "See sources",
+    "metrics": {
+      "steps": "Steps",
+      "score": "Activity score"
+    }
   },
   "home": {
     "today": "Today",

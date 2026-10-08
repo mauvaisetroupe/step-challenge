@@ -11,14 +11,8 @@ import {
 import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
-import Svg, {
-  Line,
-  Rect,
-  Text as SvgText,
-} from 'react-native-svg'
 
 import {
-  aggregateGroupByDuration,
   aggregateGroupByPeriod,
   initialize,
   requestPermission,
@@ -30,27 +24,22 @@ import { stepSourceLabel } from '@/services/healthConnectDiagnostic'
 import { getTodayStepSources } from '@/services/stepSources'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import { useFormatters, type Formatters } from '@/i18n'
+import ActivityScoreChart from '@/components/stats/ActivityScoreChart'
+import BarChart from '@/components/stats/BarChart'
 import DayActivitySummary from '@/components/stats/DayActivitySummary'
 import DayTimeline from '@/components/stats/DayTimeline'
 import { summarizeDayActivity } from '@/services/activity'
 import {
   findInactivePeriods,
   hourlyStepsFromSlices,
-  SLICE_MINUTES,
   type StepSlice,
 } from '@/services/inactivity'
+import { getHealthConnectStepSlices } from '@/services/stepSlices'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const DAILY_GOAL = 10_000
 
 type Period = '1d' | '7d' | '30d' | '1y'
-
-type ChartPoint = {
-  label: string
-  value: number
-  /** Daily goal reached (on average for a month): colored bar. */
-  reached: boolean
-}
 
 type DayStat = {
   date: string
@@ -63,6 +52,11 @@ type MonthStat = {
 }
 
 const PERIODS: Period[] = ['1d', '7d', '30d', '1y']
+
+/** What the 7-day, 30-day and 1-year views show (ADR 0010). */
+type Metric = 'steps' | 'score'
+
+const METRICS: Metric[] = ['steps', 'score']
 
 function getStartOfDay(date: Date) {
   const result = new Date(date)
@@ -184,52 +178,6 @@ async function getHealthConnectDailyStats(
   return days
 }
 
-/**
- * Steps per hour since midnight, from Health Connect: one entry per hour
- * up to the current one, 0 when nothing was recorded.
- */
-/**
- * Steps of the day in 1-minute slices, from midnight to now, 0 when
- * Health Connect has nothing: the curve, the inactive periods and the
- * active minutes.
- */
-async function getHealthConnectStepSlices(
-  startDate: Date,
-  endDate: Date,
-): Promise<StepSlice[]> {
-  const result = await aggregateGroupByDuration({
-    recordType: 'Steps',
-    timeRangeFilter: {
-      operator: 'between',
-      startTime: startDate.toISOString(),
-      endTime: endDate.toISOString(),
-    },
-    timeRangeSlicer: {
-      duration: 'MINUTES',
-      length: SLICE_MINUTES,
-    },
-  })
-
-  const sliceMs = SLICE_MINUTES * 60_000
-  const count = Math.ceil((endDate.getTime() - startDate.getTime()) / sliceMs)
-  const slices = Array.from({ length: count }, (_, index) => ({
-    start: new Date(startDate.getTime() + index * sliceMs),
-    steps: 0,
-  }))
-
-  for (const bucket of result) {
-    const index = Math.floor(
-      (new Date(bucket.startTime).getTime() - startDate.getTime()) / sliceMs,
-    )
-
-    if (index >= 0 && index < slices.length) {
-      slices[index].steps += Number(bucket.result?.COUNT_TOTAL ?? 0)
-    }
-  }
-
-  return slices
-}
-
 async function getDatabaseDailyStats(
   startDate: Date,
   endDate: Date,
@@ -313,6 +261,7 @@ export default function StatsScreen() {
   const formatters = useFormatters()
 
   const [period, setPeriod] = useState<Period>('7d')
+  const [metric, setMetric] = useState<Metric>('steps')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
   // 1-day view: steps per minute (Android).
@@ -591,44 +540,74 @@ export default function StatsScreen() {
           </>
         ) : (
           <>
-            <View style={styles.totalContainer}>
-              <Text style={styles.totalValue}>
-                {formatSteps(totalSteps, formatters)}
-              </Text>
-
-              <Text style={styles.totalLabel}>
-                {t('stats.stepsUnit', { count: Math.round(totalSteps) })}
-              </Text>
+            <View style={styles.metricSelector}>
+              {METRICS.map((item) => (
+                <Pressable
+                  key={item}
+                  style={[
+                    styles.metricButton,
+                    metric === item && styles.periodButtonActive,
+                  ]}
+                  onPress={() => setMetric(item)}
+                >
+                  <Text
+                    style={[
+                      styles.metricButtonText,
+                      metric === item && styles.periodButtonTextActive,
+                    ]}
+                  >
+                    {t(`stats.metrics.${item}`)}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
 
-            <View style={styles.chartContainer}>
-              {period === '1y' ? (
-                <BarChart
-                  data={monthlyStats.map((item) => ({
-                    label: formatMonth(parseDateKey(item.date), formatters),
-                    value: item.steps,
-                    reached:
-                      getMonthPercent(item.steps, parseDateKey(item.date)) >= 100,
-                  }))}
-                />
-              ) : (
-                <BarChart
-                  data={dailyStats.map((item) => ({
-                    label: formatShortDate(parseDateKey(item.date), formatters),
-                    value: item.steps,
-                    reached: item.steps >= DAILY_GOAL,
-                  }))}
-                />
-              )}
-            </View>
+            {metric === 'score' ? (
+              <ActivityScoreChart period={period} ready={!loading} />
+            ) : (
+              <>
+                <View style={styles.totalContainer}>
+                  <Text style={styles.totalValue}>
+                    {formatSteps(totalSteps, formatters)}
+                  </Text>
 
-            {period === '7d' || period === '30d' ? (
-              <DailyStatsList stats={dailyStats} />
-            ) : null}
+                  <Text style={styles.totalLabel}>
+                    {t('stats.stepsUnit', { count: Math.round(totalSteps) })}
+                  </Text>
+                </View>
 
-            {period === '1y' ? (
-              <MonthlyStatsList stats={monthlyStats} />
-            ) : null}
+                <View style={styles.chartContainer}>
+                  {period === '1y' ? (
+                    <BarChart
+                      goal={DAILY_GOAL}
+                      data={monthlyStats.map((item) => ({
+                        label: formatMonth(parseDateKey(item.date), formatters),
+                        value: item.steps,
+                        reached:
+                          getMonthPercent(item.steps, parseDateKey(item.date)) >= 100,
+                      }))}
+                    />
+                  ) : (
+                    <BarChart
+                      goal={DAILY_GOAL}
+                      data={dailyStats.map((item) => ({
+                        label: formatShortDate(parseDateKey(item.date), formatters),
+                        value: item.steps,
+                        reached: item.steps >= DAILY_GOAL,
+                      }))}
+                    />
+                  )}
+                </View>
+
+                {period === '7d' || period === '30d' ? (
+                  <DailyStatsList stats={dailyStats} />
+                ) : null}
+
+                {period === '1y' ? (
+                  <MonthlyStatsList stats={monthlyStats} />
+                ) : null}
+              </>
+            )}
           </>
         )}
       </ScrollView>
@@ -790,113 +769,6 @@ function MonthlyStatsList({
   )
 }
 
-function BarChart({
-  data,
-}: {
-  data: ChartPoint[]
-}) {
-  const styles = useThemedStyles(createStyles)
-  const { t } = useTranslation()
-  const { colors } = useTheme()
-
-  if (data.length === 0) {
-    return (
-      <View style={styles.emptyChart}>
-        <Text style={styles.emptyText}>
-          {t('stats.noData')}
-        </Text>
-      </View>
-    )
-  }
-
-  const width = 340
-  const height = 220
-  const paddingLeft = 40
-  const paddingRight = 10
-  const paddingTop = 20
-  const paddingBottom = 35
-
-  const chartWidth =
-    width - paddingLeft - paddingRight
-
-  const chartHeight =
-    height - paddingTop - paddingBottom
-
-  const maxValue = Math.max(
-    DAILY_GOAL,
-    ...data.map((item) => item.value),
-  )
-
-  const barWidth = Math.max(
-    4,
-    (chartWidth / data.length) * 0.65,
-  )
-
-  const gap =
-    chartWidth / data.length
-
-  return (
-    <Svg
-      width="100%"
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-    >
-      <Line
-        x1={paddingLeft}
-        y1={paddingTop + chartHeight}
-        x2={width - paddingRight}
-        y2={paddingTop + chartHeight}
-        stroke={colors.borderStrong}
-        strokeWidth={1}
-      />
-
-      {data.map((item, index) => {
-        const barHeight =
-          (item.value / maxValue) * chartHeight
-
-        const x =
-          paddingLeft +
-          index * gap +
-          (gap - barWidth) / 2
-
-        const y =
-          paddingTop +
-          chartHeight -
-          barHeight
-
-        return (
-          <React.Fragment key={`${item.label}-${index}`}>
-            <Rect
-              x={x}
-              y={y}
-              width={barWidth}
-              height={barHeight}
-              rx={3}
-              // Goal reached: full blue; otherwise a lighter blue.
-              fill={colors.primary}
-              fillOpacity={item.reached ? 1 : 0.35}
-            />
-
-            {(data.length <= 7 ||
-              index % Math.ceil(data.length / 7) ===
-                0) && (
-              <SvgText
-                x={x + barWidth / 2}
-                y={height - 10}
-                fontSize={9}
-                fill={colors.textSecondary}
-                textAnchor="middle"
-              >
-                {item.label}
-              </SvgText>
-            )}
-          </React.Fragment>
-        )
-      })}
-    </Svg>
-  )
-}
-
 const createStyles = (c: Colors) =>
   StyleSheet.create({
     sourcesLink: {
@@ -966,6 +838,29 @@ const createStyles = (c: Colors) =>
     },
 
 
+    metricSelector: {
+      flexDirection: 'row',
+      alignSelf: 'center',
+      backgroundColor: c.surface,
+      borderRadius: 10,
+      padding: 3,
+      marginBottom: 20,
+    },
+
+    metricButton: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 6,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+    },
+
+    metricButtonText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: c.textSecondary,
+    },
+
     totalContainer: {
       alignItems: 'center',
       marginBottom: 10,
@@ -1015,16 +910,6 @@ const createStyles = (c: Colors) =>
     retryText: {
       color: c.onPrimary,
       fontWeight: '600',
-    },
-
-    emptyChart: {
-      height: 220,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-
-    emptyText: {
-      color: c.textMuted,
     },
 
     statsList: {

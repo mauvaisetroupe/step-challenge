@@ -34,13 +34,13 @@ export default function DayActivitySummary({ activity }: Props) {
   const tiles = [
     {
       key: 'veryActive',
-      color: colors.primary,
+      color: colors.activity,
       opacity: 1,
       minutes: activity.veryActiveMinutes,
     },
     {
       key: 'active',
-      color: colors.primary,
+      color: colors.activity,
       opacity: 0.45,
       minutes: activity.activeMinutes,
     },
@@ -136,7 +136,7 @@ const createStyles = (c: Colors) =>
     scoreValue: {
       fontSize: 28,
       fontWeight: '800',
-      color: c.primary,
+      color: c.activity,
     },
 
     scoreLabel: {
