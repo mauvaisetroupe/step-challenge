@@ -9,7 +9,7 @@
 Depuis la 1.7.0, la vue Statistiques → 1 jour montre les périodes d'inactivité (trait rouge). L'étape suivante, faite dans l'application seule (sans serveur), y ajoute les minutes **très actives**, **actives** et **inactives** de la journée et un **score d'activité** (`services/activity.ts`) :
 
 - une minute est **active** à partir de 100 pas par minute et **très active** à partir de 130 : repères de la recherche sur la cadence de marche (CADENCE-Adults, Tudor-Locke et al. 2018-2019) pour une intensité modérée et soutenue ;
-- les minutes **inactives** sont celles des périodes rouges (`services/inactivity.ts` : 60 minutes sans 200 pas en 15 minutes, entre le premier et le dernier pas) ;
+- les minutes **inactives** sont celles des périodes rouges (`services/inactivity.ts` : 60 minutes sans 200 pas en 15 minutes, une minute sous 20 pas n'étant pas de la marche, entre le premier et le dernier pas) ;
 - **score = minutes actives + 2 × minutes très actives**. L'OMS (2020) recommande 150 minutes d'activité modérée par semaine, une minute soutenue comptant double : la règle des points cardio de Google Fit et des minutes intensives de Garmin, qui utilisent la fréquence cardiaque ; ici, seulement les pas (le vélo et la natation ne comptent pas).
 
 Ces chiffres sont calculés à la volée à partir des pas minute par minute de Santé Connect, pour aujourd'hui. Pour des **histogrammes** (jours actifs, semaines par rapport aux 150 de l'OMS) sur 7 jours, 30 jours et un an, il faut les conserver : Santé Connect ne donne pas un historique illimité, et le client web (ADR 0008) n'a pas accès à Santé Connect. La base garde déjà les pas par jour (`daily_steps`).
@@ -67,7 +67,7 @@ Règle de mise à jour : le serveur garde aujourd'hui le plus grand total de pas
 
 ### Affichage
 
-- Statistiques 7 jours et 30 jours : un histogramme du score par jour, sous celui des pas ; un jour sans donnée n'a pas de barre.
+- Statistiques 7 jours et 30 jours : un histogramme du score par jour, sous celui des pas, par rapport à la part quotidienne de l'objectif de l'OMS (150 / 7, soit 22) ; un jour sans donnée n'a pas de barre.
 - Statistiques 1 an : le score par **semaine**, avec la ligne des 150 de l'OMS ; une semaine qui l'atteint est en bleu plein (même règle que les barres de pas).
 - 1 jour : inchangé (calculé à la volée, plus précis que la valeur envoyée).
 
