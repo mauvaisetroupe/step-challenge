@@ -127,6 +127,8 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
   - `themed-text`, `themed-view`, `hint-row`, `external-link`, `web-badge`, `ui/collapsible`, `hooks/use-theme`, `constants/theme.ts`, `scripts/reset-project.js`.
 - [ ] **Plus tard** : sauvegardes automatiques de la base ou base managée. Mettre à jour la page de suppression de compte du site (`site/content/delete-account.*.md`), qui indique aujourd'hui qu'il n'y a pas de sauvegarde.
 
+- [ ] **Alerte d'inactivité** (idée écartée pour l'instant, 2026-10-08) : vibrer vers 50 minutes d'inactivité. Obstacles : les pas de Garmin arrivent en retard dans Santé Connect ; WorkManager tourne au mieux toutes les 15 minutes et le mode Doze l'espace beaucoup quand le téléphone est posé immobile, justement à un bureau ; les alarmes exactes sont réservées par Google aux réveils et agendas ; un service permanent impose une notification visible et ne voit pas les pas de la montre. Les montres (Garmin) le font déjà au poignet. Si on y revient : version « approximative » sur le travailleur de l'ADR 0009, en option, heures de journée, autorisation de notifications, ADR, et mesure du Doze en dev d'abord.
+
 ## Pièges connus
 
 - **Tests du backend** : ils exigent une base PostgreSQL (`TEST_DATABASE_URL`). En local, `npm run test:local` utilise la base Docker de test. La CI GitHub (`.github/workflows/ci.yml`) les exécute à chaque push.
