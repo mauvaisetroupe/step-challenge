@@ -46,6 +46,8 @@ type Period = '1d' | '7d' | '30d' | '1y'
 type ChartPoint = {
   label: string
   value: number
+  /** Daily goal reached (on average for a month): colored bar. */
+  reached: boolean
 }
 
 type DayStat = {
@@ -592,6 +594,8 @@ export default function StatsScreen() {
                   data={monthlyStats.map((item) => ({
                     label: formatMonth(parseDateKey(item.date), formatters),
                     value: item.steps,
+                    reached:
+                      getMonthPercent(item.steps, parseDateKey(item.date)) >= 100,
                   }))}
                 />
               ) : (
@@ -599,6 +603,7 @@ export default function StatsScreen() {
                   data={dailyStats.map((item) => ({
                     label: formatShortDate(parseDateKey(item.date), formatters),
                     value: item.steps,
+                    reached: item.steps >= DAILY_GOAL,
                   }))}
                 />
               )}
@@ -854,7 +859,9 @@ function BarChart({
               width={barWidth}
               height={barHeight}
               rx={3}
+              // Goal reached: full blue; otherwise a lighter blue.
               fill={colors.primary}
+              fillOpacity={item.reached ? 1 : 0.35}
             />
 
             {(data.length <= 7 ||
