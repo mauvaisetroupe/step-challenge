@@ -2,7 +2,7 @@
 title: Politique de confidentialité — Step Challenge
 linkTitle: Confidentialité
 description: Les données collectées par Step Challenge, pourquoi, et comment les supprimer.
-updated: 7 octobre 2026
+updated: 8 octobre 2026
 ---
 
 *Traduction de la version anglaise, qui fait foi en cas de divergence.*
@@ -61,7 +61,11 @@ les appareils compatibles.
 Les données de pas peuvent comprendre :
 
 - le nombre de pas enregistré pour une journée donnée ;
-- la date associée à ce nombre de pas.
+- la date associée à ce nombre de pas ;
+- pour une journée, ses minutes actives, très actives et inactives,
+  calculées sur le téléphone à partir des pas de chaque minute. Les pas
+  minute par minute restent sur le téléphone : seuls ces trois totaux
+  par jour sont envoyés au serveur.
 
 Step Challenge ne demande pas l'accès à d'autres informations de santé,
 comme la fréquence cardiaque, le sommeil, la tension artérielle, les
@@ -99,6 +103,7 @@ Challenge, notamment :
 
 - afficher le nombre de pas quotidien de l'utilisateur ;
 - afficher l'historique et les statistiques de pas ;
+- calculer les minutes actives et le score d'activité ;
 - calculer les résultats des défis et des classements ;
 - synchroniser les nombres de pas avec le service Step Challenge.
 
@@ -128,13 +133,14 @@ jusqu'à leur suppression conformément à la présente politique.
 ## 4. Synchronisation avec les serveurs de Step Challenge
 
 Lorsque la synchronisation est activée, Step Challenge envoie les
-nombres de pas quotidiens de l'utilisateur au serveur de Step Challenge.
+nombres de pas quotidiens de l'utilisateur, et les minutes actives, très
+actives et inactives des derniers jours, au serveur de Step Challenge.
 
 Le serveur conserve les nombres de pas associés au compte Step Challenge
 de l'utilisateur, afin que l'application puisse :
 
 - synchroniser les données entre appareils ;
-- tenir l'historique des pas ;
+- tenir l'historique des pas et du score d'activité ;
 - calculer les défis ;
 - fournir les classements.
 
@@ -148,7 +154,9 @@ Step Challenge ne vend pas de données personnelles.
 
 Dans l'application, le nom affiché et les nombres de pas quotidiens d'un
 utilisateur ne sont visibles que de ses amis. Le nom affiché est aussi
-visible de toute personne qui ouvre un de ses liens d'invitation.
+visible de toute personne qui ouvre un de ses liens d'invitation. Les
+minutes actives et le score d'activité ne sont visibles que de
+l'utilisateur.
 
 Step Challenge ne partage pas les données de pas avec des annonceurs,
 des courtiers en données ou d'autres tiers à des fins de publicité ou de

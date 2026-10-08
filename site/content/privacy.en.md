@@ -2,7 +2,7 @@
 title: Privacy Policy — Step Challenge
 linkTitle: Privacy policy
 description: What data Step Challenge collects, why, and how to delete it.
-updated: 7 October 2026
+updated: 8 October 2026
 ---
 
 Step Challenge is a step-counting and challenge application that allows
@@ -51,7 +51,10 @@ step-count data made available by Huawei Health and compatible devices.
 Step data may include:
 
 - The number of steps recorded for a given day;
-- The date associated with the step count.
+- The date associated with the step count;
+- For a day, its active, very active and inactive minutes, computed on
+  the phone from the steps of each minute. The steps per minute stay on
+  the phone: only these three daily totals are sent to the server.
 
 Step Challenge does not request access to unrelated health information
 such as heart rate, sleep, blood pressure, body measurements or medical
@@ -86,6 +89,7 @@ including:
 
 - Displaying the user's daily step count;
 - Displaying step history and statistics;
+- Computing active minutes and the activity score;
 - Calculating challenge and leaderboard results;
 - Synchronizing step counts with the Step Challenge service.
 
@@ -114,13 +118,14 @@ deleted according to this policy.
 ## 4. Synchronization with Step Challenge servers
 
 When synchronization is enabled, Step Challenge sends the user's daily
-step counts to the Step Challenge backend.
+step counts, and the active, very active and inactive minutes of the
+last days, to the Step Challenge backend.
 
 The server stores step counts associated with the user's Step Challenge
 account so that the application can:
 
 - Synchronize data between devices;
-- Maintain step history;
+- Maintain step and activity score history;
 - Calculate challenges;
 - Provide leaderboards.
 
@@ -134,7 +139,8 @@ Step Challenge does not sell personal data.
 
 Within the application, a user's display name and daily step counts are
 visible only to their friends. The display name is also shown to anyone
-who opens one of the user's invitation links.
+who opens one of the user's invitation links. Active minutes and the
+activity score are visible to the user only.
 
 Step Challenge does not share step data with advertisers, data brokers
 or other third parties for advertising or profiling.
