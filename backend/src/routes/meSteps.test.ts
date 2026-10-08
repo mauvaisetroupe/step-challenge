@@ -46,6 +46,21 @@ function postSteps(app: TestApp, token: string, days: unknown) {
   })
 }
 
+/** Activity minutes of a day never sent with minutes (ADR 0010). */
+const NO_MINUTES = {
+  activeMinutes: null,
+  veryActiveMinutes: null,
+  inactiveMinutes: null,
+}
+
+function minutes(active: number, veryActive: number, inactive: number) {
+  return {
+    activeMinutes: active,
+    veryActiveMinutes: veryActive,
+    inactiveMinutes: inactive,
+  }
+}
+
 function getSteps(app: TestApp, token: string, query = '') {
   return app.inject({
     method: 'GET',
@@ -69,8 +84,8 @@ describe('POST /api/me/steps', { skip: skipWithoutDatabase }, () => {
     assert.equal(response.statusCode, 200)
 
     assert.deepEqual((await getSteps(app, token)).json(), [
-      { date: today, steps: 1200 },
-      { date: yesterday, steps: 8000 },
+      { date: today, steps: 1200, ...NO_MINUTES },
+      { date: yesterday, steps: 8000, ...NO_MINUTES },
     ])
   })
 
@@ -268,6 +283,105 @@ describe('POST /api/me/steps', { skip: skipWithoutDatabase }, () => {
     })
 
     assert.equal(response.statusCode, 401)
+  })
+})
+
+describe('POST /api/me/steps, activity minutes (ADR 0010)', {
+  skip: skipWithoutDatabase,
+}, () => {
+  it('records the minutes with the steps', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+    const today = await serverDate()
+
+    await postSteps(app, token, [
+      { date: today, steps: 8000, ...minutes(20, 15, 90) },
+    ])
+
+    assert.deepEqual((await getSteps(app, token)).json(), [
+      { date: today, steps: 8000, ...minutes(20, 15, 90) },
+    ])
+  })
+
+  it('replaces the minutes with the same or a higher total only', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+    const today = await serverDate()
+
+    await postSteps(app, token, [
+      { date: today, steps: 8000, ...minutes(20, 15, 90) },
+    ])
+
+    // Same total, late watch steps: fewer inactive minutes.
+    const same = await postSteps(app, token, [
+      { date: today, steps: 8000, ...minutes(22, 15, 60) },
+    ])
+
+    assert.deepEqual(same.json(), { updatedDates: [today] })
+
+    // Lower total: ignored, minutes included.
+    const lower = await postSteps(app, token, [
+      { date: today, steps: 7000, ...minutes(1, 1, 1) },
+    ])
+
+    assert.deepEqual(lower.json(), { updatedDates: [] })
+
+    // Same total and same minutes: nothing changes.
+    const unchanged = await postSteps(app, token, [
+      { date: today, steps: 8000, ...minutes(22, 15, 60) },
+    ])
+
+    assert.deepEqual(unchanged.json(), { updatedDates: [] })
+
+    assert.deepEqual((await getSteps(app, token)).json(), [
+      { date: today, steps: 8000, ...minutes(22, 15, 60) },
+    ])
+  })
+
+  it('keeps the minutes when a day is sent without them', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+    const today = await serverDate()
+
+    await postSteps(app, token, [
+      { date: today, steps: 8000, ...minutes(20, 15, 90) },
+    ])
+
+    // An older app version: higher total, no minutes.
+    await postSteps(app, token, [{ date: today, steps: 9000 }])
+
+    assert.deepEqual((await getSteps(app, token)).json(), [
+      { date: today, steps: 9000, ...minutes(20, 15, 90) },
+    ])
+  })
+
+  it('rejects incomplete or impossible minutes', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+    const today = await serverDate()
+
+    for (const day of [
+      { date: today, steps: 100, activeMinutes: 10 },
+      { date: today, steps: 100, ...minutes(-1, 0, 0) },
+      { date: today, steps: 100, ...minutes(0, 0, 1441) },
+      { date: today, steps: 100, ...minutes(1.5, 0, 0) },
+      { date: today, steps: 100, ...minutes(1000, 500, 0) },
+    ]) {
+      const response = await postSteps(app, token, [day])
+
+      assert.equal(response.statusCode, 400, JSON.stringify(day))
+    }
+  })
+
+  it('accepts a whole day of activity', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+
+    const response = await postSteps(app, token, [
+      { date: await serverDate(), steps: 100, ...minutes(1000, 440, 1440) },
+    ])
+
+    assert.equal(response.statusCode, 200)
   })
 })
 

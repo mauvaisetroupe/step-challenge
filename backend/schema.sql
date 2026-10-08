@@ -15,6 +15,10 @@ CREATE TABLE daily_steps (
     user_id    uuid        NOT NULL,
     date       date        NOT NULL,
     steps      integer     NOT NULL,
+    -- Minutes calculées par l'application (ADR 0010) ; NULL : jamais envoyées.
+    active_minutes      smallint,
+    very_active_minutes smallint,
+    inactive_minutes    smallint,
     updated_at timestamptz NOT NULL DEFAULT now(),
     -- Une ligne par utilisateur et par jour : cible de l'upsert de POST /api/steps.
     CONSTRAINT daily_steps_pkey PRIMARY KEY (user_id, date),

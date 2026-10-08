@@ -14,6 +14,9 @@ export const MAX_DAILY_STEPS = 100_000
 /** The app syncs the last 30 days; 31 covers month boundaries. */
 export const MAX_DAYS_PER_REQUEST = 31
 
+/** Minutes in a day: bound of the activity minutes (ADR 0010). */
+export const MINUTES_PER_DAY = 1440
+
 /** Default history: enough for the 12-month statistics view. */
 export const DEFAULT_HISTORY_DAYS = 400
 
@@ -31,9 +34,32 @@ function isInvalidDateError(error: unknown) {
   )
 }
 
+/**
+ * Activity minutes of a day (ADR 0010), computed by the app from the
+ * steps per minute. Optional: older app versions and the web send
+ * none; null when never sent.
+ */
+type ActivityMinutes = {
+  activeMinutes: number | null
+  veryActiveMinutes: number | null
+  inactiveMinutes: number | null
+}
+
 type DayEntry = {
   date: string
   steps: number
+} & Partial<ActivityMinutes>
+
+const ACTIVITY_FIELDS = [
+  'activeMinutes',
+  'veryActiveMinutes',
+  'inactiveMinutes',
+] as const
+
+const minutesSchema = {
+  type: 'integer',
+  minimum: 0,
+  maximum: MINUTES_PER_DAY,
 }
 
 const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
@@ -48,8 +74,14 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
    * The server keeps the highest value per day: sending the same or a
    * lower total again has no effect, so the sync is idempotent.
    *
-   * Returns the dates that were actually recorded (new day or higher
-   * total), so the app can report what a sync changed.
+   * The activity minutes (ADR 0010), all three or none, follow the
+   * steps: they are replaced when the total received is the same or
+   * higher (steps arriving late, from a watch, can lower the inactive
+   * minutes without changing the total). A day sent without them keeps
+   * the stored ones.
+   *
+   * Returns the dates that were actually recorded (new day, higher
+   * total or new minutes), so the app can report what a sync changed.
    */
   app.post<{
     Body: { days: DayEntry[] }
@@ -77,6 +109,15 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
                     minimum: 0,
                     maximum: MAX_DAILY_STEPS,
                   },
+                  activeMinutes: minutesSchema,
+                  veryActiveMinutes: minutesSchema,
+                  inactiveMinutes: minutesSchema,
+                },
+                // All three activity minutes, or none.
+                dependencies: {
+                  activeMinutes: ['veryActiveMinutes', 'inactiveMinutes'],
+                  veryActiveMinutes: ['activeMinutes', 'inactiveMinutes'],
+                  inactiveMinutes: ['activeMinutes', 'veryActiveMinutes'],
                 },
               },
             },
@@ -90,6 +131,17 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
 
       if (new Set(dates).size !== dates.length) {
         return reply.code(400).send({ error: 'duplicate_date' })
+      }
+
+      // A minute is active or very active, not both.
+      if (
+        days.some(
+          (day) =>
+            (day.activeMinutes ?? 0) + (day.veryActiveMinutes ?? 0) >
+            MINUTES_PER_DAY,
+        )
+      ) {
+        return reply.code(400).send({ error: 'invalid_minutes' })
       }
 
       try {
@@ -115,20 +167,41 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
         throw error
       }
 
-      // Rows skipped by the WHERE clause (same or lower total) are
-      // neither updated nor returned.
+      // Rows skipped by the WHERE clause (lower total, or same total
+      // without new minutes) are neither updated nor returned.
       const result = await db.query<{ date: string }>(
         `
-        INSERT INTO daily_steps (user_id, date, steps)
-        SELECT $1, d.date, d.steps
-        FROM unnest($2::date[], $3::int[]) AS d(date, steps)
+        INSERT INTO daily_steps (
+            user_id, date, steps,
+            active_minutes, very_active_minutes, inactive_minutes
+        )
+        SELECT $1, d.date, d.steps, d.active, d.very_active, d.inactive
+        FROM unnest($2::date[], $3::int[], $4::int[], $5::int[], $6::int[])
+            AS d(date, steps, active, very_active, inactive)
         ON CONFLICT (user_id, date) DO UPDATE
         SET steps = EXCLUDED.steps,
+            active_minutes = COALESCE(EXCLUDED.active_minutes, daily_steps.active_minutes),
+            very_active_minutes = COALESCE(EXCLUDED.very_active_minutes, daily_steps.very_active_minutes),
+            inactive_minutes = COALESCE(EXCLUDED.inactive_minutes, daily_steps.inactive_minutes),
             updated_at = now()
         WHERE daily_steps.steps < EXCLUDED.steps
+           OR (
+               daily_steps.steps = EXCLUDED.steps
+               AND EXCLUDED.active_minutes IS NOT NULL
+               AND (EXCLUDED.active_minutes, EXCLUDED.very_active_minutes, EXCLUDED.inactive_minutes)
+                   IS DISTINCT FROM
+                   (daily_steps.active_minutes, daily_steps.very_active_minutes, daily_steps.inactive_minutes)
+           )
         RETURNING to_char(date, 'YYYY-MM-DD') AS date
         `,
-        [request.auth!.userId, dates, days.map((day) => day.steps)],
+        [
+          request.auth!.userId,
+          dates,
+          days.map((day) => day.steps),
+          ...ACTIVITY_FIELDS.map((field) =>
+            days.map((day) => day[field] ?? null),
+          ),
+        ],
       )
 
       return reply.send({
@@ -139,7 +212,8 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
 
   /**
    * Returns the signed-in user's daily totals since `from` (default:
-   * DEFAULT_HISTORY_DAYS days ago), most recent first.
+   * DEFAULT_HISTORY_DAYS days ago), most recent first, with the
+   * activity minutes (null when never sent).
    */
   app.get<{
     Querystring: { from?: string }
@@ -158,9 +232,13 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
     },
     async (request, reply) => {
       try {
-        const result = await db.query<DayEntry>(
+        const result = await db.query<DayEntry & ActivityMinutes>(
           `
-          SELECT to_char(date, 'YYYY-MM-DD') AS date, steps
+          SELECT to_char(date, 'YYYY-MM-DD') AS date,
+                 steps,
+                 active_minutes      AS "activeMinutes",
+                 very_active_minutes AS "veryActiveMinutes",
+                 inactive_minutes    AS "inactiveMinutes"
           FROM daily_steps
           WHERE user_id = $1
             AND date >= COALESCE($2::date, CURRENT_DATE - $3::int)

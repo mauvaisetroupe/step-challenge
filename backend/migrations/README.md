@@ -24,3 +24,4 @@ Faire une sauvegarde avant (`pg_dump`, ou Adminer → Exporter avec les données
 | `003_friends.sql` | 0002 | `invitations`, `friendships`, `friend_aliases` |
 | `004_reports_and_blocks.sql` | 0004 | `user_blocks`, `user_reports` |
 | `005_demo_credential.sql` | 0006 | Type d'identifiant `demo` (compte de démonstration des examinateurs) |
+| `006_daily_activity.sql` | 0010 | Minutes actives, très actives et inactives dans `daily_steps` |
