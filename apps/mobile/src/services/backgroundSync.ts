@@ -4,6 +4,7 @@ import {
   getNativeSyncHistory,
   scheduleNativeSync,
 } from '../../modules/step-sync'
+import { configureNativeSleepHours } from './sleepHours'
 import { syncLast30Days } from './stepSync'
 
 /**
@@ -57,9 +58,16 @@ async function saveManualRun(run: BackgroundSyncRun) {
   )
 }
 
-/** Schedules the native background sync. Called at each app start. */
+/**
+ * Schedules the native background sync, and gives it the sleep hours.
+ * Called at each app start.
+ */
 export function scheduleBackgroundSync() {
   scheduleNativeSync(SYNC_INTERVAL_MINUTES)
+
+  configureNativeSleepHours().catch((error) => {
+    console.error('Failed to give the sleep hours to the background sync:', error)
+  })
 }
 
 /**

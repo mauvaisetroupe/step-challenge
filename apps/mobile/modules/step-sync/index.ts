@@ -9,6 +9,7 @@ type StepSyncNativeModule = {
   configure(apiUrl: string, token: string): void
   clear(): void
   schedule(intervalMinutes: number): void
+  setSleepHours(bedMinute: number, wakeMinute: number): void
   getHistory(): string
 }
 
@@ -36,6 +37,11 @@ export function clearNativeSync() {
 /** Schedules the background sync (keeps an existing schedule). */
 export function scheduleNativeSync(intervalMinutes: number) {
   native?.schedule(intervalMinutes)
+}
+
+/** Sleep hours (minutes since midnight): no inactivity counted then. */
+export function setNativeSleepHours(bedMinute: number, wakeMinute: number) {
+  native?.setSleepHours(bedMinute, wakeMinute)
 }
 
 export function getNativeSyncHistory(): NativeSyncRun[] {

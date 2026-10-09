@@ -1,5 +1,5 @@
 {
-  "description": "Activity minutes (ADR 0010), shared by the TypeScript tests (src/services/activity.test.ts) and the Kotlin tests (modules/step-sync/android/src/test). Each day is a list of runs [minutes, steps per minute] from midnight; inactivePeriods are [start, end) in minutes since midnight.",
+  "description": "Activity minutes (ADR 0010), shared by the TypeScript tests (src/services/activity.test.ts) and the Kotlin tests (modules/step-sync/android/src/test). Each day is a list of runs [minutes, steps per minute] from midnight; inactivePeriods are [start, end) in minutes since midnight. Optional sleepHours {bed, wake} in minutes since midnight: no inactivity during them; absent means none.",
   "days": [
     {
       "name": "no steps",
@@ -40,6 +40,29 @@
       "name": "two inactive periods, one of exactly 60 minutes; shuffling next to a walk stays inactive",
       "runs": [[360, 0], [10, 150], [60, 0], [10, 150], [59, 0], [10, 150], [90, 5], [10, 150], [831, 0]],
       "expected": { "activeMinutes": 0, "veryActiveMinutes": 40, "inactiveMinutes": 150, "inactivePeriods": [[370, 430], [509, 599]] }
+    },
+    {
+      "name": "bed after midnight: the night is not inactive",
+      "sleepHours": {"bed": 1380, "wake": 420},
+      "runs": [[5, 0], [5, 30], [410, 0], [10, 120], [1010, 0]],
+      "expected": { "activeMinutes": 10, "veryActiveMinutes": 0, "inactiveMinutes": 0, "inactivePeriods": [] }
+    },
+    {
+      "name": "bed after midnight without sleep hours: the night would be inactive",
+      "runs": [[5, 0], [5, 30], [410, 0], [10, 120], [1010, 0]],
+      "expected": { "activeMinutes": 10, "veryActiveMinutes": 0, "inactiveMinutes": 415, "inactivePeriods": [[5, 420]] }
+    },
+    {
+      "name": "evening inactivity stops at bedtime",
+      "sleepHours": {"bed": 1380, "wake": 420},
+      "runs": [[1080, 0], [10, 120], [320, 0], [10, 120], [20, 0]],
+      "expected": { "activeMinutes": 20, "veryActiveMinutes": 0, "inactiveMinutes": 290, "inactivePeriods": [[1090, 1380]] }
+    },
+    {
+      "name": "daytime sleep hours (night shift)",
+      "sleepHours": {"bed": 480, "wake": 960},
+      "runs": [[360, 0], [10, 120], [590, 0], [10, 120], [470, 0]],
+      "expected": { "activeMinutes": 20, "veryActiveMinutes": 0, "inactiveMinutes": 110, "inactivePeriods": [[370, 480]] }
     }
   ]
 }

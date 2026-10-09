@@ -11,9 +11,10 @@
  * - walking means about 2 minutes of steps (200) within 15 minutes,
  *   even in several bits (a trip to the coffee machine and back); a
  *   minute under 20 steps is not walking (shuffling at the desk);
- * - only between the first and the last step of the day, so that the
- *   night is not counted (no sleep data, which would be another Health
- *   Connect permission).
+ * - only between the first and the last step of the day, and never
+ *   during the sleep hours of Settings → Activity (services/sleepHours):
+ *   a few steps to bed after midnight must not make the night inactive.
+ *   No sleep data from Health Connect: another permission.
  */
 
 /**
@@ -41,6 +42,31 @@ export type StepSlice = {
   steps: number
 }
 
+/**
+ * Sleep hours, in minutes since midnight. Bed time after wake time
+ * crosses midnight (23:00 → 06:00); the same value for both means none.
+ */
+export type SleepHours = {
+  bed: number
+  wake: number
+}
+
+/** Minute of the day of a date (local time). */
+export function minuteOfDay(date: Date) {
+  return date.getHours() * 60 + date.getMinutes()
+}
+
+/** Whether a minute of the day is within the sleep hours. */
+export function isSleepMinute(minute: number, { bed, wake }: SleepHours) {
+  if (bed === wake) {
+    return false
+  }
+
+  return bed > wake
+    ? minute >= bed || minute < wake
+    : minute >= bed && minute < wake
+}
+
 export type InactivePeriod = {
   start: Date
   end: Date
@@ -49,7 +75,10 @@ export type InactivePeriod = {
 /**
  * Inactive periods among consecutive slices (sorted, without gaps).
  */
-export function findInactivePeriods(slices: StepSlice[]): InactivePeriod[] {
+export function findInactivePeriods(
+  slices: StepSlice[],
+  sleepHours?: SleepHours,
+): InactivePeriod[] {
   const first = slices.findIndex((slice) => slice.steps > 0)
   const last = slices.findLastIndex((slice) => slice.steps > 0)
 
@@ -90,7 +119,12 @@ export function findInactivePeriods(slices: StepSlice[]): InactivePeriod[] {
   }
 
   for (let index = first; index <= last; index++) {
-    if (active[index]) {
+    const asleep =
+      sleepHours !== undefined &&
+      isSleepMinute(minuteOfDay(slices[index].start), sleepHours)
+
+    // Walking, or sleeping: not inactive.
+    if (active[index] || asleep) {
       closeRun(index)
     } else if (runStart === null) {
       runStart = index

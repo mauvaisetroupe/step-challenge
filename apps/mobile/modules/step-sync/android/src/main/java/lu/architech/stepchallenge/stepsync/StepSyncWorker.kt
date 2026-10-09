@@ -117,8 +117,10 @@ class StepSyncWorker(context: Context, params: WorkerParameters) :
     }
 
     // A day that cannot be read minute by minute keeps its steps only.
+    val sleepHours = SyncStore(applicationContext).sleepHours()
+
     for (day in days.takeLast(ACTIVITY_DAYS)) {
-      day.activity = runCatching { readActivity(client, day.date) }
+      day.activity = runCatching { readActivity(client, day.date, sleepHours) }
         .onFailure { Log.w(TAG, "Activity minutes of ${day.date} unavailable: ${it.message}") }
         .getOrNull()
     }
@@ -130,6 +132,7 @@ class StepSyncWorker(context: Context, params: WorkerParameters) :
   private suspend fun readActivity(
     client: HealthConnectClient,
     date: LocalDate,
+    sleepHours: ActivityCalculator.SleepHours,
   ): ActivityCalculator.DayActivity {
     val zone = ZoneId.systemDefault()
     val start = date.atStartOfDay(zone).toInstant()
@@ -152,7 +155,13 @@ class StepSyncWorker(context: Context, params: WorkerParameters) :
       }
     }
 
-    return ActivityCalculator.compute(minutes)
+    // Clock minute of each slice: differs from its index on daylight
+    // saving days.
+    val minuteOfDay = IntArray(minutes.size) { index ->
+      start.plusSeconds(index * 60L).atZone(zone).toLocalTime().let { it.hour * 60 + it.minute }
+    }
+
+    return ActivityCalculator.compute(minutes, minuteOfDay, sleepHours)
   }
 
   /** Sends the days, 31 at most per request. Returns the days updated. */

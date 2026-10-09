@@ -29,7 +29,8 @@ describe('activity minutes (shared fixtures)', () => {
   for (const day of fixtures.days) {
     it(day.name, () => {
       const slices = toSlices(day.runs)
-      const periods = findInactivePeriods(slices)
+      const sleepHours = 'sleepHours' in day ? day.sleepHours : undefined
+      const periods = findInactivePeriods(slices, sleepHours)
       const { score, ...minutes } = summarizeDayActivity(slices, periods)
 
       assert.equal(slices.length, 1440, 'a fixture day lasts 1440 minutes')

@@ -26,6 +26,21 @@ internal object ActivityCalculator {
   /** Steps per minute from which a minute is very active (vigorous). */
   const val VERY_ACTIVE_CADENCE = 130L
 
+  /**
+   * Sleep hours, in minutes since midnight: no inactivity is counted
+   * then. Bed time after wake time crosses midnight; the same value for
+   * both means none.
+   */
+  data class SleepHours(val bed: Int, val wake: Int) {
+    fun contains(minuteOfDay: Int) = when {
+      bed == wake -> false
+      bed > wake -> minuteOfDay >= bed || minuteOfDay < wake
+      else -> minuteOfDay >= bed && minuteOfDay < wake
+    }
+  }
+
+  val DEFAULT_SLEEP_HOURS = SleepHours(bed = 23 * 60, wake = 6 * 60)
+
   data class DayActivity(
     val activeMinutes: Int,
     val veryActiveMinutes: Int,
@@ -34,7 +49,15 @@ internal object ActivityCalculator {
     val inactivePeriods: List<Pair<Int, Int>>,
   )
 
-  fun compute(stepsPerMinute: LongArray): DayActivity {
+  /**
+   * `minuteOfDay[i]`: clock minute of `stepsPerMinute[i]` (they differ
+   * from the index on daylight saving days).
+   */
+  fun compute(
+    stepsPerMinute: LongArray,
+    minuteOfDay: IntArray = IntArray(stepsPerMinute.size) { it },
+    sleepHours: SleepHours? = null,
+  ): DayActivity {
     var activeMinutes = 0
     var veryActiveMinutes = 0
 
@@ -46,7 +69,7 @@ internal object ActivityCalculator {
       }
     }
 
-    val periods = inactivePeriods(stepsPerMinute)
+    val periods = inactivePeriods(stepsPerMinute, minuteOfDay, sleepHours)
 
     return DayActivity(
       activeMinutes = activeMinutes,
@@ -58,9 +81,13 @@ internal object ActivityCalculator {
 
   /**
    * Periods of at least INACTIVE_MINUTES without walking, between the
-   * first and the last step of the day (the night is not counted).
+   * first and the last step of the day, outside the sleep hours.
    */
-  private fun inactivePeriods(steps: LongArray): List<Pair<Int, Int>> {
+  private fun inactivePeriods(
+    steps: LongArray,
+    minuteOfDay: IntArray,
+    sleepHours: SleepHours?,
+  ): List<Pair<Int, Int>> {
     val first = steps.indexOfFirst { it > 0 }
     val last = steps.indexOfLast { it > 0 }
 
@@ -97,7 +124,10 @@ internal object ActivityCalculator {
     }
 
     for (index in first..last) {
-      if (active[index]) {
+      val asleep = sleepHours?.contains(minuteOfDay[index]) == true
+
+      // Walking, or sleeping: not inactive.
+      if (active[index] || asleep) {
         closeRun(index)
       } else if (runStart == null) {
         runStart = index

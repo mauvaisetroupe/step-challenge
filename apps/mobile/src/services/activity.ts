@@ -2,6 +2,7 @@ import {
   findInactivePeriods,
   SLICE_MINUTES,
   type InactivePeriod,
+  type SleepHours,
   type StepSlice,
 } from './inactivity'
 
@@ -71,9 +72,12 @@ export function summarizeDayActivity(
 }
 
 /** Activity minutes of a whole day of slices, for the sync (ADR 0010). */
-export function computeDayActivity(slices: StepSlice[]) {
+export function computeDayActivity(
+  slices: StepSlice[],
+  sleepHours: SleepHours,
+) {
   const { activeMinutes, veryActiveMinutes, inactiveMinutes } =
-    summarizeDayActivity(slices, findInactivePeriods(slices))
+    summarizeDayActivity(slices, findInactivePeriods(slices, sleepHours))
 
   return { activeMinutes, veryActiveMinutes, inactiveMinutes }
 }

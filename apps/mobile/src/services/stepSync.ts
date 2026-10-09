@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   aggregateGroupByPeriod,
   initialize,
@@ -8,6 +9,7 @@ import {
 
 import { postMySteps, type DayStat } from '../api/steps'
 import { computeDayActivity } from './activity'
+import { loadSleepHours } from './sleepHours'
 import { getHealthConnectStepSlices } from './stepSlices'
 
 export type { DayStat }
@@ -20,6 +22,24 @@ const HISTORY_DAYS = 30
  * which can still change. "Sync now" recomputes the 30 days.
  */
 const ACTIVITY_DAYS = 3
+
+/**
+ * Set once the activity minutes of the 30 days were sent: until then
+ * (first sync after the update, or new sleep hours), every sync sends
+ * them for the 30 days, not only the last ones.
+ */
+const ACTIVITY_BACKFILL_KEY = '@step-challenge/activity-backfill-done'
+
+/** Sends the activity minutes of the 30 days again at the next sync. */
+export async function requestActivityBackfill() {
+  await AsyncStorage.removeItem(ACTIVITY_BACKFILL_KEY)
+}
+
+async function defaultActivityDays() {
+  const done = await AsyncStorage.getItem(ACTIVITY_BACKFILL_KEY)
+
+  return done ? ACTIVITY_DAYS : HISTORY_DAYS
+}
 
 /**
  * Health Connect permissions of Step Challenge: read steps, also when
@@ -72,7 +92,10 @@ type ReadOptions = {
    * background task: the permission dialog needs the app on screen.
    */
   requestPermissions?: boolean
-  /** Last days with activity minutes; ACTIVITY_DAYS by default. */
+  /**
+   * Last days with activity minutes: ACTIVITY_DAYS, or the 30 days
+   * until they were sent once.
+   */
   activityDays?: number
 }
 
@@ -154,6 +177,8 @@ async function getHealthConnectDailyStats(
  * minute by minute. A day that cannot be read keeps its steps only.
  */
 async function addActivityMinutes(days: DayStat[], count: number, now: Date) {
+  const sleepHours = await loadSleepHours()
+
   for (const day of days.slice(-count)) {
     const [year, month, date] = day.date.split('-').map(Number)
     const start = new Date(year, month - 1, date)
@@ -165,7 +190,7 @@ async function addActivityMinutes(days: DayStat[], count: number, now: Date) {
         end < now ? end : now,
       )
 
-      Object.assign(day, computeDayActivity(slices))
+      Object.assign(day, computeDayActivity(slices, sleepHours))
     } catch (error) {
       console.error(`Activity minutes of ${day.date} unavailable:`, error)
     }
@@ -199,7 +224,7 @@ export async function getHealthConnectLast30Days(
 
   return addActivityMinutes(
     days,
-    options.activityDays ?? ACTIVITY_DAYS,
+    options.activityDays ?? (await defaultActivityDays()),
     now,
   )
 }
@@ -249,7 +274,18 @@ export async function syncTodaySteps() {
 export async function syncStatsToServer(
   healthConnectStats: DayStat[],
 ) {
-  return postMySteps(healthConnectStats)
+  const updatedDates = await postMySteps(healthConnectStats)
+
+  // The 30 days had their activity minutes: no need to send them again.
+  const withMinutes = healthConnectStats.filter(
+    (day) => day.activeMinutes != null,
+  )
+
+  if (withMinutes.length >= HISTORY_DAYS) {
+    await AsyncStorage.setItem(ACTIVITY_BACKFILL_KEY, 'true')
+  }
+
+  return updatedDates
 }
 
 /**

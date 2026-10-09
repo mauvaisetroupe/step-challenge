@@ -55,6 +55,17 @@ internal class SyncStore(context: Context) {
 
   fun historyJson(): String = prefs.getString(KEY_HISTORY, null) ?: "[]"
 
+  /** Sleep hours of Settings → Activity (src/services/sleepHours.ts). */
+  fun saveSleepHours(hours: ActivityCalculator.SleepHours) {
+    prefs.edit().putInt(KEY_SLEEP_BED, hours.bed).putInt(KEY_SLEEP_WAKE, hours.wake).apply()
+  }
+
+  /** The default ones (23:00 → 06:00) until the app gives them. */
+  fun sleepHours() = ActivityCalculator.SleepHours(
+    bed = prefs.getInt(KEY_SLEEP_BED, ActivityCalculator.DEFAULT_SLEEP_HOURS.bed),
+    wake = prefs.getInt(KEY_SLEEP_WAKE, ActivityCalculator.DEFAULT_SLEEP_HOURS.wake),
+  )
+
   private fun key(): SecretKey {
     val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
 
@@ -101,6 +112,8 @@ internal class SyncStore(context: Context) {
     const val KEY_API_URL = "apiUrl"
     const val KEY_TOKEN = "token"
     const val KEY_HISTORY = "history"
+    const val KEY_SLEEP_BED = "sleepBed"
+    const val KEY_SLEEP_WAKE = "sleepWake"
     const val MAX_HISTORY = 10
     const val KEYSTORE = "AndroidKeyStore"
     const val KEY_ALIAS = "step-challenge-background-sync"

@@ -31,6 +31,11 @@ class StepSyncModule : Module() {
       StepSyncScheduler.schedule(context, intervalMinutes.toLong())
     }
 
+    /** Sleep hours, in minutes since midnight: no inactivity then. */
+    Function("setSleepHours") { bedMinute: Int, wakeMinute: Int ->
+      SyncStore(context).saveSleepHours(ActivityCalculator.SleepHours(bedMinute, wakeMinute))
+    }
+
     /** Background runs, most recent first, as a JSON array. */
     Function("getHistory") {
       SyncStore(context).historyJson()

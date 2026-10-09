@@ -32,7 +32,10 @@ class ActivityCalculatorTest {
 
       assertEquals("$name: a fixture day lasts 1440 minutes", 1440, steps.size)
 
-      val activity = ActivityCalculator.compute(steps.toLongArray())
+      val sleepHours = day.optJSONObject("sleepHours")?.let {
+        ActivityCalculator.SleepHours(it.getInt("bed"), it.getInt("wake"))
+      }
+      val activity = ActivityCalculator.compute(steps.toLongArray(), sleepHours = sleepHours)
 
       val periods = expected.getJSONArray("inactivePeriods").let { array ->
         (0 until array.length()).map { array.getJSONArray(it).let { p -> p.getInt(0) to p.getInt(1) } }
