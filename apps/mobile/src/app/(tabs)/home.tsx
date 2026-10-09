@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { getLeaderboard, getMySteps, type DayStat } from '../../api/steps'
 import {
   getHealthConnectLast30Days,
+  syncActivityMinutes,
   syncStatsToServer,
 } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
@@ -72,7 +73,9 @@ export default function HomeScreen() {
       // the leaderboard and the history, so that they include today.
       if (Platform.OS !== 'web') {
         try {
-          const stats = await getHealthConnectLast30Days()
+          // Steps only: shown and sent at once; the activity minutes
+          // follow below, without delaying the screen.
+          const stats = await getHealthConnectLast30Days({ activityDays: 0 })
 
           healthConnectToday =
             stats.find((day) => day.date === todayKey)?.steps ?? 0
@@ -84,6 +87,12 @@ export default function HomeScreen() {
           } catch (err) {
             console.error('Step synchronization error:', err)
           }
+
+          // In the background: the minutes of the last days (30 the
+          // first time after the update, ADR 0010).
+          syncActivityMinutes(stats).catch((err) => {
+            console.error('Activity minutes synchronization error:', err)
+          })
         } catch (err) {
           console.error('Health Connect step read error:', err)
           setStepsError(

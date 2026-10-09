@@ -177,6 +177,11 @@ async function getHealthConnectDailyStats(
  * minute by minute. A day that cannot be read keeps its steps only.
  */
 async function addActivityMinutes(days: DayStat[], count: number, now: Date) {
+  // slice(-0) would take every day.
+  if (count <= 0) {
+    return days
+  }
+
   const sleepHours = await loadSleepHours()
 
   for (const day of days.slice(-count)) {
@@ -286,6 +291,26 @@ export async function syncStatsToServer(
   }
 
   return updatedDates
+}
+
+/**
+ * Computes the activity minutes of the last days (ACTIVITY_DAYS, or the
+ * 30 days until they were sent once) and sends them with their steps.
+ * Separate from the steps so that a screen can show and send the steps
+ * first: the minutes read Health Connect minute by minute, which takes
+ * a while for 30 days.
+ */
+export async function syncActivityMinutes(days: DayStat[]) {
+  const copies = days.map(({ date, steps }) => ({ date, steps }))
+  const withMinutes = (
+    await addActivityMinutes(copies, await defaultActivityDays(), new Date())
+  ).filter((day) => day.activeMinutes != null)
+
+  if (withMinutes.length === 0) {
+    return []
+  }
+
+  return syncStatsToServer(withMinutes)
 }
 
 /**
