@@ -213,7 +213,10 @@
       "detail": "D'après tes pas : 1 point par minute active (100 pas par minute ou plus), 2 par minute très active (130 ou plus). L'OMS recommande l'équivalent de {{goal}} par semaine.",
       "noData": "Pas encore de score enregistré : il est envoyé à chaque synchronisation à partir de cette version.",
       "weekTotal": "Sur 7 jours : {{score}} (l'OMS recommande {{goal}} par semaine)",
-      "weekAverage": "Moyenne par semaine : {{score}} (l'OMS recommande {{goal}})"
+      "weekAverage": "Moyenne par semaine : {{score}} (l'OMS recommande {{goal}})",
+      "weekOf": "Semaine du {{date}}",
+      "noMinutes": "pas de donnée",
+      "minutesDetail": "très actif {{veryActive}} · actif {{active}} · inactif {{inactive}}"
     },
     "goal": "Objectif",
     "inactive": "Inactif",

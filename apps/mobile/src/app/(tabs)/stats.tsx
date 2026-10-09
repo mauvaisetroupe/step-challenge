@@ -597,11 +597,15 @@ export default function StatsScreen() {
                         value: item.steps,
                         reached:
                           getMonthPercent(item.steps, parseDateKey(item.date)) >= 100,
+                        // 10,000 steps per day of the month.
+                        goal: DAILY_GOAL * getMonthDays(parseDateKey(item.date)),
                       }))}
                     />
                   ) : (
                     <BarChart
                       goal={DAILY_GOAL}
+                      showGoalLine
+                      goalLabel={`${formatters.formatNumber(DAILY_GOAL / 1000)}k`}
                       data={dailyStats.map((item) => ({
                         label: formatShortDate(parseDateKey(item.date), formatters),
                         value: item.steps,

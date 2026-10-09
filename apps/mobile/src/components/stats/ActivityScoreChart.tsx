@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import { getMySteps, type DayStat } from '@/api/steps'
 import BarChart, { type ChartPoint } from '@/components/stats/BarChart'
+import { useFormatDuration } from '@/components/stats/DayActivitySummary'
 import { useFormatters, type Formatters } from '@/i18n'
 import {
   DAILY_ACTIVITY_GOAL,
@@ -36,41 +37,62 @@ function shortDate(date: Date, f: Formatters) {
   return f.formatDate(date, { day: 'numeric', month: 'short' })
 }
 
-/** Score per day or per week; null when no minutes were ever sent. */
-type Bucket = { start: Date; score: number | null }
+/**
+ * Score and minutes per day or per week; null when no minutes were
+ * ever sent.
+ */
+type Bucket = {
+  start: Date
+  score: number | null
+  activeMinutes: number
+  veryActiveMinutes: number
+  inactiveMinutes: number
+}
 
 function buildBuckets(period: Props['period'], days: DayStat[]): Bucket[] {
-  const scores = new Map(days.map((day) => [day.date, storedDayScore(day)]))
+  const byDate = new Map(days.map((day) => [day.date, day]))
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+
+  // Sum of the days of [start, start + length[ that have minutes.
+  const bucket = (start: Date, length: number): Bucket => {
+    const result: Bucket = {
+      start,
+      score: null,
+      activeMinutes: 0,
+      veryActiveMinutes: 0,
+      inactiveMinutes: 0,
+    }
+
+    for (let offset = 0; offset < length; offset++) {
+      const day = byDate.get(dateKey(addDays(start, offset)))
+      const score = day ? storedDayScore(day) : null
+
+      if (day && score !== null) {
+        result.score = (result.score ?? 0) + score
+        result.activeMinutes += day.activeMinutes ?? 0
+        result.veryActiveMinutes += day.veryActiveMinutes ?? 0
+        result.inactiveMinutes += day.inactiveMinutes ?? 0
+      }
+    }
+
+    return result
+  }
 
   if (period !== '1y') {
     const count = period === '7d' ? 7 : 30
 
-    return Array.from({ length: count }, (_, index) => {
-      const start = addDays(today, index - count + 1)
-
-      return { start, score: scores.get(dateKey(start)) ?? null }
-    })
+    return Array.from({ length: count }, (_, index) =>
+      bucket(addDays(today, index - count + 1), 1),
+    )
   }
 
   // Weeks from Monday, the current one last.
   const monday = addDays(today, -((today.getDay() + 6) % 7))
 
-  return Array.from({ length: WEEKS }, (_, index) => {
-    const start = addDays(monday, (index - WEEKS + 1) * 7)
-    let score: number | null = null
-
-    for (let day = 0; day < 7; day++) {
-      const value = scores.get(dateKey(addDays(start, day)))
-
-      if (value != null) {
-        score = (score ?? 0) + value
-      }
-    }
-
-    return { start, score }
-  })
+  return Array.from({ length: WEEKS }, (_, index) =>
+    bucket(addDays(monday, (index - WEEKS + 1) * 7), 7),
+  )
 }
 
 /**
@@ -84,6 +106,7 @@ export default function ActivityScoreChart({ period, ready }: Props) {
   const { colors } = useTheme()
   const { t } = useTranslation()
   const formatters = useFormatters()
+  const formatDuration = useFormatDuration()
   const [days, setDays] = useState<DayStat[] | null>(null)
 
   useEffect(() => {
@@ -159,6 +182,68 @@ export default function ActivityScoreChart({ period, ready }: Props) {
           )}
         </Text>
       )}
+
+      {withData.length > 0 && (
+        <View style={styles.list}>
+          {[...buckets].reverse().map((bucket) => {
+            const reached = bucket.score !== null && bucket.score >= goal
+
+            return (
+              <View key={bucket.start.getTime()} style={styles.item}>
+                <View style={styles.mainRow}>
+                  <Text style={styles.name}>
+                    {weekly
+                      ? t('stats.activity.weekOf', {
+                          date: shortDate(bucket.start, formatters),
+                        })
+                      : formatters.formatDate(bucket.start, { weekday: 'long' })}
+                  </Text>
+
+                  <View style={styles.status}>
+                    <Text style={styles.score}>
+                      {bucket.score === null ? '—' : bucket.score}
+                    </Text>
+
+                    {bucket.score !== null && (
+                      <View
+                        style={[
+                          styles.circle,
+                          reached ? styles.circleSuccess : styles.circleFailure,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.icon,
+                            reached ? styles.iconSuccess : styles.iconFailure,
+                          ]}
+                        >
+                          {reached ? '✓' : '✕'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.subRow}>
+                  <Text style={[styles.detail, styles.date]}>
+                    {weekly ? '' : shortDate(bucket.start, formatters)}
+                  </Text>
+
+                  <Text style={styles.detail}>
+                    {bucket.score === null
+                      ? t('stats.activity.noMinutes')
+                      : t('stats.activity.minutesDetail', {
+                          veryActive: formatDuration(bucket.veryActiveMinutes),
+                          active: formatDuration(bucket.activeMinutes),
+                          inactive: formatDuration(bucket.inactiveMinutes),
+                        })}
+                  </Text>
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      )}
     </View>
   )
 }
@@ -173,5 +258,94 @@ const createStyles = (c: Colors) =>
       fontSize: 13,
       color: c.textSecondary,
       textAlign: 'center',
+    },
+
+    // Same layout as the steps list of the Stats screen.
+    list: {
+      marginTop: 12,
+    },
+
+    item: {
+      paddingVertical: 11,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+
+    mainRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+
+    name: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '500',
+      color: c.text,
+      textTransform: 'capitalize',
+    },
+
+    status: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+
+    score: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: c.text,
+      minWidth: 40,
+      textAlign: 'right',
+    },
+
+    circle: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+    },
+
+    circleSuccess: {
+      borderColor: c.success,
+      backgroundColor: c.successSoft,
+    },
+
+    circleFailure: {
+      borderColor: c.danger,
+      backgroundColor: c.dangerSoft,
+    },
+
+    icon: {
+      fontSize: 13,
+      fontWeight: '800',
+      lineHeight: 16,
+    },
+
+    iconSuccess: {
+      color: c.success,
+    },
+
+    iconFailure: {
+      color: c.danger,
+    },
+
+    subRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 2,
+    },
+
+    detail: {
+      fontSize: 12,
+      color: c.textMuted,
+    },
+
+    date: {
+      textTransform: 'capitalize',
     },
   })

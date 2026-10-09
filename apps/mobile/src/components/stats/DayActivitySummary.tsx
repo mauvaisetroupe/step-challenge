@@ -9,7 +9,7 @@ type Props = {
 }
 
 /** 75 → "1 h 15", 45 → "45 min". */
-function useFormatDuration() {
+export function useFormatDuration() {
   const { t } = useTranslation()
 
   return (minutes: number) =>
