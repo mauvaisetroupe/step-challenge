@@ -55,6 +55,14 @@ internal class SyncStore(context: Context) {
 
   fun historyJson(): String = prefs.getString(KEY_HISTORY, null) ?: "[]"
 
+  /** Interval of the last schedule, to schedule again at sign-in. */
+  fun saveIntervalMinutes(minutes: Long) {
+    prefs.edit().putLong(KEY_INTERVAL, minutes).apply()
+  }
+
+  fun intervalMinutes(): Long? =
+    prefs.getLong(KEY_INTERVAL, 0L).takeIf { it > 0 }
+
   /** Sleep hours of Settings → Activity (src/services/sleepHours.ts). */
   fun saveSleepHours(hours: ActivityCalculator.SleepHours) {
     prefs.edit().putInt(KEY_SLEEP_BED, hours.bed).putInt(KEY_SLEEP_WAKE, hours.wake).apply()
@@ -112,6 +120,7 @@ internal class SyncStore(context: Context) {
     const val KEY_API_URL = "apiUrl"
     const val KEY_TOKEN = "token"
     const val KEY_HISTORY = "history"
+    const val KEY_INTERVAL = "intervalMinutes"
     const val KEY_SLEEP_BED = "sleepBed"
     const val KEY_SLEEP_WAKE = "sleepWake"
     const val MAX_HISTORY = 10

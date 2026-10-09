@@ -16,9 +16,15 @@ class StepSyncModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("StepSync")
 
-    /** API address and session token used by the worker. */
+    /**
+     * API address and session token used by the worker. A new sign-in
+     * schedules the sync again: signing out cancelled it, and the app
+     * only schedules it at start.
+     */
     Function("configure") { apiUrl: String, token: String ->
-      SyncStore(context).saveConfig(apiUrl, token)
+      val store = SyncStore(context)
+      store.saveConfig(apiUrl, token)
+      store.intervalMinutes()?.let { StepSyncScheduler.schedule(context, it) }
     }
 
     /** Signed out: forget the token and stop the sync. */
@@ -28,6 +34,7 @@ class StepSyncModule : Module() {
     }
 
     Function("schedule") { intervalMinutes: Int ->
+      SyncStore(context).saveIntervalMinutes(intervalMinutes.toLong())
       StepSyncScheduler.schedule(context, intervalMinutes.toLong())
     }
 
