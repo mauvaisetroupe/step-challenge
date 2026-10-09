@@ -28,7 +28,9 @@ const ACTIVITY_DAYS = 3
  * (first sync after the update, or new sleep hours), every sync sends
  * them for the 30 days, not only the last ones.
  */
-const ACTIVITY_BACKFILL_KEY = '@step-challenge/activity-backfill-done'
+// Versioned: a new version of the calculation recomputes the 30 days
+// once (v2: inactivity broken by 100 steps instead of 200).
+const ACTIVITY_BACKFILL_KEY = '@step-challenge/activity-backfill-done-v2'
 
 /** Sends the activity minutes of the 30 days again at the next sync. */
 export async function requestActivityBackfill() {

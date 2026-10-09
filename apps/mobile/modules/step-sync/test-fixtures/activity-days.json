@@ -22,7 +22,7 @@
       "expected": { "activeMinutes": 10, "veryActiveMinutes": 0, "inactiveMinutes": 70, "inactivePeriods": [[485, 555]] }
     },
     {
-      "name": "200 steps in several bits within 15 minutes break inactivity",
+      "name": "100 steps or more in several bits within 15 minutes break inactivity",
       "runs": [[480, 0], [5, 120], [40, 0], [1, 80], [5, 0], [1, 80], [5, 0], [1, 80], [40, 0], [5, 120], [857, 0]],
       "expected": { "activeMinutes": 10, "veryActiveMinutes": 0, "inactiveMinutes": 0, "inactivePeriods": [] }
     },
@@ -42,6 +42,11 @@
       "expected": { "activeMinutes": 0, "veryActiveMinutes": 40, "inactiveMinutes": 150, "inactivePeriods": [[370, 430], [509, 599]] }
     },
     {
+      "name": "a few slow minutes (about 24 steps) and a short walk break inactivity, as with Garmin",
+      "runs": [[600, 0], [10, 120], [66, 0], [4, 24], [10, 0], [1, 51], [749, 0]],
+      "expected": { "activeMinutes": 10, "veryActiveMinutes": 0, "inactiveMinutes": 66, "inactivePeriods": [[610, 676]] }
+    },
+    {
       "name": "bed after midnight: the night is not inactive",
       "sleepHours": {"bed": 1380, "wake": 420},
       "runs": [[5, 0], [5, 30], [410, 0], [10, 120], [1010, 0]],
@@ -50,7 +55,7 @@
     {
       "name": "bed after midnight without sleep hours: the night would be inactive",
       "runs": [[5, 0], [5, 30], [410, 0], [10, 120], [1010, 0]],
-      "expected": { "activeMinutes": 10, "veryActiveMinutes": 0, "inactiveMinutes": 415, "inactivePeriods": [[5, 420]] }
+      "expected": { "activeMinutes": 10, "veryActiveMinutes": 0, "inactiveMinutes": 410, "inactivePeriods": [[10, 420]] }
     },
     {
       "name": "evening inactivity stops at bedtime",

@@ -11,8 +11,8 @@ internal object ActivityCalculator {
   /** Minimum length of an inactive period, in minutes. */
   const val INACTIVE_MINUTES = 60
 
-  /** Steps that break an inactive period (about 2 minutes of walking)… */
-  const val BREAK_STEPS = 200L
+  /** Steps that break an inactive period (about a minute of walking)… */
+  const val BREAK_STEPS = 100L
 
   /** …within this window, in minutes. */
   const val BREAK_WINDOW_MINUTES = 15

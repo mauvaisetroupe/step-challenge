@@ -8,8 +8,9 @@
  *
  * - a period is inactive when it lasts at least 60 minutes without
  *   walking;
- * - walking means about 2 minutes of steps (200) within 15 minutes,
- *   even in several bits (a trip to the coffee machine and back); a
+ * - walking means about a minute of steps (100) within 15 minutes,
+ *   even in several bits (a trip to the coffee machine and back): close
+ *   to Garmin, which a few minutes of slow steps reset; a
  *   minute under 20 steps is not walking (shuffling at the desk);
  * - only between the first and the last step of the day, and never
  *   during the sleep hours of Settings → Activity (services/sleepHours):
@@ -27,8 +28,8 @@ export const SLICE_MINUTES = 1
 /** Minimum length of an inactive period, in minutes. */
 export const INACTIVE_MINUTES = 60
 
-/** Steps that break an inactive period (about 2 minutes of walking)… */
-export const BREAK_STEPS = 200
+/** Steps that break an inactive period (about a minute of walking)… */
+export const BREAK_STEPS = 100
 
 /** …within this window, in minutes. */
 export const BREAK_WINDOW_MINUTES = 15
