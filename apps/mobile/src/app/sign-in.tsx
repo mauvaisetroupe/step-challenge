@@ -5,6 +5,7 @@ import type { TFunction } from 'i18next'
 import {
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -164,143 +165,149 @@ export default function SignInScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.content}>
-        <Text style={styles.eyebrow}>{t('signIn.welcome')}</Text>
+      {/* Scrolls in landscape, where the screen is not tall enough. */}
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <Text style={styles.eyebrow}>{t('signIn.welcome')}</Text>
 
-        <Text style={styles.title}>Step Challenge</Text>
+          <Text style={styles.title}>Step Challenge</Text>
 
-        {step.name === 'google' ? (
-          <>
-            <Text style={styles.explanation}>{t('signIn.explanation')}</Text>
+          {step.name === 'google' ? (
+            <>
+              <Text style={styles.explanation}>{t('signIn.explanation')}</Text>
 
-            {isGoogleSignInSupported ? (
+              {isGoogleSignInSupported ? (
+                <TouchableOpacity
+                  style={[styles.button, loading && styles.buttonDisabled]}
+                  onPress={handleGoogleSignIn}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.buttonText}>
+                    {loading ? t('signIn.signingIn') : t('signIn.google')}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.explanation}>
+                  {t('signIn.googleErrors.unavailable')}
+                </Text>
+              )}
+            </>
+          ) : step.name === 'demo' ? (
+            <>
+              <Text style={styles.question}>{t('signIn.demo.title')}</Text>
+
+              <Text style={styles.hint}>{t('signIn.demo.hint')}</Text>
+
+              <TextInput
+                style={styles.input}
+                value={demoCode}
+                onChangeText={(value) => {
+                  setDemoCode(value)
+                  setError(null)
+                }}
+                placeholder={t('signIn.demo.code')}
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoFocus
+                maxLength={200}
+                returnKeyType="go"
+                onSubmitEditing={handleDemoSignIn}
+                editable={!loading}
+              />
+
               <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
-                onPress={handleGoogleSignIn}
-                disabled={loading}
+                style={[
+                  styles.button,
+                  (!demoCode.trim() || loading) && styles.buttonDisabled,
+                ]}
+                onPress={handleDemoSignIn}
+                disabled={!demoCode.trim() || loading}
                 activeOpacity={0.8}
               >
                 <Text style={styles.buttonText}>
-                  {loading ? t('signIn.signingIn') : t('signIn.google')}
+                  {loading ? t('signIn.signingIn') : t('signIn.demo.enter')}
                 </Text>
               </TouchableOpacity>
-            ) : (
-              <Text style={styles.explanation}>
-                {t('signIn.googleErrors.unavailable')}
-              </Text>
-            )}
-          </>
-        ) : step.name === 'demo' ? (
-          <>
-            <Text style={styles.question}>{t('signIn.demo.title')}</Text>
 
-            <Text style={styles.hint}>{t('signIn.demo.hint')}</Text>
-
-            <TextInput
-              style={styles.input}
-              value={demoCode}
-              onChangeText={(value) => {
-                setDemoCode(value)
-                setError(null)
-              }}
-              placeholder={t('signIn.demo.code')}
-              placeholderTextColor={colors.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoFocus
-              maxLength={200}
-              returnKeyType="go"
-              onSubmitEditing={handleDemoSignIn}
-              editable={!loading}
-            />
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                (!demoCode.trim() || loading) && styles.buttonDisabled,
-              ]}
-              onPress={handleDemoSignIn}
-              disabled={!demoCode.trim() || loading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>
-                {loading ? t('signIn.signingIn') : t('signIn.demo.enter')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.secondaryLink}
-              onPress={() => showStep({ name: 'google' })}
-              disabled={loading}
-            >
-              <Text style={styles.secondaryLinkText}>{t('common.back')}</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <Text style={styles.question}>{t('signIn.name.question')}</Text>
-
-            <Text style={styles.hint}>{t('signIn.name.hint')}</Text>
-
-            <TextInput
-              style={styles.input}
-              value={displayName}
-              onChangeText={(value) => {
-                setDisplayName(value)
-                setError(null)
-              }}
-              placeholder={t('signIn.name.placeholder')}
-              placeholderTextColor={colors.textMuted}
-              autoCapitalize="words"
-              autoCorrect={false}
-              autoFocus
-              maxLength={MAX_DISPLAY_NAME_LENGTH}
-              returnKeyType="done"
-              onSubmitEditing={handleCreateAccount}
-              editable={!loading}
-            />
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                (!displayName.trim() || loading) && styles.buttonDisabled,
-              ]}
-              onPress={handleCreateAccount}
-              disabled={!displayName.trim() || loading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>
-                {loading ? t('signIn.name.creating') : t('signIn.name.continue')}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Terms accepted before the display name, the only content a
-                user creates, is visible to others (ADR 0004). */}
-            <Text style={styles.terms}>
-              {t('signIn.terms.before')}
-              <Text
-                style={styles.termsLink}
-                onPress={() => openPublicPage('agreement')}
+              <TouchableOpacity
+                style={styles.secondaryLink}
+                onPress={() => showStep({ name: 'google' })}
+                disabled={loading}
               >
-                {t('signIn.terms.link')}
+                <Text style={styles.secondaryLinkText}>{t('common.back')}</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={styles.question}>{t('signIn.name.question')}</Text>
+
+              <Text style={styles.hint}>{t('signIn.name.hint')}</Text>
+
+              <TextInput
+                style={styles.input}
+                value={displayName}
+                onChangeText={(value) => {
+                  setDisplayName(value)
+                  setError(null)
+                }}
+                placeholder={t('signIn.name.placeholder')}
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="words"
+                autoCorrect={false}
+                autoFocus
+                maxLength={MAX_DISPLAY_NAME_LENGTH}
+                returnKeyType="done"
+                onSubmitEditing={handleCreateAccount}
+                editable={!loading}
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  (!displayName.trim() || loading) && styles.buttonDisabled,
+                ]}
+                onPress={handleCreateAccount}
+                disabled={!displayName.trim() || loading}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.buttonText}>
+                  {loading ? t('signIn.name.creating') : t('signIn.name.continue')}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Terms accepted before the display name, the only content a
+                  user creates, is visible to others (ADR 0004). */}
+              <Text style={styles.terms}>
+                {t('signIn.terms.before')}
+                <Text
+                  style={styles.termsLink}
+                  onPress={() => openPublicPage('agreement')}
+                >
+                  {t('signIn.terms.link')}
+                </Text>
+                {t('signIn.terms.after')}
               </Text>
-              {t('signIn.terms.after')}
-            </Text>
-          </>
+            </>
+          )}
+
+          {error && <Text style={styles.error}>{error}</Text>}
+        </View>
+
+        {step.name === 'google' && (
+          <TouchableOpacity
+            style={styles.demoLink}
+            onPress={() => showStep({ name: 'demo' })}
+            disabled={loading}
+          >
+            <Text style={styles.demoLinkText}>{t('signIn.demo.title')}</Text>
+          </TouchableOpacity>
         )}
-
-        {error && <Text style={styles.error}>{error}</Text>}
-      </View>
-
-      {step.name === 'google' && (
-        <TouchableOpacity
-          style={styles.demoLink}
-          onPress={() => showStep({ name: 'demo' })}
-          disabled={loading}
-        >
-          <Text style={styles.demoLinkText}>{t('signIn.demo.title')}</Text>
-        </TouchableOpacity>
-      )}
+      </ScrollView>
     </KeyboardAvoidingView>
   )
 }
@@ -312,10 +319,19 @@ const createStyles = (c: Colors) =>
       backgroundColor: c.background,
     },
 
+    scroll: {
+      flexGrow: 1,
+    },
+
+    // Centered, and not wider than a phone on tablets.
     content: {
       flex: 1,
       justifyContent: 'center',
       paddingHorizontal: 24,
+      paddingVertical: 24,
+      width: '100%',
+      maxWidth: 480,
+      alignSelf: 'center',
     },
 
     eyebrow: {

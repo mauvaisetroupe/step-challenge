@@ -3,7 +3,7 @@
     "name": "step-challenge",
     "slug": "step-challenge",
     "version": "1.8.2",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "stepchallenge",
     "userInterfaceStyle": "automatic",

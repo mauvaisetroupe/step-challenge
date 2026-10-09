@@ -135,7 +135,11 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 
 - [ ] **1.8.2, R8 et reprise de la synchronisation** (2026-10-09) : la Play Console signalait un code non obscurci (« Obfuscation 2 % »). R8 et `shrinkResources` activés (`expo-build-properties` : `enableMinifyInReleaseBuilds`, `enableShrinkResourcesInReleaseBuilds`), avec des règles pour le SDK Huawei Health, qui n'en fournit pas (`extraProguardRules` dans `app.json`). Testé sur le Pixel en release : écrans, connexion, Santé Connect, invitation, travailleur natif. Corrigé au passage : une déconnexion annule la synchronisation en arrière-plan, et une reconnexion sans redémarrer l'application ne la reprogrammait pas ; le module la reprogramme maintenant à chaque nouveau jeton (`configure`). À faire : test de la reprise en dev, build, vérification de l'`.aab`.
 
+- [ ] **Grands écrans : orientation libre** (pour la 1.9, 2026-10-09) : avertissement Play Console, Android 16 ignorera le verrou portrait sur tablettes et pliants. `"orientation": "default"` dans `app.json` ; écran de connexion défilant et limité à 480 de large. À faire : vérifier tous les écrans en paysage (téléphone et émulateur de tablette).
+
 ## Pièges connus
+
+- **Avertissement Play Console « edge-to-edge » (Android 15)** : `get/setStatusBarColor`, `setNavigationBarColor` et les modes d'encoche (`LAYOUT_IN_DISPLAY_CUTOUT_MODE_*`) signalés le 2026-10-09 viennent tous de bibliothèques : React Native (`StatusBarModule`, `WindowUtilKt`), Material Components (`BottomSheetDialog`) et le SDK Huawei. Rien dans notre code ; recommandation, pas blocage ; à revoir aux prochaines versions d'Expo et de React Native.
 
 - **R8 (depuis la 1.8.2)** : une nouvelle bibliothèque native qui utilise la réflexion sans fournir de règles peut casser en production seulement. Le build de production échoue sur « Missing class » : ajouter les règles `-dontwarn`/`-keep` dans `extraProguardRules` (`app.json`), d'après `android/app/build/outputs/mapping/release/missing_rules.txt`. Tester en release avant d'envoyer (`APP_VARIANT=development` puis `./gradlew :app:assembleRelease`) ; cette version de dev cherche encore le JavaScript auprès de Metro.
 
