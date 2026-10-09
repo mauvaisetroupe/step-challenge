@@ -130,6 +130,9 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 
 - [ ] **Alerte d'inactivité** (idée écartée pour l'instant, 2026-10-08) : vibrer vers 50 minutes d'inactivité. Obstacles : les pas de Garmin arrivent en retard dans Santé Connect ; WorkManager tourne au mieux toutes les 15 minutes et le mode Doze l'espace beaucoup quand le téléphone est posé immobile, justement à un bureau ; les alarmes exactes sont réservées par Google aux réveils et agendas ; un service permanent impose une notification visible et ne voit pas les pas de la montre. Les montres (Garmin) le font déjà au poignet. Si on y revient : version « approximative » sur le travailleur de l'ADR 0009, en option, heures de journée, autorisation de notifications, ADR, et mesure du Doze en dev d'abord.
 
+- [ ] **Hébergement du backend sur un VPS OVH, dans Docker** ([ADR 0011](adr/0011-backend-hosting.md), proposé, 2026-10-09) : VPS-1 dans l'UE, Debian, `ufw`, API, PostgreSQL et `cloudflared` dans une composition Docker sans port publié, `pg_dump` chiffré récupéré chaque nuit par le home lab, supervision de `/api/health`. Le tunnel Cloudflare est gardé dans un premier temps ; son retrait de l'API est une étape 2 à décider. À faire : commande du VPS, `Dockerfile` et composition de production testés en local, bascule.
+- [ ] **Rattrapage des minutes actives** (pour la 1.8.1) : à la première synchronisation après la mise à jour, envoyer les minutes des 30 jours une seule fois (aujourd'hui, seulement « Synchroniser maintenant » le fait ; l'Accueil et l'arrière-plan n'envoient que 3 jours).
+
 ## Pièges connus
 
 - **Tests du backend** : ils exigent une base PostgreSQL (`TEST_DATABASE_URL`). En local, `npm run test:local` utilise la base Docker de test. La CI GitHub (`.github/workflows/ci.yml`) les exécute à chaque push.
