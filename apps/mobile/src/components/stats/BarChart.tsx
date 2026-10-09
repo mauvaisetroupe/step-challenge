@@ -10,11 +10,6 @@ export type ChartPoint = {
   value: number
   /** Goal reached: full color bar; otherwise a lighter one. */
   reached: boolean
-  /**
-   * Goal of this bar when it differs from one bar to another (months of
-   * 28 to 31 days): a short dashed mark over the bar.
-   */
-  goal?: number
 }
 
 type Props = {
@@ -63,10 +58,7 @@ export default function BarChart({
     )
   }
 
-  const maxValue = Math.max(
-    goal,
-    ...data.map((item) => Math.max(item.value, item.goal ?? 0)),
-  )
+  const maxValue = Math.max(goal, ...data.map((item) => item.value))
   const barWidth = Math.max(2, (CHART_WIDTH / data.length) * 0.65)
   const gap = CHART_WIDTH / data.length
   const y = (value: number) =>
@@ -99,18 +91,6 @@ export default function BarChart({
               fill={color ?? colors.primary}
               fillOpacity={item.reached ? 1 : 0.35}
             />
-
-            {item.goal !== undefined && (
-              <Line
-                x1={x - 2}
-                x2={x + barWidth + 2}
-                y1={y(item.goal)}
-                y2={y(item.goal)}
-                stroke={colors.text}
-                strokeWidth={1.5}
-                strokeDasharray="3 2"
-              />
-            )}
 
             {(data.length <= 7 ||
               index % Math.ceil(data.length / 7) === 0) && (

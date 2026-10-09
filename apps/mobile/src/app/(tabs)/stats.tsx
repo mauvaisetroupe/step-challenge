@@ -40,6 +40,9 @@ import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const DAILY_GOAL = 10_000
 
+/** Goal line of the 1-year steps chart: a 30-day month at the daily goal. */
+const MONTH_GOAL_LINE = DAILY_GOAL * 30
+
 type Period = '1d' | '7d' | '30d' | '1y'
 
 type DayStat = {
@@ -591,14 +594,17 @@ export default function StatsScreen() {
                 <View style={styles.chartContainer}>
                   {period === '1y' ? (
                     <BarChart
-                      goal={DAILY_GOAL}
+                      // One straight line for a 30-day month; the color of
+                      // each bar keeps the exact goal of its month (28 to
+                      // 31 days, getMonthPercent).
+                      goal={MONTH_GOAL_LINE}
+                      showGoalLine
+                      goalLabel={`${formatters.formatNumber(MONTH_GOAL_LINE / 1000)}k`}
                       data={monthlyStats.map((item) => ({
                         label: formatMonth(parseDateKey(item.date), formatters),
                         value: item.steps,
                         reached:
                           getMonthPercent(item.steps, parseDateKey(item.date)) >= 100,
-                        // 10,000 steps per day of the month.
-                        goal: DAILY_GOAL * getMonthDays(parseDateKey(item.date)),
                       }))}
                     />
                   ) : (
