@@ -64,6 +64,8 @@ Règle de mise à jour : le serveur garde aujourd'hui le plus grand total de pas
 - **Jeux d'essai partagés** : un fichier JSON de journées (minutes de pas → résultats attendus), lu par les tests TypeScript et par les tests unitaires Kotlin. Un seuil changé d'un seul côté fait échouer les tests.
 - **Coût** : la lecture minute par minute (1 440 valeurs par jour) est faite pour **les 3 derniers jours** à chaque synchronisation, au premier plan comme en arrière-plan ; les jours plus anciens ne changent pratiquement plus et gardent leurs valeurs. « Synchroniser maintenant » recalcule les 30 jours. À mesurer sur le Pixel avant de figer ces chiffres.
 - Jour en cours : les minutes inactives ne comptent qu'entre le premier et le dernier pas ; elles peuvent donc augmenter au fil de la journée.
+- **Heures de sommeil** (Paramètres → Activité, 23 h → 6 h par défaut, réglables par demi-heure : un lève-tôt n'a pas à les régler, et une heure de sommeil en plus ou en moins ne change rien pour qui dort) : aucune inactivité n'est comptée pendant ces heures (complément du 2026-10-09 : quelques pas pour aller se coucher après minuit étaient les premiers du jour, et toute la nuit devenait inactive). Les pas et les minutes actives de ces heures comptent toujours. Réglage gardé sur le téléphone, jamais envoyé au serveur, transmis au travailleur Kotlin comme le jeton ; il fait partie des jeux d'essai partagés. Après un changement, les 30 jours sont recalculés à la synchronisation suivante.
+- **Rattrapage** : tant que les minutes des 30 jours n'ont pas été envoyées une fois (première synchronisation après la mise à jour, ou nouvelles heures de sommeil), la synchronisation au premier plan envoie les 30 jours, puis revient à 3.
 
 ### Affichage
 
