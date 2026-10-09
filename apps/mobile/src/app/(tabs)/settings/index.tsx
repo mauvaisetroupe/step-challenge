@@ -6,7 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import TabScreenHeader from '@/components/TabScreenHeader'
 import { NavRow } from '@/components/settings/ui'
-import { LANGUAGE_NAMES, useLanguage } from '@/i18n'
+import { LANGUAGE_NAMES, useFormatters, useLanguage } from '@/i18n'
+import { useSleepHours } from '@/services/sleepHours'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Entry = {
@@ -23,6 +24,14 @@ export default function SettingsScreen() {
   const { preference } = useTheme()
   const language = useLanguage()
   const { t } = useTranslation()
+  const { formatDate } = useFormatters()
+  const sleepHours = useSleepHours()
+
+  const formatTime = (minute: number) =>
+    formatDate(new Date(2000, 0, 1, Math.floor(minute / 60), minute % 60), {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
 
   const groups: { title: string; entries: Entry[] }[] = [
     {
@@ -55,6 +64,14 @@ export default function SettingsScreen() {
           title: t('settings.sources.title'),
           detail: t('settings.sources.detail'),
           href: '/settings/sources',
+        },
+        {
+          title: t('settings.activity.title'),
+          detail: t('settings.activity.summary', {
+            bed: formatTime(sleepHours.bed),
+            wake: formatTime(sleepHours.wake),
+          }),
+          href: '/settings/activity',
         },
         {
           title: t('settings.sync.title'),

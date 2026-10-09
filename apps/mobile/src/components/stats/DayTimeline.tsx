@@ -5,11 +5,12 @@ import Svg, {
   Line,
   Polygon,
   Polyline,
+  Rect,
   Text as SvgText,
 } from 'react-native-svg'
 
 import { useFormatters, type Formatters } from '@/i18n'
-import type { InactivePeriod } from '@/services/inactivity'
+import type { InactivePeriod, SleepHours } from '@/services/inactivity'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Props = {
@@ -18,6 +19,8 @@ type Props = {
   goal: number
   /** Inactive periods of the day, shown in red on the time axis. */
   inactivePeriods: InactivePeriod[]
+  /** Sleep hours, shaded: no inactivity is counted then. */
+  sleepHours: SleepHours
   /** Current time, to end the curve at the current minute. */
   now: Date
   /** Message shown when there is no hourly data. */
@@ -49,12 +52,14 @@ function formatThousands(value: number, f: Formatters) {
 /**
  * Cumulative steps over the day, from midnight to now, against the daily
  * goal (dashed line). A check mark shows when the goal was reached, and
- * red marks on the time axis the inactive periods (services/inactivity).
+ * red marks on the time axis the inactive periods (services/inactivity);
+ * the sleep hours are shaded.
  */
 export default function DayTimeline({
   hourlySteps,
   goal,
   inactivePeriods,
+  sleepHours,
   now,
   emptyMessage,
 }: Props) {
@@ -94,6 +99,13 @@ export default function DayTimeline({
   const y = (steps: number) => TOP + CHART_HEIGHT - (steps / maxValue) * CHART_HEIGHT
 
   const hourOf = (date: Date) => date.getHours() + date.getMinutes() / 60
+
+  // Sleep hours as ranges of hours of the day: one range, or two when
+  // they cross midnight.
+  const bed = sleepHours.bed / 60
+  const wake = sleepHours.wake / 60
+  const sleepRanges =
+    bed === wake ? [] : bed > wake ? [[0, wake], [bed, 24]] : [[bed, wake]]
 
   const line = points.map((p) => `${x(p.hour)},${y(p.steps)}`).join(' ')
   const last = points[points.length - 1]
@@ -140,6 +152,18 @@ export default function DayTimeline({
           >
             {formatThousands(step * i, formatters)}
           </SvgText>
+        ))}
+
+        {sleepRanges.map(([start, end]) => (
+          <Rect
+            key={`sleep-${start}`}
+            x={x(start)}
+            y={TOP}
+            width={x(end) - x(start)}
+            height={CHART_HEIGHT}
+            fill={colors.textMuted}
+            fillOpacity={0.12}
+          />
         ))}
 
         <Polygon points={area} fill={colors.primary} fillOpacity={0.15} />
@@ -227,6 +251,13 @@ export default function DayTimeline({
           <Text style={styles.legendText}>{t('stats.goal')}</Text>
         </View>
 
+        {sleepRanges.length > 0 && (
+          <View style={styles.legendItem}>
+            <View style={styles.legendSleep} />
+            <Text style={styles.legendText}>{t('stats.sleep')}</Text>
+          </View>
+        )}
+
         {inactivePeriods.length > 0 && (
           <View style={styles.legendItem}>
             <View style={styles.legendInactive} />
@@ -266,6 +297,14 @@ const createStyles = (c: Colors) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
+    },
+
+    legendSleep: {
+      width: 14,
+      height: 14,
+      borderRadius: 3,
+      backgroundColor: c.textMuted,
+      opacity: 0.3,
     },
 
     legendInactive: {

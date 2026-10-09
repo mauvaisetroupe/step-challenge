@@ -90,6 +90,16 @@
       "openHealthConnect": "Ouvrir Santé Connect",
       "refresh": "Actualiser",
       "androidOnly": "Les sources de pas ne sont visibles que dans l'application Android."
+    },
+    "activity": {
+      "title": "Activité",
+      "summary": "Sommeil : {{bed}} – {{wake}}",
+      "description": "Heures de sommeil : aucune inactivité n'est comptée pendant ces heures.",
+      "bed": "Coucher",
+      "wake": "Lever",
+      "earlier": "{{label}} : une demi-heure plus tôt",
+      "later": "{{label}} : une demi-heure plus tard",
+      "detail": "Les pas faits pendant ces heures comptent toujours, et les minutes actives aussi. Après un changement, les 30 derniers jours sont recalculés à la prochaine synchronisation."
     }
   },
   "friends": {
@@ -227,7 +237,8 @@
     "metrics": {
       "steps": "Pas",
       "score": "Score d'activité"
-    }
+    },
+    "sleep": "Sommeil"
   },
   "home": {
     "today": "Aujourd'hui",

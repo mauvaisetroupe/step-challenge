@@ -88,6 +88,16 @@
       "openHealthConnect": "Open Health Connect",
       "refresh": "Refresh",
       "androidOnly": "Step sources are only available in the Android app."
+    },
+    "activity": {
+      "title": "Activity",
+      "summary": "Sleep: {{bed}} – {{wake}}",
+      "description": "Sleep hours: no inactivity is counted during these hours.",
+      "bed": "Bedtime",
+      "wake": "Wake-up",
+      "earlier": "{{label}}: half an hour earlier",
+      "later": "{{label}}: half an hour later",
+      "detail": "Steps taken during these hours still count, and so do active minutes. After a change, the last 30 days are recomputed at the next sync."
     }
   },
   "friends": {
@@ -220,7 +230,8 @@
     "metrics": {
       "steps": "Steps",
       "score": "Activity score"
-    }
+    },
+    "sleep": "Sleep"
   },
   "home": {
     "today": "Today",

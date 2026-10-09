@@ -34,6 +34,7 @@ import {
   hourlyStepsFromSlices,
   type StepSlice,
 } from '@/services/inactivity'
+import { useSleepHours } from '@/services/sleepHours'
 import { getHealthConnectStepSlices } from '@/services/stepSlices'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
@@ -267,9 +268,10 @@ export default function StatsScreen() {
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
   // 1-day view: steps per minute (Android).
   const [daySlices, setDaySlices] = useState<StepSlice[]>([])
+  const sleepHours = useSleepHours()
   const inactivePeriods = useMemo(
-    () => findInactivePeriods(daySlices),
-    [daySlices],
+    () => findInactivePeriods(daySlices, sleepHours),
+    [daySlices, sleepHours],
   )
   // Names of today's step sources, under the 1-day view (Android).
   const [sourceNames, setSourceNames] = useState<string[]>([])
@@ -507,6 +509,7 @@ export default function StatsScreen() {
                   : []
               }
               inactivePeriods={inactivePeriods}
+              sleepHours={sleepHours}
               goal={DAILY_GOAL}
               now={new Date()}
               emptyMessage={
