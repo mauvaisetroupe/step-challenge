@@ -2,7 +2,7 @@
   "expo": {
     "name": "step-challenge",
     "slug": "step-challenge",
-    "version": "1.8.1",
+    "version": "1.8.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "stepchallenge",
@@ -60,7 +60,10 @@
         "expo-build-properties",
         {
           "android": {
-            "minSdkVersion": 26
+            "minSdkVersion": 26,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "# Huawei HMS (Health Kit, @hmscore/react-native-hms-health): the SDK ships no\n# R8 rules; it uses reflection, kept as Huawei recommends. The missing\n# classes exist only on Huawei phones (or are optional).\n-keepattributes *Annotation*,Exceptions,InnerClasses,Signature\n-keep class com.huawei.hms.** { *; }\n-keep class com.huawei.hianalytics.** { *; }\n-keep class com.huawei.updatesdk.** { *; }\n-dontwarn android.telephony.HwTelephonyManager\n-dontwarn com.huawei.android.os.BuildEx$VERSION\n-dontwarn com.huawei.hianalytics.**\n-dontwarn com.huawei.hms.availableupdate.UpdateAdapterMgr\n-dontwarn com.huawei.libcore.io.**\n-dontwarn org.bouncycastle.crypto.**"
           }
         }
       ],
