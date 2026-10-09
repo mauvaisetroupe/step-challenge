@@ -1,11 +1,19 @@
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, Text, View } from 'react-native'
+import { Linking, StyleSheet, Text, View } from 'react-native'
 
+import RichText from '@/i18n/RichText'
 import { WEEKLY_ACTIVITY_GOAL, type DayActivity } from '@/services/activity'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Props = {
   activity: DayActivity
+}
+
+/** WHO fact sheet on physical activity, in French when available. */
+function whoFactSheetUrl(language: string) {
+  const path = language.startsWith('fr') ? '/fr' : ''
+
+  return `https://www.who.int${path}/news-room/fact-sheets/detail/physical-activity`
 }
 
 /** 75 → "1 h 15", 45 → "45 min". */
@@ -28,7 +36,7 @@ export function useFormatDuration() {
 export default function DayActivitySummary({ activity }: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const formatDuration = useFormatDuration()
 
   const tiles = [
@@ -76,9 +84,17 @@ export default function DayActivitySummary({ activity }: Props) {
         <Text style={styles.scoreLabel}>{t('stats.activity.score')}</Text>
       </View>
 
-      <Text style={styles.detail}>
-        {t('stats.activity.detail', { goal: WEEKLY_ACTIVITY_GOAL })}
-      </Text>
+      <RichText
+        text={t('stats.activity.detail', { skipInterpolation: true })}
+        values={{ goal: String(WEEKLY_ACTIVITY_GOAL) }}
+        style={styles.detail}
+        boldStyle={styles.link}
+        onBoldPress={() => {
+          Linking.openURL(whoFactSheetUrl(i18n.language)).catch((error) =>
+            console.error('Failed to open the WHO page:', error),
+          )
+        }}
+      />
     </View>
   )
 }
@@ -150,5 +166,10 @@ const createStyles = (c: Colors) =>
       lineHeight: 17,
       color: c.textMuted,
       textAlign: 'center',
+    },
+
+    link: {
+      color: c.primary,
+      textDecorationLine: 'underline',
     },
   })

@@ -9,6 +9,8 @@ type Props = {
   values?: Record<string, string>
   style?: StyleProp<TextStyle>
   boldStyle?: StyleProp<TextStyle>
+  /** Makes the bold parts a link. */
+  onBoldPress?: () => void
 }
 
 function interpolate(text: string, values: Record<string, string>) {
@@ -18,7 +20,7 @@ function interpolate(text: string, values: Record<string, string>) {
 }
 
 /**
- * A translated sentence with bold parts (ADR 0007). The tags are split
+ * A translated sentence with bold parts (ADR 0007), which can be a link. The tags are split
  * before the values are inserted: a value that contains <b> (a friend's
  * name) stays plain text.
  */
@@ -27,6 +29,7 @@ export default function RichText({
   values = {},
   style,
   boldStyle,
+  onBoldPress,
 }: Props) {
   // Odd indexes are the parts between <b> and </b>.
   const parts = text.split(/<b>(.*?)<\/b>/)
@@ -35,7 +38,12 @@ export default function RichText({
     <Text style={style}>
       {parts.map((part, index) =>
         index % 2 === 1 ? (
-          <Text key={index} style={boldStyle}>
+          <Text
+            key={index}
+            style={boldStyle}
+            onPress={onBoldPress}
+            accessibilityRole={onBoldPress ? 'link' : undefined}
+          >
             {interpolate(part, values)}
           </Text>
         ) : (
