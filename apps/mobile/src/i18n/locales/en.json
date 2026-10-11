@@ -228,13 +228,26 @@
     "stepsUnit_other": "steps",
     "percent": "{{percent}}%",
     "noData": "No data",
-    "sources": "Sources: {{names}}",
-    "seeSources": "See sources",
     "metrics": {
       "steps": "Steps",
       "score": "Activity score"
     },
-    "sleep": "Sleep"
+    "sleep": "Sleep",
+    "noStepsDay": "No steps recorded on that day.",
+    "sourcesTitle": "Step sources",
+    "day": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "previous": "Previous day",
+      "next": "Next day"
+    },
+    "surplus": {
+      "title": "{{steps}} more steps than {{source}}",
+      "description": "Counted by another source at times when {{source}} recorded nothing:",
+      "otherMoments_one": "{{count}} other moment",
+      "otherMoments_other": "{{count}} other moments",
+      "hint": "Health Connect keeps the steps of the priority source and fills in with the others where it has nothing. For instance when walking with your hands on a trolley or a stroller: the watch counts nothing, the phone in your pocket does. These steps can be right; they can also come from a shaken phone (car, bike)."
+    }
   },
   "home": {
     "today": "Today",

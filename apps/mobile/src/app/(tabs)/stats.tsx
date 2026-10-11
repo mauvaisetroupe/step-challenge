@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Platform,
@@ -8,26 +8,34 @@ import {
   Text,
   View,
 } from 'react-native'
-import { router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 
 import {
   aggregateGroupByPeriod,
   initialize,
+  openHealthConnectSettings,
   requestPermission,
 } from 'react-native-health-connect'
 
 import { getMySteps } from '../../api/steps'
 import { HEALTH_PERMISSIONS, syncTodaySteps } from '../../services/stepSync'
-import { stepSourceLabel } from '@/services/healthConnectDiagnostic'
-import { getTodayStepSources } from '@/services/stepSources'
+import {
+  getSourceSurplus,
+  getStepSources,
+  type SourceSurplus,
+  type StepSourcesReport,
+} from '@/services/stepSources'
+import StepSourcesList from '@/components/StepSourcesList'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import { useFormatters, type Formatters } from '@/i18n'
 import ActivityScoreChart from '@/components/stats/ActivityScoreChart'
 import BarChart from '@/components/stats/BarChart'
 import DayActivitySummary from '@/components/stats/DayActivitySummary'
+import DayNavigator from '@/components/stats/DayNavigator'
+import DaySwipeArea from '@/components/stats/DaySwipeArea'
 import DayTimeline from '@/components/stats/DayTimeline'
+import StepSurplusExplanation from '@/components/stats/StepSurplusExplanation'
 import { summarizeDayActivity } from '@/services/activity'
 import {
   findInactivePeriods,
@@ -35,7 +43,7 @@ import {
   type StepSlice,
 } from '@/services/inactivity'
 import { useSleepHours } from '@/services/sleepHours'
-import { getHealthConnectStepSlices } from '@/services/stepSlices'
+import { getDayRange, getHealthConnectStepSlices } from '@/services/stepSlices'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const DAILY_GOAL = 10_000
@@ -56,6 +64,12 @@ type MonthStat = {
 }
 
 const PERIODS: Period[] = ['1d', '7d', '30d', '1y']
+
+/**
+ * Days the 1-day view can go back to, today included: the 30-day view's
+ * range, read from Health Connect like it.
+ */
+const DAY_VIEW_DAYS = 30
 
 /** What the 7-day, 30-day and 1-year views show (ADR 0010). */
 type Metric = 'steps' | 'score'
@@ -265,7 +279,13 @@ export default function StatsScreen() {
   const { t } = useTranslation()
   const formatters = useFormatters()
 
-  const [period, setPeriod] = useState<Period>('7d')
+  // The day first on Android: comparing it with the watch is the usual
+  // question. The web has no detail for a day (no Health Connect).
+  const [period, setPeriod] = useState<Period>(
+    Platform.OS === 'web' ? '7d' : '1d',
+  )
+  // Midnight of the day shown by the 1-day view.
+  const [day, setDay] = useState(() => getStartOfDay(new Date()))
   const [metric, setMetric] = useState<Metric>('steps')
   const [dailyStats, setDailyStats] = useState<DayStat[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
@@ -276,17 +296,48 @@ export default function StatsScreen() {
     () => findInactivePeriods(daySlices, sleepHours),
     [daySlices, sleepHours],
   )
-  // Names of today's step sources, under the 1-day view (Android).
-  const [sourceNames, setSourceNames] = useState<string[]>([])
+  // The day's step sources, under the 1-day view (Android).
+  const [sources, setSources] = useState<
+    StepSourcesReport | { error: string } | null
+  >(null)
+  const [surplus, setSurplus] = useState<SourceSurplus | null>(null)
+  // The sources take room: folded until asked for, kept open from day to
+  // day.
+  const [sourcesOpen, setSourcesOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Only the latest load updates the screen: going through the days
+  // quickly starts several.
+  const loadRef = useRef(0)
+
+  const isToday = day.getTime() === getStartOfDay(new Date()).getTime()
+  // End of the curve: now for today, the last moment of a past day (its
+  // range ends at the next midnight, hour 0).
+  const timelineEnd = isToday
+    ? new Date()
+    : new Date(getDayRange(day).end.getTime() - 1)
+
+  /** Next or previous day of the 1-day view, within its range. */
+  const shiftDay = (delta: 1 | -1) => {
+    const today = getStartOfDay(new Date())
+    const target = getDaysAgo(day, -delta)
+
+    if (target <= today && target >= getDaysAgo(today, DAY_VIEW_DAYS - 1)) {
+      setDay(target)
+    }
+  }
 
   const loadStats = useCallback(async () => {
+    const load = ++loadRef.current
+    const isLatest = () => load === loadRef.current
+
     setLoading(true)
     setError(null)
 
     try {
       const now = new Date()
+      const pastDay =
+        period === '1d' && day.getTime() < getStartOfDay(now).getTime()
 
       // Source of each view:
       //
@@ -309,8 +360,11 @@ export default function StatsScreen() {
           await requestPermission(HEALTH_PERMISSIONS)
 
           // Sends today's Health Connect total to the backend before
-          // displaying: the 1-year view then includes today.
-          await syncTodaySteps()
+          // displaying: the 1-year view then includes today. Not needed
+          // to show a past day.
+          if (!pastDay) {
+            await syncTodaySteps()
+          }
         } catch (err) {
           // The other views need Health Connect. The 1-year view reads
           // the database: it is shown even when Health Connect is
@@ -376,28 +430,45 @@ export default function StatsScreen() {
       }
 
       if (period === '1d') {
-        const slices = await getHealthConnectStepSlices(
-          getStartOfDay(now),
-          now,
-        )
+        const { start, end } = getDayRange(day, now)
+        const slices = await getHealthConnectStepSlices(start, end)
+
+        if (!isLatest()) {
+          return
+        }
 
         setDaySlices(slices)
 
         setDailyStats([])
         setMonthlyStats([])
+        setSources(null)
+        setSurplus(null)
 
-        // Best effort: the link to the sources screen works without names.
-        getTodayStepSources()
-          .then((report) =>
-            setSourceNames(
-              report.sources
-                .filter((source) => source.steps > 0)
-                .map(stepSourceLabel),
-            ),
-          )
+        // Best effort, after the curve: the sources, then the steps above
+        // the main source (watch) and when they were counted.
+        getStepSources(day)
+          .then(async (report) => {
+            if (!isLatest()) {
+              return
+            }
+
+            setSources(report)
+
+            const result = await getSourceSurplus(day, report, slices)
+
+            if (isLatest()) {
+              setSurplus(result && result.steps > 0 ? result : null)
+            }
+          })
           .catch((err) => {
             console.error('Step sources error:', err)
-            setSourceNames([])
+
+            if (isLatest()) {
+              setSources({
+                error:
+                  err instanceof Error ? err.message : t('stats.loadError'),
+              })
+            }
           })
 
         return
@@ -420,15 +491,21 @@ export default function StatsScreen() {
     } catch (err) {
       console.error(err)
 
+      if (!isLatest()) {
+        return
+      }
+
       setError(
         err instanceof Error
           ? err.message
           : t('stats.loadError'),
       )
     } finally {
-      setLoading(false)
+      if (isLatest()) {
+        setLoading(false)
+      }
     }
-  }, [period, t])
+  }, [period, day, t])
 
   useEffect(() => {
     loadStats()
@@ -486,152 +563,191 @@ export default function StatsScreen() {
           ))}
         </View>
 
-        {loading ? (
-          <View style={styles.loading}>
-            <ActivityIndicator size="large" />
-          </View>
-        ) : error ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-
-            <Pressable
-              style={styles.retryButton}
-              onPress={loadStats}
-            >
-              <Text style={styles.retryText}>
-                {t('common.retry')}
-              </Text>
-            </Pressable>
-          </View>
-        ) : period === '1d' ? (
-          <>
-            <DayTimeline
-              hourlySteps={
-                daySlices.length > 0
-                  ? hourlyStepsFromSlices(daySlices, new Date())
-                  : []
-              }
-              inactivePeriods={inactivePeriods}
-              sleepHours={sleepHours}
-              goal={DAILY_GOAL}
-              now={new Date()}
-              emptyMessage={
-                Platform.OS === 'web'
-                  ? t('stats.hourlyAndroidOnly')
-                  : t('stats.noStepsToday')
-              }
+        <DaySwipeArea
+          enabled={period === '1d' && Platform.OS === 'android'}
+          onSwipe={shiftDay}
+        >
+          {period === '1d' && Platform.OS === 'android' && (
+            <DayNavigator
+              day={day}
+              today={getStartOfDay(new Date())}
+              maxDays={DAY_VIEW_DAYS}
+              onChange={setDay}
             />
+          )}
 
-            {daySlices.length > 0 && (
-              <DayActivitySummary
-                activity={summarizeDayActivity(daySlices, inactivePeriods)}
-              />
-            )}
+          {loading ? (
+            <View style={styles.loading}>
+              <ActivityIndicator size="large" />
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
 
-            {Platform.OS === 'android' && (
               <Pressable
-                style={styles.sourcesLink}
-                onPress={() => router.push('/settings/sources')}
-                hitSlop={8}
+                style={styles.retryButton}
+                onPress={loadStats}
               >
-                {sourceNames.length > 0 && (
-                  <Text style={styles.sourcesText} numberOfLines={1}>
-                    {t('stats.sources', { names: sourceNames.join(', ') })}
-                  </Text>
-                )}
-                <Text style={styles.sourcesAction}>
-                  {t('stats.seeSources')}
+                <Text style={styles.retryText}>
+                  {t('common.retry')}
                 </Text>
               </Pressable>
-            )}
-          </>
-        ) : (
-          <>
-            <View style={styles.metricSelector}>
-              {METRICS.map((item) => (
+            </View>
+          ) : period === '1d' ? (
+            <>
+              <DayTimeline
+                hourlySteps={
+                  daySlices.length > 0
+                    ? hourlyStepsFromSlices(daySlices, timelineEnd)
+                    : []
+                }
+                inactivePeriods={inactivePeriods}
+                sleepHours={sleepHours}
+                goal={DAILY_GOAL}
+                now={timelineEnd}
+                emptyMessage={
+                  Platform.OS === 'web'
+                    ? t('stats.hourlyAndroidOnly')
+                    : isToday
+                      ? t('stats.noStepsToday')
+                      : t('stats.noStepsDay')
+                }
+              />
+
+              {daySlices.length > 0 && (
+                <DayActivitySummary
+                  activity={summarizeDayActivity(daySlices, inactivePeriods)}
+                />
+              )}
+
+              {Platform.OS === 'android' && (
                 <Pressable
-                  key={item}
-                  style={[
-                    styles.metricButton,
-                    metric === item && [
-                      styles.periodButtonActive,
-                      // Underlined with its chart color: steps blue,
-                      // activity teal.
-                      {
-                        borderBottomColor:
-                          item === 'steps' ? colors.primary : colors.activity,
-                      },
-                    ],
-                  ]}
-                  onPress={() => setMetric(item)}
+                  style={styles.sourcesToggle}
+                  onPress={() => setSourcesOpen((open) => !open)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: sourcesOpen }}
                 >
-                  <Text
-                    style={[
-                      styles.metricButtonText,
-                      metric === item && styles.periodButtonTextActive,
-                    ]}
-                  >
-                    {t(`stats.metrics.${item}`)}
+                  <Text style={styles.sourcesAction}>
+                    {t('stats.sourcesTitle')} {sourcesOpen ? '▴' : '▾'}
                   </Text>
                 </Pressable>
-              ))}
-            </View>
+              )}
 
-            {metric === 'score' ? (
-              <ActivityScoreChart period={period} ready={!loading} />
-            ) : (
-              <>
-                <View style={styles.totalContainer}>
-                  <Text style={styles.totalValue}>
-                    {formatSteps(totalSteps, formatters)}
-                  </Text>
-
-                  <Text style={styles.totalLabel}>
-                    {t('stats.stepsUnit', { count: Math.round(totalSteps) })}
-                  </Text>
-                </View>
-
-                <View style={styles.chartContainer}>
-                  {period === '1y' ? (
-                    <BarChart
-                      // One straight line for a 30-day month; the color of
-                      // each bar keeps the exact goal of its month (28 to
-                      // 31 days, getMonthPercent).
-                      goal={MONTH_GOAL_LINE}
-                      showGoalLine
-                      goalLabel={`${formatters.formatNumber(MONTH_GOAL_LINE / 1000)}k`}
-                      data={monthlyStats.map((item) => ({
-                        label: formatMonth(parseDateKey(item.date), formatters),
-                        value: item.steps,
-                        reached:
-                          getMonthPercent(item.steps, parseDateKey(item.date)) >= 100,
-                      }))}
-                    />
+              {Platform.OS === 'android' && sourcesOpen && (
+                <View style={styles.sources}>
+                  {sources ? (
+                    <StepSourcesList sources={sources} />
                   ) : (
-                    <BarChart
-                      goal={DAILY_GOAL}
-                      showGoalLine
-                      goalLabel={`${formatters.formatNumber(DAILY_GOAL / 1000)}k`}
-                      data={dailyStats.map((item) => ({
-                        label: formatShortDate(parseDateKey(item.date), formatters),
-                        value: item.steps,
-                        reached: item.steps >= DAILY_GOAL,
-                      }))}
-                    />
+                    <ActivityIndicator color={colors.primary} />
                   )}
+
+                  {surplus && <StepSurplusExplanation surplus={surplus} />}
+
+                  <Text style={styles.sourcesHint}>
+                    {t('diagnostic.sources.hint')}
+                  </Text>
+
+                  <Pressable
+                    style={styles.sourcesLink}
+                    onPress={() => openHealthConnectSettings()}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.sourcesAction}>
+                      {t('settings.sources.openHealthConnect')}
+                    </Text>
+                  </Pressable>
                 </View>
+              )}
+            </>
+          ) : (
+            <>
+              <View style={styles.metricSelector}>
+                {METRICS.map((item) => (
+                  <Pressable
+                    key={item}
+                    style={[
+                      styles.metricButton,
+                      metric === item && [
+                        styles.periodButtonActive,
+                        // Underlined with its chart color: steps blue,
+                        // activity teal.
+                        {
+                          borderBottomColor:
+                            item === 'steps' ? colors.primary : colors.activity,
+                        },
+                      ],
+                    ]}
+                    onPress={() => setMetric(item)}
+                  >
+                    <Text
+                      style={[
+                        styles.metricButtonText,
+                        metric === item && styles.periodButtonTextActive,
+                      ]}
+                    >
+                      {t(`stats.metrics.${item}`)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
 
-                {period === '7d' || period === '30d' ? (
-                  <DailyStatsList stats={dailyStats} />
-                ) : null}
+              {metric === 'score' ? (
+                <ActivityScoreChart period={period} ready={!loading} />
+              ) : (
+                <>
+                  <View style={styles.totalContainer}>
+                    <Text style={styles.totalValue}>
+                      {formatSteps(totalSteps, formatters)}
+                    </Text>
 
-                {period === '1y' ? (
-                  <MonthlyStatsList stats={monthlyStats} />
-                ) : null}
-              </>
-            )}
-          </>
-        )}
+                    <Text style={styles.totalLabel}>
+                      {t('stats.stepsUnit', { count: Math.round(totalSteps) })}
+                    </Text>
+                  </View>
+
+                  <View style={styles.chartContainer}>
+                    {period === '1y' ? (
+                      <BarChart
+                        // One straight line for a 30-day month; the color of
+                        // each bar keeps the exact goal of its month (28 to
+                        // 31 days, getMonthPercent).
+                        goal={MONTH_GOAL_LINE}
+                        showGoalLine
+                        goalLabel={`${formatters.formatNumber(MONTH_GOAL_LINE / 1000)}k`}
+                        data={monthlyStats.map((item) => ({
+                          label: formatMonth(parseDateKey(item.date), formatters),
+                          value: item.steps,
+                          reached:
+                            getMonthPercent(item.steps, parseDateKey(item.date)) >= 100,
+                        }))}
+                      />
+                    ) : (
+                      <BarChart
+                        goal={DAILY_GOAL}
+                        showGoalLine
+                        goalLabel={`${formatters.formatNumber(DAILY_GOAL / 1000)}k`}
+                        data={dailyStats.map((item) => ({
+                          label: formatShortDate(parseDateKey(item.date), formatters),
+                          value: item.steps,
+                          reached: item.steps >= DAILY_GOAL,
+                        }))}
+                      />
+                    )}
+                  </View>
+
+                  {period === '7d' || period === '30d' ? (
+                    <DailyStatsList stats={dailyStats} />
+                  ) : null}
+
+                  {period === '1y' ? (
+                    <MonthlyStatsList stats={monthlyStats} />
+                  ) : null}
+                </>
+              )}
+            </>
+          )}
+        </DaySwipeArea>
       </ScrollView>
     </SafeAreaView>
   )
@@ -793,15 +909,25 @@ function MonthlyStatsList({
 
 const createStyles = (c: Colors) =>
   StyleSheet.create({
-    sourcesLink: {
-      marginTop: 16,
+    sourcesToggle: {
+      marginTop: 20,
       alignItems: 'center',
-      gap: 2,
     },
 
-    sourcesText: {
-      fontSize: 13,
-      color: c.textSecondary,
+    sources: {
+      marginTop: 8,
+    },
+
+    sourcesHint: {
+      marginTop: 12,
+      fontSize: 12,
+      lineHeight: 17,
+      color: c.textMuted,
+    },
+
+    sourcesLink: {
+      marginTop: 12,
+      alignItems: 'center',
     },
 
     sourcesAction: {

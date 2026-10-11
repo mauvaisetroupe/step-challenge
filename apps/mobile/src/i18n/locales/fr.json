@@ -235,13 +235,27 @@
     "stepsUnit_other": "pas",
     "percent": "{{percent}} %",
     "noData": "Aucune donnée",
-    "sources": "Sources : {{names}}",
-    "seeSources": "Voir les sources",
     "metrics": {
       "steps": "Pas",
       "score": "Score d'activité"
     },
-    "sleep": "Sommeil"
+    "sleep": "Sommeil",
+    "noStepsDay": "Aucun pas enregistré ce jour-là.",
+    "sourcesTitle": "Sources des pas",
+    "day": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "previous": "Jour précédent",
+      "next": "Jour suivant"
+    },
+    "surplus": {
+      "title": "{{steps}} pas de plus que {{source}}",
+      "description": "Comptés par une autre source à des moments où {{source}} n'a rien enregistré :",
+      "otherMoments_one": "{{count}} autre moment",
+      "otherMoments_many": "{{count}} autres moments",
+      "otherMoments_other": "{{count}} autres moments",
+      "hint": "Santé Connect garde les pas de la source prioritaire et complète avec les autres là où elle n'a rien. Par exemple en marchant les mains sur un caddie ou une poussette : la montre ne compte rien, le téléphone dans la poche, si. Ces pas peuvent donc être justes ; ils peuvent aussi venir d'un téléphone secoué (voiture, vélo)."
+    }
   },
   "home": {
     "today": "Aujourd'hui",
