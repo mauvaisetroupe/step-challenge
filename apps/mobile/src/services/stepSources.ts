@@ -4,9 +4,13 @@ import {
   readRecords,
 } from 'react-native-health-connect'
 
+import type { StepSlice } from './inactivity'
+import { getDayRange, getHealthConnectStepSlices } from './stepSlices'
+import { findStepSurplus, type StepSurplus } from './stepSurplus'
+
 /**
- * Where the steps read by Step Challenge come from (Settings →
- * Diagnostics). Health Connect merges the data of every app that writes
+ * Where the steps read by Step Challenge come from (Settings → Step
+ * sources, Stats → 1 day, Settings → Diagnostics). Health Connect merges the data of every app that writes
  * steps (Garmin Connect, the phone…) and removes duplicates according to
  * the priority order set in its own settings: the total it gives is not
  * the sum of the sources.
@@ -51,14 +55,14 @@ export type StepSource = {
   packageName: string
   /** App name, or null for an unknown app (show the package name). */
   name: string | null
-  /** Steps of this source today. */
+  /** Steps of this source on the day. */
   steps: number
-  /** Devices declared by this source today ("Garmin Forerunner 255"). */
+  /** Devices declared by this source on the day ("Garmin Forerunner 255"). */
   devices: string[]
 }
 
 export type StepSourcesReport = {
-  /** Today's total as merged by Health Connect: the one Step Challenge uses. */
+  /** The day's total as merged by Health Connect: the one Step Challenge uses. */
   total: number
   /** Most steps first. */
   sources: StepSource[]
@@ -73,12 +77,6 @@ export function isPhoneSource(packageName: string) {
 
 function sourceName(packageName: string) {
   return KNOWN_SOURCES[packageName] ?? null
-}
-
-function startOfDay(date: Date) {
-  const result = new Date(date)
-  result.setHours(0, 0, 0, 0)
-  return result
 }
 
 function deviceName(device?: { manufacturer?: string; model?: string }) {
@@ -97,7 +95,7 @@ function deviceName(device?: { manufacturer?: string; model?: string }) {
   return parts.join(' ') || null
 }
 
-/** Devices per source, from today's raw records. Best effort. */
+/** Devices per source, from the day's raw records. Best effort. */
 async function readDevices(startTime: string, endTime: string) {
   const devices = new Map<string, Set<string>>()
   let pageToken: string | undefined
@@ -133,39 +131,39 @@ async function readDevices(startTime: string, endTime: string) {
 }
 
 /**
- * Today's steps per source, and the merged total. Requires the Health
- * Connect steps permission.
+ * Steps per source on a day (today: until now), and the merged total.
+ * Requires the Health Connect steps permission.
  */
-export async function getTodayStepSources(): Promise<StepSourcesReport> {
+export async function getStepSources(day: Date): Promise<StepSourcesReport> {
   await initialize()
 
-  const now = new Date()
-  const today = {
+  const { start, end } = getDayRange(day)
+  const range = {
     operator: 'between' as const,
-    startTime: startOfDay(now).toISOString(),
-    endTime: now.toISOString(),
+    startTime: start.toISOString(),
+    endTime: end.toISOString(),
   }
 
-  const discoveryStart = startOfDay(now)
+  const discoveryStart = new Date(start)
   discoveryStart.setDate(discoveryStart.getDate() - (SOURCE_DISCOVERY_DAYS - 1))
 
-  const [todayTotal, recent] = await Promise.all([
-    aggregateRecord({ recordType: 'Steps', timeRangeFilter: today }),
+  const [dayTotal, recent] = await Promise.all([
+    aggregateRecord({ recordType: 'Steps', timeRangeFilter: range }),
     aggregateRecord({
       recordType: 'Steps',
       timeRangeFilter: {
         operator: 'between',
         startTime: discoveryStart.toISOString(),
-        endTime: now.toISOString(),
+        endTime: end.toISOString(),
       },
     }),
   ])
 
   const origins = [
-    ...new Set([...recent.dataOrigins, ...todayTotal.dataOrigins]),
+    ...new Set([...recent.dataOrigins, ...dayTotal.dataOrigins]),
   ]
 
-  const devices = await readDevices(today.startTime, today.endTime).catch(
+  const devices = await readDevices(range.startTime, range.endTime).catch(
     (error) => {
       console.warn('Cannot read the step devices:', error)
       return new Map<string, Set<string>>()
@@ -176,7 +174,7 @@ export async function getTodayStepSources(): Promise<StepSourcesReport> {
     origins.map(async (packageName): Promise<StepSource> => {
       const result = await aggregateRecord({
         recordType: 'Steps',
-        timeRangeFilter: today,
+        timeRangeFilter: range,
         dataOriginFilter: [packageName],
       })
 
@@ -192,7 +190,54 @@ export async function getTodayStepSources(): Promise<StepSourcesReport> {
   sources.sort((a, b) => b.steps - a.steps)
 
   return {
-    total: Number(todayTotal.COUNT_TOTAL ?? 0),
+    total: Number(dayTotal.COUNT_TOTAL ?? 0),
     sources,
   }
+}
+
+/** Today's steps per source, and the merged total. */
+export function getTodayStepSources() {
+  return getStepSources(new Date())
+}
+
+export type SourceSurplus = StepSurplus & {
+  /** The source with the most steps on the day: usually the watch. */
+  main: StepSource
+  /** The other sources with steps on the day, by package name. */
+  others: StepSource[]
+}
+
+/**
+ * Steps of the merged total above the main source, and when they were
+ * counted (services/stepSurplus). Null with a single source or none.
+ * `merged` are the day's merged slices, already read for the curve.
+ */
+export async function getSourceSurplus(
+  day: Date,
+  report: StepSourcesReport,
+  merged: StepSlice[],
+): Promise<SourceSurplus | null> {
+  const [main, ...others] = report.sources.filter((source) => source.steps > 0)
+
+  if (!main || others.length === 0) {
+    return null
+  }
+
+  const { start, end } = getDayRange(day)
+  const [mainSlices, ...otherSlices] = await Promise.all(
+    [main, ...others].map((source) =>
+      getHealthConnectStepSlices(start, end, [source.packageName]),
+    ),
+  )
+
+  const surplus = findStepSurplus(
+    merged,
+    mainSlices,
+    others.map((source, index) => ({
+      id: source.packageName,
+      slices: otherSlices[index],
+    })),
+  )
+
+  return { ...surplus, main, others }
 }
