@@ -587,7 +587,7 @@ Les sections 1 à 13 décrivent le POC tel qu'il a été mené. Depuis, le proje
 
 ## Statut Huawei
 
-* Demande Health Service Kit : **To be reviewed**. Impossible de tester la lecture des pas tant qu'elle n'est pas validée (`signIn` sur le scope `step.read` échouera).
+* Demande Health Service Kit : **To be reviewed** (refusée le 2026-10-16, voir la section 15). Impossible de tester la lecture des pas tant qu'elle n'est pas validée (`signIn` sur le scope `step.read` échouera).
 * Permission d'accès à l'**historique demandée : 1 mois**. Cohérent avec `HISTORY_DAYS = 30` dans `stepSync.ts`.
 
 ## Cas d'usage cible
@@ -642,3 +642,42 @@ Les trois empreintes SHA-256 doivent être déclarées : clé de debug (builds l
 L'application 1.2.x du Store ne contenait pas `com.huawei.hms.client.appid` (fichier perdu lors d'une régénération de `android/`) : HMS Core proposait alors une mise à jour, qui échouait avec l'erreur 102 sur un téléphone non Huawei. La semaine précédente, avec le fichier, l'erreur était 50011 (demande Health Kit encore en examen).
 
 La demande Health Kit est toujours **To be reviewed** : les comptes de test (0/100) ne peuvent être ajoutés qu'une fois la permission de test accordée.
+
+# 15. Refus de la demande Health Kit — 2026-10-16
+
+Huawei a refusé la demande de permission Health Kit, pour deux raisons :
+
+1. **Pas de preuve de publication sur HUAWEI AppGallery.** Huawei exige que l'application y soit publiée dès la demande ([conditions](https://developer.huawei.com/consumer/en/doc/HMSCore-Guides/application-qualification-description-0000001425636570), page inaccessible le jour du refus). Le test fermé sur Google Play ne suffit pas.
+2. **Autorisation d'écriture des pas demandée sans justification.** Elle avait été cochée par erreur : l'application ne demande que la lecture (`STEP_READ_SCOPE` dans `apps/mobile/src/services/huaweiHealth.ts`) et n'écrit rien dans Health Kit. À décocher dans le formulaire ; garder la lecture des pas et 1 mois d'historique.
+
+## Suite choisie
+
+* Ticket au support (HMS Core → Health Kit) envoyé le 2026-10-16 : permission de test (comptes de test, 0/100) possible avant toute publication ? Une version en test ouvert ou limitée à quelques pays suffit-elle comme preuve ?
+* Sans attendre la réponse, **publication sur AppGallery** (pas d'ADR pour l'instant) : version 1.9.0 soumise le 2026-10-16.
+
+## Publication sur AppGallery
+
+* **Paquet : APK, sans App Signing.** AppGallery n'accepte un AAB qu'avec App Signing : soit Huawei génère sa propre clé (nouvelle empreinte à déclarer dans AGC, dans un client OAuth Google et dans `assetlinks.json`, clé ni visible ni exportable), soit on lui confie une clé privée (celle de Google Play ne s'exporte pas ; il faudrait celle d'importation). L'APK est signé avec la **clé d'importation** d'EAS, dont l'empreinte est déjà déclarée partout (voir [`docs/signing.md`](../docs/signing.md)) : Huawei le distribue tel quel.
+* **Build** : profil `appgallery` d'`apps/mobile/eas.json` (hérite de `production`, `buildType: apk`). Il consomme un `versionCode`, comme tout build de production :
+
+  ```bash
+  cd apps/mobile
+  npx eas-cli build --platform android --profile appgallery --local
+  ```
+
+  Vérifier ensuite la signature et la configuration AGC :
+
+  ```bash
+  BT=$(ls -d ~/Library/Android/sdk/build-tools/* | sort -V | tail -1)
+  $BT/apksigner verify --print-certs <apk> | grep SHA-256     # 71b4f8fb…
+  $BT/aapt2 dump xmltree --file AndroidManifest.xml <apk> | grep -A2 hms.client.appid
+  ```
+
+* **Fiche** : français (par défaut) et anglais, sans balises HTML (AppGallery les affiche telles quelles) ; icône `icons/playstore-icon.png` ; captures `docs/screenshots/french/` et `english/` (compte de démonstration, données fictives).
+* **Version** :
+  * pays : France seulement (en ajouter se fait dans une nouvelle version, sans nouveau paquet) ;
+  * classification par âge : 7+ (interactions entre utilisateurs : oui ; compte et données personnelles : oui ; position : non ; application non destinée aux seuls enfants) ;
+  * confidentialité : `privacy.html`, droits des personnes : `delete-account.html` ;
+  * données déclarées, usage « App functionality » seulement : Fitness information, Contact list (amis), User identifiers, Account information (nom affiché), Text information (surnoms, commentaire de signalement) ; pas de transfert hors du pays (VPS OVH en France) ;
+  * examinateurs : « Sign-in required », utilisateur `demo`, mot de passe = code d'accès de démonstration (ADR 0006), remarque de 300 caractères au plus. Sur un téléphone Huawei sans Santé Connect, l'examinateur voit les pas des amis fictifs, et 0 pour lui.
+* **Examen** : contrôle automatique en quelques heures (refus éventuel dans ce délai), puis examen manuel.
