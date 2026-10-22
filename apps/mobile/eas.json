@@ -21,6 +21,9 @@
     },
     "appgallery": {
       "extends": "production",
+      "env": {
+        "PHONE_STEP_COUNTER": "true"
+      },
       "android": {
         "buildType": "apk"
       }

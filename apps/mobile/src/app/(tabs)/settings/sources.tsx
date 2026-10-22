@@ -2,7 +2,6 @@ import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Platform } from 'react-native'
-import { openHealthConnectSettings } from 'react-native-health-connect'
 
 import StepSourcesList from '@/components/StepSourcesList'
 import {
@@ -16,6 +15,10 @@ import {
   getTodayStepSources,
   type StepSourcesReport,
 } from '@/services/stepSources'
+import {
+  isHealthConnectAvailable,
+  openHealthConnectSettingsIfAvailable,
+} from '@/services/stepSync'
 import { useTheme } from '@/theme'
 
 /**
@@ -34,6 +37,8 @@ export default function StepSourcesSettingsScreen() {
     StepSourcesReport | { error: string } | null
   >(null)
   const [loading, setLoading] = useState(false)
+  // False on a phone without Health Connect (Huawei).
+  const [healthConnect, setHealthConnect] = useState<boolean | null>(null)
 
   const load = useCallback(async () => {
     if (Platform.OS !== 'android') {
@@ -43,6 +48,14 @@ export default function StepSourcesSettingsScreen() {
     setLoading(true)
 
     try {
+      const available = await isHealthConnectAvailable()
+
+      setHealthConnect(available)
+
+      if (!available) {
+        return
+      }
+
       setSources(await getTodayStepSources())
     } catch (error) {
       console.error('Step sources error:', error)
@@ -70,6 +83,14 @@ export default function StepSourcesSettingsScreen() {
     )
   }
 
+  if (healthConnect === false) {
+    return (
+      <SettingsPage>
+        <Description>{t('settings.sources.noHealthConnect')}</Description>
+      </SettingsPage>
+    )
+  }
+
   return (
     <SettingsPage>
       <Description>{t('settings.sources.description')}</Description>
@@ -86,7 +107,7 @@ export default function StepSourcesSettingsScreen() {
 
       <PrimaryButton
         title={t('settings.sources.openHealthConnect')}
-        onPress={() => openHealthConnectSettings()}
+        onPress={openHealthConnectSettingsIfAvailable}
       />
 
       <SecondaryButton

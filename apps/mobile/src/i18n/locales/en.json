@@ -87,7 +87,8 @@
       "description": "The apps that record your steps in Health Connect today, and the total Step Challenge uses.",
       "openHealthConnect": "Open Health Connect",
       "refresh": "Refresh",
-      "androidOnly": "Step sources are only available in the Android app."
+      "androidOnly": "Step sources are only available in the Android app.",
+      "noHealthConnect": "Health Connect is not available on this phone. Step Challenge counts your steps with the phone's own step counter, from the first opening of the app. Huawei Health support is coming soon."
     },
     "activity": {
       "title": "Activity",
@@ -223,6 +224,7 @@
     },
     "loadError": "Cannot load the statistics",
     "hourlyAndroidOnly": "The hour-by-hour detail is only available on Android.",
+    "hourlyHealthConnectOnly": "The hour-by-hour detail needs Health Connect, which is not available on this phone.",
     "noStepsToday": "No steps recorded today.",
     "stepsUnit_one": "step",
     "stepsUnit_other": "steps",
@@ -303,7 +305,6 @@
   },
   "leaderboard": {
     "loadError": "Cannot load the leaderboard.",
-    "syncError": "Cannot update the steps.",
     "thisWeek": "This week",
     "thisMonth": "This month",
     "week": "Week",

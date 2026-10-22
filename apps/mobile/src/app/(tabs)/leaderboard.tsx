@@ -67,9 +67,15 @@ export default function LeaderboardScreen() {
     setRefreshing(true)
     setError(null)
 
+    // A failed sync (no Health Connect, permission refused) still shows
+    // the leaderboard, without the latest steps.
     try {
       await syncLast30Days()
+    } catch (err) {
+      console.error('Step synchronization before the leaderboard failed:', err)
+    }
 
+    try {
       const data = await getLeaderboard(period)
 
       setResults(data.results)
@@ -79,11 +85,7 @@ export default function LeaderboardScreen() {
         err,
       )
 
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('leaderboard.syncError'),
-      )
+      setError(t('leaderboard.loadError'))
     } finally {
       setRefreshing(false)
     }

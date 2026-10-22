@@ -89,7 +89,8 @@
       "description": "Les applications qui enregistrent tes pas dans Santé Connect aujourd'hui, et le total que Step Challenge utilise.",
       "openHealthConnect": "Ouvrir Santé Connect",
       "refresh": "Actualiser",
-      "androidOnly": "Les sources de pas ne sont visibles que dans l'application Android."
+      "androidOnly": "Les sources de pas ne sont visibles que dans l'application Android.",
+      "noHealthConnect": "Santé Connect n'est pas disponible sur ce téléphone. Step Challenge compte tes pas avec le podomètre du téléphone, depuis la première ouverture de l'application. La prise en charge de Huawei Santé arrive bientôt."
     },
     "activity": {
       "title": "Activité",
@@ -229,6 +230,7 @@
     },
     "loadError": "Impossible de charger les statistiques",
     "hourlyAndroidOnly": "Le détail heure par heure n'est disponible que sur Android.",
+    "hourlyHealthConnectOnly": "Le détail heure par heure nécessite Santé Connect, qui n'est pas disponible sur ce téléphone.",
     "noStepsToday": "Aucun pas enregistré aujourd'hui.",
     "stepsUnit_one": "pas",
     "stepsUnit_many": "pas",
@@ -315,7 +317,6 @@
   },
   "leaderboard": {
     "loadError": "Impossible de charger le classement.",
-    "syncError": "Impossible de mettre à jour les pas.",
     "thisWeek": "Cette semaine",
     "thisMonth": "Ce mois-ci",
     "week": "Semaine",

@@ -1,0 +1,15 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'lu.architech.stepchallenge'
+version = '1.0.0'
+
+android {
+  namespace "lu.architech.stepchallenge.phonesteps"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}

@@ -15,9 +15,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { getLeaderboard, getMySteps, type DayStat } from '../../api/steps'
 import {
   getHealthConnectLast30Days,
+  isHealthConnectAvailable,
   syncActivityMinutes,
   syncStatsToServer,
 } from '../../services/stepSync'
+import { syncPhoneSteps } from '@/services/phoneSteps'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import StreakCard from '@/components/home/StreakCard'
 import WeekRankCard from '@/components/home/WeekRankCard'
@@ -66,20 +68,35 @@ export default function HomeScreen() {
     loading.current = true
 
     const todayKey = localDateKey(new Date())
-    let healthConnectToday: number | null = null
+    // Read on the phone (Health Connect or step counter).
+    let deviceToday: number | null = null
 
     try {
+      // No Health Connect (Huawei phone): today's steps come from the
+      // phone step counter when the build has it, else from the server.
+      const withHealthConnect = await isHealthConnectAvailable()
+
+      if (Platform.OS !== 'web' && !withHealthConnect) {
+        try {
+          deviceToday = await syncPhoneSteps()
+        } catch (err) {
+          console.error('Phone step counter error:', err)
+        }
+
+        setStepsError(null)
+      }
+
       // Health Connect first, then send it to the server before reading
       // the leaderboard and the history, so that they include today.
-      if (Platform.OS !== 'web') {
+      if (withHealthConnect) {
         try {
           // Steps only: shown and sent at once; the activity minutes
           // follow below, without delaying the screen.
           const stats = await getHealthConnectLast30Days({ activityDays: 0 })
 
-          healthConnectToday =
+          deviceToday =
             stats.find((day) => day.date === todayKey)?.steps ?? 0
-          setTodaySteps(healthConnectToday)
+          setTodaySteps(deviceToday)
           setStepsError(null)
 
           try {
@@ -122,11 +139,11 @@ export default function HomeScreen() {
         )
         const serverToday =
           history.value.find((day) => day.date === todayKey)?.steps ?? 0
-        const today = Math.max(serverToday, healthConnectToday ?? 0)
+        const today = Math.max(serverToday, deviceToday ?? 0)
 
         days.push({ date: todayKey, steps: today })
 
-        if (Platform.OS === 'web') {
+        if (!withHealthConnect) {
           setTodaySteps(today)
         }
 

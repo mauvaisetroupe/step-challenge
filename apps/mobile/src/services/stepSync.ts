@@ -1,7 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import Constants from 'expo-constants'
+import { Platform } from 'react-native'
 import {
   aggregateGroupByPeriod,
+  getSdkStatus,
   initialize,
+  openHealthConnectSettings,
+  SdkAvailabilityStatus,
   requestPermission,
   type BackgroundAccessPermission,
   type Permission,
@@ -9,6 +14,7 @@ import {
 
 import { postMySteps, type DayStat } from '../api/steps'
 import { computeDayActivity } from './activity'
+import { syncPhoneSteps } from './phoneSteps'
 import { loadSleepHours } from './sleepHours'
 import { getHealthConnectStepSlices } from './stepSlices'
 
@@ -53,6 +59,39 @@ export const HEALTH_PERMISSIONS: (Permission | BackgroundAccessPermission)[] = [
   { accessType: 'read', recordType: 'Steps' },
   { accessType: 'read', recordType: 'BackgroundAccessPermission' },
 ]
+
+/**
+ * Health Connect is installed and up to date. Missing on phones without
+ * Google services (Huawei): every Health Connect call then fails with
+ * "Service not available", and opening its settings crashes the app.
+ */
+export async function isHealthConnectAvailable() {
+  if (Platform.OS !== 'android') {
+    return false
+  }
+
+  // Development build only (app.config.ts): a Huawei phone, on a Pixel.
+  if (Constants.expoConfig?.extra?.simulateNoHealthConnect === true) {
+    return false
+  }
+
+  try {
+    return (await getSdkStatus()) === SdkAvailabilityStatus.SDK_AVAILABLE
+  } catch (error) {
+    console.error('Health Connect status unavailable:', error)
+    return false
+  }
+}
+
+/**
+ * Opens the Health Connect settings when it is there: without it, the
+ * library starts an activity that does not exist and the app crashes.
+ */
+export async function openHealthConnectSettingsIfAvailable() {
+  if (await isHealthConnectAvailable()) {
+    openHealthConnectSettings()
+  }
+}
 
 /**
  * Returns a copy of the given date set to the beginning of its day.
@@ -323,7 +362,19 @@ export async function syncActivityMinutes(days: DayStat[]) {
  *
  * Health Connect → read 30 days → PostgreSQL
  */
-export async function syncLast30Days(options: ReadOptions = {}) {
+export async function syncLast30Days(
+  options: ReadOptions = {},
+): Promise<string[]> {
+  // Without Health Connect: the phone step counter when the build has it
+  // (today only), else nothing to send.
+  if (!(await isHealthConnectAvailable())) {
+    const steps = await syncPhoneSteps({
+      requestPermission: options.requestPermissions ?? true,
+    })
+
+    return steps === null ? [] : [getDateKey(new Date())]
+  }
+
   const healthConnectStats =
     await getHealthConnectLast30Days(options)
 

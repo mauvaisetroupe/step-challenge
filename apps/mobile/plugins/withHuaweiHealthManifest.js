@@ -1,4 +1,5 @@
 const { withAndroidManifest } = require('@expo/config-plugins');
+const { isPhoneStepCounterEnabled } = require('./withPhoneStepCounter');
 
 module.exports = function withHuaweiHealthManifest(config) {
   return withAndroidManifest(config, (config) => {
@@ -21,12 +22,17 @@ module.exports = function withHuaweiHealthManifest(config) {
           'tools:node': 'remove',
         },
       },
-      {
-        $: {
-          'android:name': 'android.permission.ACTIVITY_RECOGNITION',
-          'tools:node': 'remove',
-        },
-      },
+      // Kept by the phone step counter (AppGallery build only).
+      ...(isPhoneStepCounterEnabled()
+        ? []
+        : [
+            {
+              $: {
+                'android:name': 'android.permission.ACTIVITY_RECOGNITION',
+                'tools:node': 'remove',
+              },
+            },
+          ]),
       {
         $: {
           'android:name': 'android.permission.ACCESS_FINE_LOCATION',

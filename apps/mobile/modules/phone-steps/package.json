@@ -1,0 +1,7 @@
+{
+  "name": "phone-steps",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Phone step counter, fallback without Health Connect (AppGallery build)",
+  "main": "index.ts"
+}

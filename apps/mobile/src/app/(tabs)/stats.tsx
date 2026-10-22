@@ -14,12 +14,17 @@ import { useTranslation } from 'react-i18next'
 import {
   aggregateGroupByPeriod,
   initialize,
-  openHealthConnectSettings,
   requestPermission,
 } from 'react-native-health-connect'
 
 import { getMySteps } from '../../api/steps'
-import { HEALTH_PERMISSIONS, syncTodaySteps } from '../../services/stepSync'
+import {
+  HEALTH_PERMISSIONS,
+  isHealthConnectAvailable,
+  openHealthConnectSettingsIfAvailable,
+  syncTodaySteps,
+} from '../../services/stepSync'
+import { syncPhoneSteps } from '@/services/phoneSteps'
 import {
   getSourceSurplus,
   getStepSources,
@@ -306,6 +311,9 @@ export default function StatsScreen() {
   const [sourcesOpen, setSourcesOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // False on a phone without Health Connect (Huawei): the views then
+  // read the database, as on the web.
+  const [healthConnect, setHealthConnect] = useState(Platform.OS === 'android')
   // Only the latest load updates the screen: going through the days
   // quickly starts several.
   const loadRef = useRef(0)
@@ -350,10 +358,26 @@ export default function StatsScreen() {
       //   from it would be wrong. Step Challenge does not try to replace
       //   the watch's own history: this is the only view that reads the
       //   database.
-      // - On the web (no Health Connect), the views read the database;
-      //   the 1-day view has no hourly detail.
+      // - On the web, and on a phone without Health Connect (Huawei),
+      //   the views read the database; the 1-day view has no hourly
+      //   detail. The phone step counter, when the build has it, first
+      //   sends today's steps.
 
-      if (Platform.OS !== 'web') {
+      const withHealthConnect = await isHealthConnectAvailable()
+
+      if (isLatest()) {
+        setHealthConnect(withHealthConnect)
+      }
+
+      if (Platform.OS === 'android' && !withHealthConnect) {
+        try {
+          await syncPhoneSteps()
+        } catch (err) {
+          console.error('Phone step counter error:', err)
+        }
+      }
+
+      if (withHealthConnect) {
         try {
           await initialize()
 
@@ -401,7 +425,7 @@ export default function StatsScreen() {
         return
       }
 
-      if (Platform.OS === 'web') {
+      if (!withHealthConnect) {
         if (period === '7d' || period === '30d') {
           const days = period === '7d' ? 7 : 30
           const startDate = getStartOfDay(getDaysAgo(now, days - 1))
@@ -421,7 +445,7 @@ export default function StatsScreen() {
           return
         }
 
-        // 1 day: no hourly detail on the web.
+        // 1 day: no hourly detail without Health Connect.
         setDaySlices([])
         setDailyStats([])
         setMonthlyStats([])
@@ -564,10 +588,10 @@ export default function StatsScreen() {
         </View>
 
         <DaySwipeArea
-          enabled={period === '1d' && Platform.OS === 'android'}
+          enabled={period === '1d' && healthConnect}
           onSwipe={shiftDay}
         >
-          {period === '1d' && Platform.OS === 'android' && (
+          {period === '1d' && healthConnect && (
             <DayNavigator
               day={day}
               today={getStartOfDay(new Date())}
@@ -608,9 +632,11 @@ export default function StatsScreen() {
                 emptyMessage={
                   Platform.OS === 'web'
                     ? t('stats.hourlyAndroidOnly')
-                    : isToday
-                      ? t('stats.noStepsToday')
-                      : t('stats.noStepsDay')
+                    : !healthConnect
+                      ? t('stats.hourlyHealthConnectOnly')
+                      : isToday
+                        ? t('stats.noStepsToday')
+                        : t('stats.noStepsDay')
                 }
               />
 
@@ -620,7 +646,7 @@ export default function StatsScreen() {
                 />
               )}
 
-              {Platform.OS === 'android' && (
+              {healthConnect && (
                 <Pressable
                   style={styles.sourcesToggle}
                   onPress={() => setSourcesOpen((open) => !open)}
@@ -634,7 +660,7 @@ export default function StatsScreen() {
                 </Pressable>
               )}
 
-              {Platform.OS === 'android' && sourcesOpen && (
+              {healthConnect && sourcesOpen && (
                 <View style={styles.sources}>
                   {sources ? (
                     <StepSourcesList sources={sources} />
@@ -650,7 +676,7 @@ export default function StatsScreen() {
 
                   <Pressable
                     style={styles.sourcesLink}
-                    onPress={() => openHealthConnectSettings()}
+                    onPress={openHealthConnectSettingsIfAvailable}
                     hitSlop={8}
                   >
                     <Text style={styles.sourcesAction}>
