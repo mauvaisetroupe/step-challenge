@@ -2,7 +2,7 @@
 title: Politique de confidentialité — Step Challenge
 linkTitle: Confidentialité
 description: Les données collectées par Step Challenge, pourquoi, et comment les supprimer.
-updated: 8 octobre 2026
+updated: 22 octobre 2026
 ---
 
 *Traduction de la version anglaise, qui fait foi en cas de divergence.*
@@ -57,6 +57,15 @@ de Santé Connect.
 Sur les appareils Huawei, Step Challenge utilise **Huawei Health Kit**
 pour accéder aux nombres de pas mis à disposition par Huawei Santé et
 les appareils compatibles.
+
+Sur les appareils Android sans Santé Connect (par exemple les téléphones
+Huawei), la version distribuée sur Huawei AppGallery peut lire à la
+place le **podomètre du téléphone** (un capteur du téléphone), avec
+l'autorisation de l'utilisateur (« Activité physique »). Step Challenge
+ne le lit que lorsque l'application est ouverte, et ne garde sur le
+téléphone que le dernier relevé et le total du jour ; seul le nombre de
+pas quotidien est envoyé au serveur. Cette autorisation peut être
+retirée à tout moment dans les paramètres Android de l'application.
 
 Les données de pas peuvent comprendre :
 
