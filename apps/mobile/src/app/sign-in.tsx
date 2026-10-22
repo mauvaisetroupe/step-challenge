@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { signInWithDemoCode, signInWithGoogleIdToken } from '../api/auth'
 import {
@@ -73,6 +74,7 @@ export default function SignInScreen() {
   const [step, setStep] = useState<Step>({ name: 'google' })
   const [displayName, setDisplayName] = useState('')
   const [demoCode, setDemoCode] = useState('')
+  const insets = useSafeAreaInsets()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -300,7 +302,9 @@ export default function SignInScreen() {
 
         {step.name === 'google' && (
           <TouchableOpacity
-            style={styles.demoLink}
+            // Above the navigation bar: the app is drawn under it
+            // (edge-to-edge), which hid most of the link on Android 10.
+            style={[styles.demoLink, { marginBottom: 24 + insets.bottom }]}
             onPress={() => showStep({ name: 'demo' })}
             disabled={loading}
           >
