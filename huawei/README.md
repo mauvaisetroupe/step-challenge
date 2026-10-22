@@ -681,3 +681,20 @@ Huawei a refusé la demande de permission Health Kit, pour deux raisons :
   * données déclarées, usage « App functionality » seulement : Fitness information, Contact list (amis), User identifiers, Account information (nom affiché), Text information (surnoms, commentaire de signalement) ; pas de transfert hors du pays (VPS OVH en France) ;
   * examinateurs : « Sign-in required », utilisateur `demo`, mot de passe = code d'accès de démonstration (ADR 0006), remarque de 300 caractères au plus. Sur un téléphone Huawei sans Santé Connect, l'examinateur voit les pas des amis fictifs, et 0 pour lui.
 * **Examen** : contrôle automatique en quelques heures (refus éventuel dans ce délai), puis examen manuel.
+
+### Refus de la 1.9.0 (2026-10-22) et 1.9.1
+
+Rapport du 2026-10-22, règle 3.1 (« l'application doit être utilisable dans ses pays de publication »), testée sur P30 Pro (EMUI 10.1) et P40 Pro (EMUI 12), **sans Santé Connect** :
+
+1. « Service not available » (message d'androidx Health Connect) sur l'accueil, Stats et le classement, qui ne s'affichait pas du tout (la synchronisation précédait sa lecture, dans le même `try`) ;
+2. plantage sur Paramètres → Sources de pas → Ouvrir Santé Connect : `openHealthConnectSettings()` de `react-native-health-connect` lance une activité qui n'existe pas (`ActivityNotFoundException`, côté natif, impossible à rattraper en JavaScript).
+
+Corrections de la 1.9.1 :
+
+* `isHealthConnectAvailable()` (`services/stepSync.ts`, d'après `getSdkStatus()`) ; sans Santé Connect, l'accueil et Stats lisent la base comme le client web, le classement s'affiche même si la synchronisation échoue, Sources de pas affiche une explication, et `openHealthConnectSettingsIfAvailable()` remplace tous les appels directs ;
+* **podomètre du téléphone**, en attendant Health Kit, dans le build AppGallery seulement (`PHONE_STEP_COUNTER=true`, profil `appgallery`) : capteur `TYPE_STEP_COUNTER` (module `modules/phone-steps`), autorisation « Activité physique » (`ACTIVITY_RECOGNITION`, ajoutée par `plugins/withPhoneStepCounter.js` ; le build Play la retire toujours), relevé à chaque ouverture de l'accueil, de Stats et à l'actualisation du classement, total du jour envoyé au serveur (`services/phoneSteps.ts`, calcul testé dans `phoneStepTally.ts`). Volontairement simple : rien avant la première ouverture, les pas entre le dernier relevé d'un jour et le premier du suivant vont au jour précédent, ceux d'avant un redémarrage sont perdus, pas de synchronisation en arrière-plan ni de détail par minute. **À retirer** quand Health Kit sera en place : le module, les deux fichiers de service, le plugin, la variable du profil `appgallery` et l'exception dans `withHuaweiHealthManifest.js`.
+* Test sur un Pixel : build de développement avec `SIMULATE_NO_HEALTH_CONNECT=true` et `PHONE_STEP_COUNTER=true` (voir `app.config.ts`), après `npx expo prebuild --clean -p android`.
+
+Remarque pour les examinateurs (300 caractères au plus) :
+
+> Sign in: tap "Demo access" on the sign-in screen (or user demo / code). Without Health Connect (Huawei phones), steps come from the phone's step counter: allow "Physical activity" and walk a little. Huawei Health support needs Health Kit approval, which requires this listing.
