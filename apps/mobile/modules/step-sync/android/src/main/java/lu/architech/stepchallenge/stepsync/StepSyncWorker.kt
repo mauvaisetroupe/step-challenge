@@ -46,6 +46,13 @@ class StepSyncWorker(context: Context, params: WorkerParameters) :
       return Result.success()
     }
 
+    // No Health Connect (Huawei phone): nothing to read, and a failed
+    // run every 6 hours in the history would only alarm the user.
+    if (HealthConnectClient.getSdkStatus(applicationContext) != HealthConnectClient.SDK_AVAILABLE) {
+      Log.i(TAG, "Skipped: Health Connect not available")
+      return Result.success()
+    }
+
     val run = JSONObject()
       .put("timestamp", Instant.now().toString())
       .put("trigger", "background")

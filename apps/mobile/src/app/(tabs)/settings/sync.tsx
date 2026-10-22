@@ -15,6 +15,10 @@ import {
   type BackgroundSyncRun,
 } from '@/services/backgroundSync'
 import { useFormatters } from '@/i18n'
+import {
+  noHealthConnectNotice,
+  useHealthConnectAvailable,
+} from '@/services/noHealthConnectNotice'
 import { useThemedStyles, type Colors } from '@/theme'
 
 /** History of the background step sync, and a "Sync now" button. */
@@ -25,6 +29,7 @@ export default function SyncSettingsScreen() {
   const [history, setHistory] = useState<BackgroundSyncRun[]>([])
   const [syncing, setSyncing] = useState(false)
   const [result, setResult] = useState<BackgroundSyncRun | null>(null)
+  const healthConnect = useHealthConnectAvailable()
 
   const load = useCallback(async () => {
     const status = await getBackgroundSyncStatus()
@@ -53,7 +58,11 @@ export default function SyncSettingsScreen() {
 
   return (
     <SettingsPage>
-      <Description>{t('settings.sync.description')}</Description>
+      <Description>
+        {healthConnect === false
+          ? `${t('noHealthConnect.sync')} ${noHealthConnectNotice(t)}`
+          : t('settings.sync.description')}
+      </Description>
 
       <PrimaryButton
         title={t('settings.sync.syncNow')}

@@ -16,6 +16,8 @@ import {
   type HealthConnectDiagnostic,
 } from '@/services/healthConnectDiagnostic'
 import { getHuaweiHealthDiagnostic } from '@/services/huaweiHealthDiagnostic'
+import { HUAWEI_HEALTH_READY } from '@/services/huaweiHealthReady'
+import { isHealthConnectAvailable } from '@/services/stepSync'
 // Step sources have their own screen (Settings → Step sources); they
 // stay in the copied diagnostics text, useful for support.
 import { getTodayStepSources } from '@/services/stepSources'
@@ -38,9 +40,19 @@ export default function DiagnosticSettingsScreen() {
 
     try {
       const result = await getHealthConnectDiagnostic()
-      const huaweiItems = await getHuaweiHealthDiagnostic()
+      // Until Health Kit is approved, its calls only fail (or ask for
+      // HMS Core): one line saying it is coming instead.
+      const huaweiItems: DiagnosticItem[] = HUAWEI_HEALTH_READY
+        ? await getHuaweiHealthDiagnostic()
+        : [
+            {
+              label: 'Huawei Health',
+              value: t('diagnostic.huaweiComingSoon'),
+              status: 'unknown',
+            },
+          ]
       const stepSources =
-        Platform.OS === 'android'
+        Platform.OS === 'android' && (await isHealthConnectAvailable())
           ? await getTodayStepSources().catch((error) => {
               console.error('Step sources error:', error)
               return {

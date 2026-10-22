@@ -62,7 +62,10 @@
       "description": "Connecte Step Challenge à Huawei Health pour permettre la lecture de tes pas.",
       "configure": "Configurer Huawei Health",
       "configured": "Huawei Health est configuré.",
-      "error": "Erreur de configuration Huawei Health"
+      "error": "Erreur de configuration Huawei Health",
+      "comingSoon": "La prise en charge de Huawei Health arrive bientôt : Step Challenge pourra lire les pas des montres et bracelets Huawei. Elle attend l'accord de Huawei.",
+      "comingSoonDetail": "Bientôt disponible",
+      "comingSoonShort": "La prise en charge de Huawei Health arrive bientôt."
     },
     "diagnostic": {
       "title": "Diagnostic",
@@ -90,7 +93,7 @@
       "openHealthConnect": "Ouvrir Santé Connect",
       "refresh": "Actualiser",
       "androidOnly": "Les sources de pas ne sont visibles que dans l'application Android.",
-      "noHealthConnect": "Santé Connect n'est pas disponible sur ce téléphone. Step Challenge compte tes pas avec le podomètre du téléphone, depuis la première ouverture de l'application. La prise en charge de Huawei Santé arrive bientôt."
+      "noHealthConnect": "Santé Connect n'est pas disponible sur ce téléphone."
     },
     "activity": {
       "title": "Activité",
@@ -419,12 +422,14 @@
       "initialization": "Initialisation",
       "stepsPermission": "Permission Steps",
       "grantedPermissions": "Permissions accordées",
-      "permissions": "Permissions"
+      "permissions": "Permissions",
+      "phoneStepCounter": "Podomètre du téléphone"
     },
     "sdk": {
       "unavailable": "Non disponible",
       "updateRequired": "Disponible après mise à jour",
-      "available": "Disponible"
+      "available": "Disponible",
+      "notOnThisPhone": "Non disponible sur ce téléphone"
     },
     "httpError": "Erreur HTTP {{status}}",
     "reachable": "Accessible",
@@ -451,6 +456,15 @@
       "kept": "Total retenu par Santé Connect",
       "total": "Total retenu par Santé Connect : {{steps}}",
       "hint": "Santé Connect fusionne toutes les sources et retire les doublons selon l'ordre de priorité réglé dans ses paramètres (Santé Connect → Données et accès → Activité → Pas) : le total n'est pas la somme des sources. C'est ce total que Step Challenge utilise."
-    }
+    },
+    "huaweiComingSoon": "Bientôt disponible",
+    "phoneStepCounterUsed": "Utilisé à la place de Santé Connect"
+  },
+  "noHealthConnect": {
+    "phoneCounter": "Pour l'instant, sur ce téléphone, Step Challenge compte tes pas avec le podomètre du téléphone, à chaque ouverture de l'application.",
+    "noSource": "Pour l'instant, Step Challenge ne peut pas lire tes pas sur ce téléphone.",
+    "activityScore": "Le score d'activité se calcule à partir de tes pas minute par minute, ce qui nécessite Santé Connect, non disponible sur ce téléphone.",
+    "sync": "La synchronisation en arrière-plan nécessite Santé Connect, qui n'est pas disponible sur ce téléphone.",
+    "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui nécessitent Santé Connect, non disponible sur ce téléphone."
   }
 }

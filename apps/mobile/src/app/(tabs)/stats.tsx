@@ -24,6 +24,7 @@ import {
   openHealthConnectSettingsIfAvailable,
   syncTodaySteps,
 } from '../../services/stepSync'
+import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
 import {
   getSourceSurplus,
@@ -633,7 +634,7 @@ export default function StatsScreen() {
                   Platform.OS === 'web'
                     ? t('stats.hourlyAndroidOnly')
                     : !healthConnect
-                      ? t('stats.hourlyHealthConnectOnly')
+                      ? `${t('stats.hourlyHealthConnectOnly')} ${noHealthConnectNotice(t)}`
                       : isToday
                         ? t('stats.noStepsToday')
                         : t('stats.noStepsDay')
@@ -719,7 +720,15 @@ export default function StatsScreen() {
               </View>
 
               {metric === 'score' ? (
-                <ActivityScoreChart period={period} ready={!loading} />
+                <ActivityScoreChart
+                  period={period}
+                  ready={!loading}
+                  emptyMessage={
+                    healthConnect
+                      ? undefined
+                      : `${t('noHealthConnect.activityScore')} ${noHealthConnectNotice(t)}`
+                  }
+                />
               ) : (
                 <>
                   <View style={styles.totalContainer}>

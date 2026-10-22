@@ -9,6 +9,8 @@ import {
 import { API_URL } from '../api/config'
 import { getFormatters, i18n } from '@/i18n'
 
+import { isPhoneStepCounterEnabled } from './phoneSteps'
+
 import {
   isPhoneSource,
   type StepSource,
@@ -166,6 +168,34 @@ export async function getHealthConnectDiagnostic(): Promise<HealthConnectDiagnos
           : t('diagnostic.cannotCheck'),
       status: 'error',
     })
+  }
+
+  // No Health Connect (Huawei phone): not an error, the phone step
+  // counter replaces it when the build has it. Initializing would only
+  // add "Service not available".
+  if (sdkStatus !== 3) {
+    items[items.length - 1] = {
+      label: 'Health Connect',
+      value: t('diagnostic.sdk.notOnThisPhone'),
+      status: 'unknown',
+    }
+
+    const counter = isPhoneStepCounterEnabled()
+
+    items.push({
+      label: t('diagnostic.labels.phoneStepCounter'),
+      value: counter
+        ? t('diagnostic.phoneStepCounterUsed')
+        : t('diagnostic.sdk.unavailable'),
+      status: counter ? 'ok' : 'warning',
+    })
+
+    items.push(await checkBackend())
+
+    return {
+      items,
+      generatedAt: new Date().toISOString(),
+    }
   }
 
   let initialized = false

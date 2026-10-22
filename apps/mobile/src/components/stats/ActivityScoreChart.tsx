@@ -17,6 +17,8 @@ type Props = {
   period: '7d' | '30d' | '1y'
   /** False while the steps of the screen load (and sync today). */
   ready: boolean
+  /** Replaces the default message when there is no score. */
+  emptyMessage?: string
 }
 
 /** Weeks of the 1-year view. */
@@ -101,7 +103,11 @@ function buildBuckets(period: Props['period'], days: DayStat[]): Bucket[] {
  * week over a year against the WHO goal itself. Read from the
  * database: days synced before the activity minutes have no bar.
  */
-export default function ActivityScoreChart({ period, ready }: Props) {
+export default function ActivityScoreChart({
+  period,
+  ready,
+  emptyMessage,
+}: Props) {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { t } = useTranslation()
@@ -169,7 +175,7 @@ export default function ActivityScoreChart({ period, ready }: Props) {
         goal={goal}
         showGoalLine
         color={colors.activity}
-        emptyMessage={t('stats.activity.noData')}
+        emptyMessage={emptyMessage ?? t('stats.activity.noData')}
       />
 
       {withData.length > 0 && (

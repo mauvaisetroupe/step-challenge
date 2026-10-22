@@ -4,6 +4,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Card, Description, SettingsPage } from '@/components/settings/ui'
 import { useFormatters } from '@/i18n'
 import {
+  noHealthConnectNotice,
+  useHealthConnectAvailable,
+} from '@/services/noHealthConnectNotice'
+import {
   saveSleepHours,
   SLEEP_HOURS_STEP,
   useSleepHours,
@@ -23,6 +27,7 @@ export default function ActivitySettingsScreen() {
   const { t } = useTranslation()
   const { formatDate } = useFormatters()
   const sleepHours = useSleepHours()
+  const healthConnect = useHealthConnectAvailable()
 
   const formatTime = (minute: number) =>
     formatDate(new Date(2000, 0, 1, Math.floor(minute / 60), minute % 60), {
@@ -48,6 +53,12 @@ export default function ActivitySettingsScreen() {
   return (
     <SettingsPage>
       <Description>{t('settings.activity.description')}</Description>
+
+      {healthConnect === false && (
+        <Description>
+          {`${t('noHealthConnect.sleepHours')} ${noHealthConnectNotice(t)}`}
+        </Description>
+      )}
 
       <Card>
         {rows.map((row, index) => (

@@ -60,7 +60,10 @@
       "description": "Connect Step Challenge to Huawei Health so that it can read your steps.",
       "configure": "Set up Huawei Health",
       "configured": "Huawei Health is set up.",
-      "error": "Huawei Health setup error"
+      "error": "Huawei Health setup error",
+      "comingSoon": "Huawei Health support is coming soon: Step Challenge will be able to read the steps of Huawei watches and bands. It is waiting for Huawei's approval.",
+      "comingSoonDetail": "Coming soon",
+      "comingSoonShort": "Huawei Health support is coming soon."
     },
     "diagnostic": {
       "title": "Diagnostics",
@@ -88,7 +91,7 @@
       "openHealthConnect": "Open Health Connect",
       "refresh": "Refresh",
       "androidOnly": "Step sources are only available in the Android app.",
-      "noHealthConnect": "Health Connect is not available on this phone. Step Challenge counts your steps with the phone's own step counter, from the first opening of the app. Huawei Health support is coming soon."
+      "noHealthConnect": "Health Connect is not available on this phone."
     },
     "activity": {
       "title": "Activity",
@@ -406,12 +409,14 @@
       "initialization": "Initialization",
       "stepsPermission": "Steps permission",
       "grantedPermissions": "Granted permissions",
-      "permissions": "Permissions"
+      "permissions": "Permissions",
+      "phoneStepCounter": "Phone step counter"
     },
     "sdk": {
       "unavailable": "Not available",
       "updateRequired": "Available after an update",
-      "available": "Available"
+      "available": "Available",
+      "notOnThisPhone": "Not available on this phone"
     },
     "httpError": "HTTP error {{status}}",
     "reachable": "Reachable",
@@ -438,6 +443,15 @@
       "kept": "Total kept by Health Connect",
       "total": "Total kept by Health Connect: {{steps}}",
       "hint": "Health Connect merges every source and removes duplicates according to the priority order set in its settings (Health Connect → Data and access → Activity → Steps): the total is not the sum of the sources. Step Challenge uses this total."
-    }
+    },
+    "huaweiComingSoon": "Coming soon",
+    "phoneStepCounterUsed": "Used instead of Health Connect"
+  },
+  "noHealthConnect": {
+    "phoneCounter": "For now, on this phone, Step Challenge counts your steps with the phone's own step counter, each time the app is opened.",
+    "noSource": "For now, Step Challenge cannot read your steps on this phone.",
+    "activityScore": "The activity score is computed from your steps minute by minute, which needs Health Connect, not available on this phone.",
+    "sync": "Background sync needs Health Connect, which is not available on this phone.",
+    "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which need Health Connect, not available on this phone."
   }
 }

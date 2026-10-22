@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import TabScreenHeader from '@/components/TabScreenHeader'
 import { NavRow } from '@/components/settings/ui'
 import { LANGUAGE_NAMES, useFormatters, useLanguage } from '@/i18n'
+import { HUAWEI_HEALTH_READY } from '@/services/huaweiHealthReady'
 import { useSleepHours } from '@/services/sleepHours'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
@@ -80,7 +81,9 @@ export default function SettingsScreen() {
         },
         {
           title: t('settings.huawei.title'),
-          detail: t('settings.huawei.detail'),
+          detail: HUAWEI_HEALTH_READY
+            ? t('settings.huawei.detail')
+            : t('settings.huawei.comingSoonDetail'),
           href: '/settings/huawei',
         },
         {

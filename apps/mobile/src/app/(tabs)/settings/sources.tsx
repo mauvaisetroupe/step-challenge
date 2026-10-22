@@ -15,6 +15,7 @@ import {
   getTodayStepSources,
   type StepSourcesReport,
 } from '@/services/stepSources'
+import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import {
   isHealthConnectAvailable,
   openHealthConnectSettingsIfAvailable,
@@ -87,6 +88,8 @@ export default function StepSourcesSettingsScreen() {
     return (
       <SettingsPage>
         <Description>{t('settings.sources.noHealthConnect')}</Description>
+
+        <Description>{noHealthConnectNotice(t)}</Description>
       </SettingsPage>
     )
   }

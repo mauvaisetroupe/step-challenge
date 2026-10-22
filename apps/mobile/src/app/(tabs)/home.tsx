@@ -19,6 +19,7 @@ import {
   syncActivityMinutes,
   syncStatsToServer,
 } from '../../services/stepSync'
+import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import StreakCard from '@/components/home/StreakCard'
@@ -52,6 +53,8 @@ export default function HomeScreen() {
 
   const [todaySteps, setTodaySteps] = useState<number | null>(null)
   const [stepsError, setStepsError] = useState<string | null>(null)
+  // Phone without Health Connect (Huawei): says where the steps come from.
+  const [noHealthConnect, setNoHealthConnect] = useState(false)
   const [rank, setRank] = useState<WeekRank | null>(null)
   const [rankError, setRankError] = useState(false)
   const [streaks, setStreaks] = useState<Streaks | null>(null)
@@ -75,6 +78,8 @@ export default function HomeScreen() {
       // No Health Connect (Huawei phone): today's steps come from the
       // phone step counter when the build has it, else from the server.
       const withHealthConnect = await isHealthConnectAvailable()
+
+      setNoHealthConnect(Platform.OS !== 'web' && !withHealthConnect)
 
       if (Platform.OS !== 'web' && !withHealthConnect) {
         try {
@@ -201,6 +206,10 @@ export default function HomeScreen() {
             </View>
           )}
 
+          {noHealthConnect && (
+            <Text style={styles.notice}>{noHealthConnectNotice(t)}</Text>
+          )}
+
           {/* From today to the week: the streak right under the ring
               (today's goal keeps it going), then the friends. */}
           <StreakCard
@@ -250,6 +259,13 @@ const createStyles = (c: Colors) =>
     ring: {
       alignItems: 'center',
       marginBottom: 8,
+    },
+
+    notice: {
+      color: c.textSecondary,
+      fontSize: 13,
+      lineHeight: 18,
+      textAlign: 'center',
     },
 
     error: {
