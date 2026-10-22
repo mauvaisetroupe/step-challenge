@@ -2,7 +2,7 @@
   "expo": {
     "name": "step-challenge",
     "slug": "step-challenge",
-    "version": "1.9.0",
+    "version": "1.9.1",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "stepchallenge",
@@ -84,6 +84,7 @@
       "./plugins/withHuaweiMavenRepo",
       "./plugins/withAGConnect",
       "./plugins/withHuaweiHealthManifest",
+      "./plugins/withPhoneStepCounter",
       "./plugins/withGradleMemory",
       "expo-secure-store"
     ],
