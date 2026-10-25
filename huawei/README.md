@@ -658,21 +658,7 @@ Huawei a refusé la demande de permission Health Kit, pour deux raisons :
 ## Publication sur AppGallery
 
 * **Paquet : APK, sans App Signing.** AppGallery n'accepte un AAB qu'avec App Signing : soit Huawei génère sa propre clé (nouvelle empreinte à déclarer dans AGC, dans un client OAuth Google et dans `assetlinks.json`, clé ni visible ni exportable), soit on lui confie une clé privée (celle de Google Play ne s'exporte pas ; il faudrait celle d'importation). L'APK est signé avec la **clé d'importation** d'EAS, dont l'empreinte est déjà déclarée partout (voir [`docs/signing.md`](../docs/signing.md)) : Huawei le distribue tel quel.
-* **Build** : profil `appgallery` d'`apps/mobile/eas.json` (hérite de `production`, `buildType: apk`). Il consomme un `versionCode`, comme tout build de production :
-
-  ```bash
-  cd apps/mobile
-  npx eas-cli build --platform android --profile appgallery --local
-  ```
-
-  Vérifier ensuite la signature et la configuration AGC :
-
-  ```bash
-  BT=$(ls -d ~/Library/Android/sdk/build-tools/* | sort -V | tail -1)
-  $BT/apksigner verify --print-certs <apk> | grep SHA-256     # 71b4f8fb…
-  $BT/aapt2 dump xmltree --file AndroidManifest.xml <apk> | grep -A2 hms.client.appid
-  ```
-
+* **Build, vérification de l'APK et envoi** : voir [`docs/exploitation.md`](../docs/exploitation.md#huawei-appgallery).
 * **Fiche** : français (par défaut) et anglais, sans balises HTML (AppGallery les affiche telles quelles) ; icône `icons/playstore-icon.png` ; captures `docs/screenshots/french/` et `english/` (compte de démonstration, données fictives).
 * **Version** :
   * pays : France seulement (en ajouter se fait dans une nouvelle version, sans nouveau paquet) ;
@@ -698,6 +684,6 @@ Corrections de la 1.9.1 :
 * Émulateur « comme un Huawei » : AVD `Huawei_like_API29`, image `system-images;android-29;default;arm64-v8a` (sans Google Play, donc sans Santé Connect, qui fait partie du système depuis Android 14). L'APK de release s'y installe (pas d'application Play à remplacer) ; il n'a pas de podomètre.
 * Test sur un Pixel : build de développement avec `SIMULATE_NO_HEALTH_CONNECT=true` et `PHONE_STEP_COUNTER=true` (voir `app.config.ts`), après `npx expo prebuild --clean -p android`.
 
-Remarque pour les examinateurs (300 caractères au plus) :
+Remarque pour les examinateurs (300 caractères au plus), saisie dans AppGallery Connect pour la 1.9.1 :
 
-> Sign in: tap "Demo access" on the sign-in screen (or user demo / code). Without Health Connect (Huawei phones), steps come from the phone's step counter: allow "Physical activity" and walk a little. Huawei Health support needs Health Kit approval, which requires this listing.
+> The app uses Google sign-in. For review, tap "Demo access" at the bottom of the sign-in screen and enter the access code given in the password field. Huawei phones have no Health Connect: steps come from the phone's step counter (allow "Physical activity"). Friends and history are fictitious.

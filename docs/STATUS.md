@@ -46,7 +46,7 @@ Installation, lancement en local, tests, déploiement et build : voir le [README
 | Application | **1.9.0** envoyée en test fermé le 2026-10-11 (vue 1j par jour, sources des pas, orientation libre) |
 | Fiche Play Store | Descriptions et bannière refaites le 2026-10-04 |
 
-Le déploiement du backend se fait avec `deploy.sh` sur le serveur. Les migrations SQL sont appliquées à la main (voir `backend/migrations/README.md`).
+Déploiement de chaque partie (base, API, site, Google Play, AppGallery) : voir [`exploitation.md`](exploitation.md).
 
 ## Reste à faire
 

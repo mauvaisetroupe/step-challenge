@@ -98,10 +98,7 @@ npm run test:local
 
 ### Déploiement
 
-Sur le serveur (`/opt/step-challenge`, service systemd `step-challenge-api`) :
-
-- `install-step-challenge.sh` : installation initiale (Node.js, service systemd) ;
-- `deploy.sh` : `git pull`, `npm ci`, build, redémarrage et vérification de `/api/health`.
+Migrations, `deploy.sh`, retour en arrière : voir [`docs/exploitation.md`](docs/exploitation.md).
 
 ## Application mobile
 
@@ -148,20 +145,7 @@ La connexion Google (`react-native-nitro-google-signin`, Android Credential Mana
 
 ### Build et publication
 
-Distribution via le Google Play Store (test fermé). Les builds sont faits **en local**, EAS cloud ne sert qu'à stocker :
-
-- les **credentials** Android (keystore de signature, alias, mots de passe) ;
-- les **variables d'environnement** (voir ci-dessus) ;
-- le numéro de version Android (`versionCode`), incrémenté automatiquement (`appVersionSource: remote`, `autoIncrement`).
-
-```bash
-cd apps/mobile
-npx eas-cli build --platform android --profile production --local
-```
-
-Le build produit un `.aab` signé à téléverser dans la Google Play Console. Les credentials se consultent ou se modifient avec `npx eas-cli credentials`.
-
-Clés de signature, empreintes et services où elles sont déclarées (Play, connexion Google, Huawei) : voir [`docs/signing.md`](docs/signing.md).
+Builds locaux avec EAS, envoi à Google Play et à Huawei AppGallery : voir [`docs/exploitation.md`](docs/exploitation.md). Clés de signature et empreintes : voir [`docs/signing.md`](docs/signing.md).
 
 ## Licence
 
