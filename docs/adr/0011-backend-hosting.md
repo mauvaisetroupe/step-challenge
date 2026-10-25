@@ -1,7 +1,7 @@
-# ADR 0011 — Hébergement du backend : VPS OVH et Docker
+# ADR 0011 — Hébergement du backend : une image de conteneur, hébergée par un exploitant
 
-- **Statut** : Proposé
-- **Date** : 2026-10-09
+- **Statut** : Accepté
+- **Date** : 2026-10-09, révisé le 2026-10-25
 - **Décideur** : mauvaisetroupe
 
 ## Contexte
@@ -14,7 +14,7 @@ Limites de la situation actuelle :
 - **séparation** : le home lab porte des données de santé de tiers ;
 - **sauvegardes** : aucune sauvegarde automatique de la base (voir `STATUS.md`), le risque principal aujourd'hui.
 
-Le mainteneur envisage, pour d'autres raisons, une offre **VPS-1 d'OVH** : 2 vCores, 4 Go de RAM, 40 Go de SSD NVMe, sauvegarde quotidienne des dernières 24 heures, trafic illimité, 500 Mbit/s ; environ 4,50 à 5 € par mois selon l'engagement. C'est largement suffisant : la base fait quelques Mo (100 utilisateurs sur un an ≈ 36 000 lignes dans `daily_steps`), Node.js et PostgreSQL occupent environ 0,5 Go de mémoire.
+La première version de cet ADR (2026-10-09) mettait dans ce dépôt toute la production : composition à trois services (API, base, `cloudflared`), `docker-compose.prod.yml`, `deploy.sh` sur le VPS, sauvegardes. Or ce dépôt est public et décrit une application ; la machine qui l'héberge, ses ports, ses utilisateurs, son tunnel et ses sauvegardes sont propres à un hébergement, et changeraient avec lui.
 
 L'application n'a pas encore de version publique : quelques testeurs, une interruption de quelques minutes est acceptable.
 
@@ -30,102 +30,100 @@ L'application n'a pas encore de version publique : quelques testeurs, une interr
 - ✅ Comme aujourd'hui : `deploy.sh` et l'unité systemd restent valables.
 - ❌ Versions de Node.js et PostgreSQL à installer et tenir identiques à la main, en dev et en production ; un futur changement d'hébergeur refait tout.
 
-### Option C — VPS, tout dans Docker (API, base, connecteur du tunnel)
+### Option C — Conteneurs, avec la production décrite dans ce dépôt
 
-- ✅ Mêmes versions figées en dev, en test et en production ; la base de dev et de test est déjà dans Docker (`backend/docker-compose.dev.yml`, `postgres:18`).
-- ✅ Migration plus simple (installer Docker seulement), retour en arrière par l'image précédente, portabilité vers un autre hébergeur.
-- ❌ Docker contourne `ufw` pour les ports publiés ; les images ne profitent pas des mises à jour automatiques du système ; journaux sans limite par défaut ; fuseau horaire UTC par défaut (voir les précautions).
+Version du 2026-10-09 : `Dockerfile`, `docker-compose.prod.yml` avec `cloudflared`, `deploy.sh` qui construit l'image sur le VPS.
+
+- ✅ Mêmes versions figées en dev, en test et en production.
+- ❌ Le dépôt public décrit une machine précise ; changer d'hébergement ou de tunnel modifie l'application.
+- ❌ L'image est construite sur le serveur, sans version : pas de retour en arrière simple, pas de trace de ce qui tourne.
+
+### Option D — Le dépôt livre une image versionnée et sa documentation ; un exploitant l'héberge
+
+Ce que livre un éditeur pour être hébergé par quelqu'un d'autre.
+
+- ✅ Mêmes versions figées partout ; retour en arrière en changeant de tag ; ce qui tourne est identifié (version, commit).
+- ✅ Le dépôt ne sait rien de l'hôte : changer d'hébergeur, de proxy ou de méthode de sauvegarde ne touche pas l'application.
+- ✅ La documentation d'exploitation est un contrat explicite (variables, port, santé, données), lisible sans connaître le code.
+- ❌ Deux endroits à tenir : ce dépôt et la configuration de l'exploitant. Ici, c'est la même personne.
 
 ### Passerelle d'API (Kong, Traefik…) — écartée
 
-Cloudflare tient déjà le rôle de périphérie (TLS, WAF, limitation de débit, statistiques) ; il n'y a qu'un backend, pas de clients tiers ni de clés d'API ; l'authentification est dans le backend (ADR 0001). Une passerelle ajouterait un composant à tenir à jour sans rien apporter. **À reconsidérer** : plusieurs services (par exemple une synchronisation Huawei séparée), une API ouverte à d'autres développeurs (clés, quotas), ou des déploiements sans coupure (un petit proxy local suffirait alors).
+Cloudflare tient déjà le rôle de périphérie (TLS, WAF, limitation de débit, statistiques) ; il n'y a qu'un backend, pas de clients tiers ni de clés d'API ; l'authentification est dans le backend (ADR 0001). Une passerelle ajouterait un composant à tenir à jour sans rien apporter. **À reconsidérer** : plusieurs services (par exemple une synchronisation Huawei séparée), une API ouverte à d'autres développeurs (clés, quotas), ou des déploiements sans coupure.
 
 ## Décision
 
-**Option C**, en gardant d'abord le tunnel Cloudflare.
+**Option D.** Ce dépôt livre l'image `ghcr.io/mauvaisetroupe/step-challenge-api` et sa documentation d'exploitation ([`docs/exploitation.md`](../exploitation.md)). Rien de plus : ni port publié, ni utilisateur Linux, ni tunnel, ni sauvegarde, ni chemin d'un autre dépôt.
 
-### Le VPS
+### Ce que livre ce dépôt
 
-- Offre VPS-1, **centre de données dans l'Union européenne** (Gravelines, Roubaix, Strasbourg…), **sans engagement** au début ; engagement de 12 mois une fois le backend stable dessus.
-- **Debian** (ou Ubuntu LTS, la même famille que les conteneurs LXC actuels).
-- Clé SSH ajoutée à la commande : jamais de mot de passe SSH.
+**L'image** (`backend/Dockerfile`) :
 
-### Sécurisation du système
+- plusieurs étapes, Node.js 24 « slim » à version figée, dépendances de production seulement, utilisateur non root ;
+- un seul port HTTP, **3000** ;
+- arrêt propre sur `SIGTERM` : Fastify termine les requêtes en cours, puis le pool PostgreSQL est fermé ;
+- amd64 et arm64.
 
-1. Mises à jour, utilisateur personnel avec `sudo`.
-2. SSH par clé uniquement (`/etc/ssh/sshd_config.d/hardening.conf`) : `PermitRootLogin no`, `PasswordAuthentication no`, `KbdInteractiveAuthentication no`. Vérifier dans un second terminal avant de fermer la session ; la console KVM d'OVH en dernier recours.
-3. **Pare-feu Linux (`ufw`, interface de netfilter/nftables)** : tout refusé en entrée sauf SSH ; tout autorisé en sortie. Le tunnel sort vers Cloudflare : ni 80 ni 443 à ouvrir. Le pare-feu est à états : les réponses aux connexions sortantes reviennent.
-4. **Pare-feu réseau d'OVH** (espace client, par IP, en amont du VPS) : facultatif tant que le tunnel est là. Il est sans états : une règle « TCP established » est indispensable, sinon le tunnel et `apt` cessent de fonctionner.
-5. `unattended-upgrades` pour les mises à jour de sécurité du système ; `fail2ban` facultatif (réduit le bruit des journaux).
-6. Plus tard : SSH par Cloudflare Access, et port 22 fermé lui aussi.
+**Un démarrage autonome** :
 
-### Docker
+- l'API refuse de démarrer, avec un message qui les nomme, si des variables obligatoires manquent ;
+- les **migrations sont appliquées au démarrage**, avant d'écouter. Un registre en base (`schema_migrations`) garde celles qui sont faites ; un verrou PostgreSQL empêche deux instances de migrer en même temps ; chaque migration s'exécute dans sa transaction. Au premier échec, l'API s'arrête ;
+- **base vide** : `schema.sql` est appliqué, et toutes les migrations qu'il contient sont notées comme faites ;
+- **base existante sans registre** (celle d'aujourd'hui, migrée à la main) : l'API **refuse de démarrer**, sauf si `MIGRATIONS_BASELINE=<numéro>` est donné. Les migrations jusqu'à ce numéro sont alors notées comme faites, **sans être lancées**, puis les suivantes s'appliquent. La variable ne sert qu'une fois, à la reprise d'une base existante. Les migrations 001 à 006 ne sont ni réécrites ni rejouées.
 
-- **`backend/Dockerfile`** en plusieurs étapes : image Node.js « slim » à version figée, dépendances de production seulement, utilisateur non root. Les secrets restent dans un `.env` sur le VPS (droits `600`), jamais dans l'image.
-- **`docker-compose.prod.yml`** : trois services sur un réseau interne, **aucun port publié** :
-  - `api` : le backend, joint par le tunnel sur le réseau interne ;
-  - `db` : `postgres:18` (même version majeure qu'en dev et en test), volume nommé, contrôle de santé ;
-  - `cloudflared` : le connecteur du tunnel.
-- **Précautions** :
-  - **fuseau horaire** : `TZ` dans les conteneurs et `timezone` de PostgreSQL égaux à celui du home lab actuel. Le backend utilise `CURRENT_DATE` (dates refusées dans le futur, semaines et mois du classement) : en UTC, le classement changerait de semaine à une autre heure ;
-  - **journaux** : pilote `json-file` limité (`max-size`, `max-file`), sinon le disque de 40 Go se remplit ;
-  - **mises à jour des images** : reconstruction et relance une fois par mois, et à chaque alerte de sécurité (Node.js, PostgreSQL, cloudflared) ;
-  - **montée de version majeure de PostgreSQL** : sauvegarde et restauration, jamais un simple changement d'image.
-- **`deploy.sh`** : `git pull`, construction de l'image sur le VPS, `docker compose up -d`, attente de `/api/health`. Plus tard, l'image peut être construite par une GitHub Action.
-- **En dev** : la même composition, l'API accessible pour l'application de dev (`192.168.1.109:3001`).
+**Une configuration uniquement par variables d'environnement**, dont deux dépendances jusqu'ici implicites :
 
-### Sauvegardes
+- **le fuseau** (`APP_TIMEZONE`, `Europe/Paris` par défaut) : le classement (semaine, mois) et le refus des dates futures reposent sur `CURRENT_DATE`. L'API fixe le fuseau de chaque connexion PostgreSQL, au lieu de dépendre de celui du conteneur ou du serveur ;
+- **l'adresse du client** (`CLIENT_IP_HEADER`, `cf-connecting-ip` par défaut) : l'en-tête lu par les limites de débit, écrit en dur jusqu'ici. Un autre proxy devient possible (`x-forwarded-for` : la dernière adresse de la liste, celle écrite par le proxy) ; vide, l'adresse de la connexion.
 
-- La sauvegarde quotidienne d'OVH (dernières 24 heures, chez le même fournisseur) sert à restaurer vite tout le VPS ; elle ne suffit pas seule : une erreur remarquée le surlendemain y serait déjà.
-- **`pg_dump` chaque nuit, chiffré (`age`), récupéré par le home lab** (le home lab vient chercher : le VPS n'a aucun accès au réseau du domicile), **30 jours** d'historique.
-- Une **restauration testée** au moins une fois, puis après chaque changement de la procédure.
+**`/api/health`** sans authentification : 200 si l'API et la base répondent, 503 sinon.
 
-### Supervision
+**Les versions** :
 
-`/api/health` surveillé de l'extérieur (Uptime Kuma sur le home lab, ou contrôle de santé Cloudflare), avec alerte.
+- un tag git `api-vX.Y.Z` (le dépôt contient aussi l'application mobile, versionnée à part) publie l'image sous `X.Y.Z` et `X.Y` ; chaque commit sur `main` la publie sous l'empreinte du commit. Pas de `latest` : l'exploitant choisit sa version. Première version : `api-v1.0.0` ;
+- l'image n'est publiée qu'après les tests de la CI ; elle est publique, comme le dépôt ;
+- chaque version a ses **notes** (GitHub Releases, tirées de `backend/CHANGELOG.md`) avec ce qui change pour l'exploitant : variable ajoutée ou retirée, migration lourde, version de PostgreSQL exigée.
 
-### Cloudflare
+**Une composition d'exemple** (API et base) pour essayer l'image, présentée comme un exemple et non comme la production.
 
-- **Étape 1 (cette migration)** : le tunnel est gardé et déplacé sur le VPS. `step-api.architech.lu` ne change pas : **aucune nouvelle version de l'application**.
-- **Règles WAF** (Security → WAF), applicables dès maintenant :
-  - bloquer tout chemin qui ne commence pas par `/api/` (robots qui cherchent `/wp-admin`, `/.env`…) ;
-  - limiter le débit sur `/api/auth/*`, en plus de `rateLimit.ts`.
-- **À ne pas activer** sur l'API : « Bot Fight Mode » et les défis (l'application ne peut pas les résoudre : la synchronisation échouerait sans message clair) ; le filtrage par pays (il bloquerait les examinateurs Google et Huawei et les testeurs en voyage).
-- **Étape 2 (à décider plus tard)** : retirer Cloudflare de l'API. Argument : Cloudflare déchiffre le trafic de l'API (pas, minutes actives, jetons) ; sans lui, le trafic est chiffré du téléphone jusqu'au VPS en France, et la politique de confidentialité peut dire que les données de santé ne transitent que par un hébergeur de l'Union européenne. Ce qu'il faudrait alors :
-  - **Caddy** devant l'API (certificats Let's Encrypt, seul `/api/*` transmis, limites de taille et de délai), ports 80 et 443 ouverts ;
-  - le **pare-feu réseau d'OVH** devient utile (22, 80, 443) ; l'anti-DDoS d'OVH protège le réseau, pas l'applicatif ; `fail2ban` sur les journaux de Caddy ;
-  - **`rateLimit.ts`** : lire l'adresse transmise par Caddy (`X-Forwarded-For`, `trustProxy` limité au proxy local) et ne plus faire confiance à `CF-Connecting-IP`, qu'un client pourrait sinon falsifier pour contourner les limites. À déployer avant la bascule ;
-  - le DNS : soit Cloudflare reste pour le site seul, soit la zone `architech.lu` passe chez OVH (revérifier alors les App Links, qui dépendent de `assetlinks.json` en HTTPS) ;
-  - un nouvel ADR remplaçant en partie l'ADR 0005, et `exposure.md` réécrit.
+### Ce que tient l'exploitant, hors de ce dépôt
+
+Pour Step Challenge, l'exploitant est le mainteneur. Ses choix, décrits ici pour mémoire et tenus ailleurs :
+
+- un **VPS OVH au Canada** ; le transfert hors de l'Union européenne repose sur la décision d'adéquation de la Commission européenne pour le Canada (politique de confidentialité mise à jour) ;
+- Docker **sans root** ; la composition de production, ses volumes et ses secrets ;
+- le **tunnel Cloudflare** sur l'hôte, hors de la composition ; `step-api.architech.lu` ne change pas, donc **aucune nouvelle version de l'application** ;
+- la sécurisation du système (SSH par clé, pare-feu, mises à jour), les **sauvegardes** de PostgreSQL (chiffrées, hors du VPS, restauration testée), la supervision de `/api/health`, les mises à jour de l'image et de PostgreSQL ;
+- les règles de Cloudflare (WAF, débit) et un éventuel retrait de Cloudflare de l'API : `CLIENT_IP_HEADER` le permet sans toucher au code.
+
+### Retiré de la version du 2026-10-09
+
+`cloudflared` dans la composition, `docker-compose.prod.yml`, `deploy.sh` sur le VPS, la procédure de sécurisation du VPS et celle des sauvegardes : ils relèvent de l'exploitant.
+
+L'ancien `deploy.sh` et `install-step-challenge.sh` (LXC, systemd) **restent** jusqu'à la bascule : ils servent la production actuelle.
 
 ### Limitation de débit par compte (indépendant de l'hébergement)
 
-Les routes authentifiées limitées (création d'invitation, signalement) devraient compter par compte plutôt que par adresse IP : clé infalsifiable, pas de gêne entre personnes qui partagent une IP. Les routes sans compte (connexion, accès démo, consultation d'un code d'invitation) gardent l'adresse IP.
+Les routes authentifiées limitées (création d'invitation, signalement) devraient compter par compte plutôt que par adresse IP : clé infalsifiable, pas de gêne entre personnes qui partagent une IP. Les routes sans compte (connexion, accès démo, consultation d'un code d'invitation) gardent l'adresse IP. À faire plus tard.
 
 ## Procédure de migration
 
-1. **En local** : `Dockerfile` et `docker-compose.prod.yml` ; lancer la composition sur le Mac, y restaurer une copie de la base, vérifier l'application de dev contre elle.
-2. **Préparer le VPS** : sécurisation, Docker, fuseau horaire, `.env`, composition démarrée sans le connecteur du tunnel ; sauvegardes et supervision en place.
-3. **Bascule** (quelques minutes) :
-   1. arrêter l'API du home lab ;
-   2. `pg_dump` du home lab, restauration sur le VPS ;
-   3. démarrer l'API sur le VPS, puis basculer le tunnel (connecteur du home lab arrêté, celui du VPS démarré) ;
-   4. vérifier `/api/health`, une connexion, une synchronisation, le classement.
-4. **Retour en arrière possible** : le home lab reste arrêté mais intact quelques jours ; revenir, c'est rebasculer le connecteur (et reprendre les données écrites entre-temps).
+1. **Sur le Mac** : l'image et la composition d'exemple, une copie de la base de production restaurée dedans (première fois avec `MIGRATIONS_BASELINE=6`), l'application de dev pointée dessus : connexion, synchronisation, classement.
+2. **Chez l'exploitant** : VPS, composition de production, sauvegardes et supervision, hors de ce dépôt.
+3. **Bascule** (quelques minutes) : arrêt de l'API du home lab, `pg_dump`, restauration sur le VPS, démarrage de l'image (`MIGRATIONS_BASELINE=6` une fois), bascule du tunnel ; vérifier `/api/health`, une connexion, une synchronisation, le classement.
+4. **Retour en arrière possible** : le home lab reste arrêté mais intact quelques jours.
 
 Aucune perte de pas pendant l'arrêt : les synchronisations échouées sont refaites, et le serveur garde le plus grand total de chaque jour.
 
 ## Conséquences
 
-- ✅ API disponible sans dépendre du domicile ; données de santé hors du home lab, dans l'Union européenne.
-- ✅ Sauvegardes enfin automatiques, chiffrées, hors du VPS, testées.
-- ✅ Mêmes versions en dev et en production ; changement d'hébergeur futur en une heure.
-- ⚠️ Mises à jour des images à faire soi-même, chaque mois.
-- ⚠️ Environ 5 € par mois.
-- À mettre à jour : `exposure.md` (le home lab ne sert plus l'API), `STATUS.md`, `README` (déploiement), la politique de confidentialité (« hébergé dans l'Union européenne »), et le dossier Huawei s'il mentionne le lieu de traitement.
+- ✅ API disponible sans dépendre du domicile ; données de santé hors du home lab.
+- ✅ Ce qui tourne est une version identifiée ; retour en arrière par le tag précédent (sauf migration non compatible, signalée dans les notes de version).
+- ✅ Le dépôt reste celui d'une application, utilisable par un autre hébergeur.
+- ⚠️ Les migrations au démarrage exigent une sauvegarde avant chaque mise à jour de l'image : c'est l'exploitant qui la fait.
+- À mettre à jour : `exploitation.md` (documentation de l'image ; la partie mainteneur passe dans `publication.md`), `STATUS.md`, `README`, `exposure.md` à la bascule, la politique de confidentialité (sous-traitants : OVH au Canada, Cloudflare, Google).
 
 ## Points ouverts
 
-- Système des conteneurs LXC actuels et fuseau horaire du home lab (`timedatectl`), à reprendre tels quels.
-- Version de Node.js en production, à figer dans le `Dockerfile`.
-- Centre de données choisi à la commande.
+- Fuseau du home lab actuel (`timedatectl`), à comparer à `Europe/Paris` avant la bascule.
+- Visibilité du paquet GHCR : à passer en public une fois, à la première publication.
