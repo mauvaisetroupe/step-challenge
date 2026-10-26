@@ -1,9 +1,12 @@
 # Bases PostgreSQL locales pour le développement et les tests.
 # Jamais utilisé en production. Voir README.md, section Backend.
 #
-#   npm run db:up      démarre les deux bases (schéma appliqué à la création)
+#   npm run db:up      démarre les deux bases et leur applique les migrations
 #   npm run db:reset   les recrée vides (supprime les données de dev)
 #   npm run db:down    les arrête
+#
+# Les schémas sont créés et mis à jour par l'image de migration
+# (migrations/Dockerfile, Flyway), comme en production (ADR 0011).
 
 name: step-challenge
 
@@ -19,12 +22,23 @@ services:
       - '127.0.0.1:55433:5432'
     volumes:
       - dev-db-data:/var/lib/postgresql
-      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', 'step_challenge', '-d', 'step_challenge_dev']
       interval: 2s
       timeout: 5s
       retries: 15
+
+  # Lancé par `docker compose run` (scripts db:*), qui attend sa fin.
+  dev-migrations:
+    build: ./migrations
+    profiles: [migrations]
+    environment:
+      FLYWAY_URL: jdbc:postgresql://dev-db:5432/step_challenge_dev
+      FLYWAY_USER: step_challenge
+      FLYWAY_PASSWORD: dev
+    depends_on:
+      dev-db:
+        condition: service_healthy
 
   # Base de test, jetable (en mémoire) : utilisée par `npm test`.
   test-db:
@@ -37,13 +51,23 @@ services:
       - '127.0.0.1:55432:5432'
     tmpfs:
       - /var/lib/postgresql
-    volumes:
-      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ['CMD', 'pg_isready', '-U', 'postgres', '-d', 'step_challenge_test']
       interval: 2s
       timeout: 5s
       retries: 15
+
+  # Lancé par `docker compose run` (scripts db:*), qui attend sa fin.
+  test-migrations:
+    build: ./migrations
+    profiles: [migrations]
+    environment:
+      FLYWAY_URL: jdbc:postgresql://test-db:5432/step_challenge_test
+      FLYWAY_USER: postgres
+      FLYWAY_PASSWORD: test
+    depends_on:
+      test-db:
+        condition: service_healthy
 
 volumes:
   dev-db-data:

@@ -53,7 +53,7 @@ La liste complète (obligatoire ou non, défaut, secret) est dans [`docs/exploit
 | `PUBLIC_BASE_URL` | Base des liens d'invitation (`<base>/i/<code>`) et des App Links, `https://step.architech.lu` par défaut |
 | `DEMO_ACCESS_CODE` | Code d'accès de démonstration des examinateurs des boutiques ([ADR 0006](docs/adr/0006-review-demo-access.md)). **Secret**, au moins 20 caractères aléatoires (sinon le serveur refuse de démarrer), par exemple `openssl rand -base64 30`. Absent : l'accès de démonstration est désactivé (`POST /api/auth/demo` répond 404). Le donner aux examinateurs dans la Play Console (Contenu de l'application → Accès à l'application) et le garder dans un gestionnaire de mots de passe ; le changer coupe l'accès |
 
-Créer les tables avec `psql -d <base> -f backend/schema.sql` (base neuve) ; faire évoluer une base existante avec [`backend/migrations/`](backend/migrations/README.md).
+Le schéma est créé et mis à jour par l'image de migration (Flyway, [`backend/migrations/`](backend/migrations/README.md)), lancée avant le backend ; au démarrage, le backend vérifie que la base est à la version qu'il attend. Voir [`docs/exploitation.md`](docs/exploitation.md).
 
 ### Lancer en local
 
@@ -62,16 +62,18 @@ Le développement local utilise des bases PostgreSQL dans Docker ([`docker-compo
 ```bash
 cd backend
 npm install
-npm run db:up        # bases de dev et de test, schéma appliqué à la création
+npm run db:up        # bases de dev et de test, migrations appliquées (Flyway, dans Docker)
 npm run dev:local    # backend sur la base de dev, port 3001
 ```
+
+Une base de dev créée avant Flyway (sans table `flyway_schema_history`) est refusée par l'image de migration : la reprendre une fois avec `docker compose -f docker-compose.dev.yml run --rm -e FLYWAY_BASELINE_ON_MIGRATE=true -e FLYWAY_BASELINE_VERSION=6 dev-migrations`, ou la recréer avec `npm run db:reset`.
 
 `dev:local` lit [`backend/.env.development`](backend/.env.development) (versionné, sans secret) et non `.env`. Le backend écoute sur toutes les interfaces : un téléphone du même réseau le joint via `http://<IP du Mac>:3001` (variable `EXPO_PUBLIC_API_URL` de l'environnement EAS `development`).
 
 | Commande | Effet |
 |---|---|
-| `npm run db:up` | Démarre les bases de dev (port 55433, persistante) et de test (port 55432, en mémoire) |
-| `npm run db:reset` | Recrée les bases vides : **supprime les données de dev** |
+| `npm run db:up` | Démarre les bases de dev (port 55433, persistante) et de test (port 55432, en mémoire), puis leur applique les migrations avec l'image de migration (Flyway) : à relancer après l'ajout d'une migration |
+| `npm run db:reset` | Recrée les bases vides et les migre : **supprime les données de dev** |
 | `npm run db:down` | Arrête les bases (les données de dev sont conservées) |
 | `npm run seed:demo` | Données fictives dans la base de **dev**, pour les captures d'écran du Store (voir ci-dessous) |
 

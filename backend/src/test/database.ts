@@ -5,7 +5,8 @@ import pg from 'pg'
  *
  * Only TEST_DATABASE_URL is used, never the DATABASE_* variables of .env:
  * tests truncate tables and must not run against a real database by
- * mistake. The schema (schema.sql) must already be applied.
+ * mistake. The migrations must already be applied (npm run db:up, or
+ * the migration image in the CI).
  *
  * Returns null when TEST_DATABASE_URL is not set, so that integration
  * tests are skipped.

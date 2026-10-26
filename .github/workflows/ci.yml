@@ -50,7 +50,13 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci --no-audit
       - run: npx tsc --noEmit
-      - run: psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -q -f schema.sql
+      # Schema created by the migration image, as in production (ADR 0011).
+      - run: docker build -t step-challenge-migrations migrations
+      - run: >-
+          docker run --rm --network host
+          -e FLYWAY_URL=jdbc:postgresql://localhost:5432/step_challenge_test
+          -e FLYWAY_USER=postgres -e FLYWAY_PASSWORD=test
+          step-challenge-migrations
       - run: npm test
 
   mobile:
