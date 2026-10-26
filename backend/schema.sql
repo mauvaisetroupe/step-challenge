@@ -1,6 +1,6 @@
 -- Step Challenge — schéma PostgreSQL complet.
 -- Pour une base neuve. Une base existante évolue via migrations/ (voir migrations/README.md).
--- Dernière migration incluse : 005_demo_credential.
+-- Dernière migration incluse : 006_daily_activity.
 
 -- name est un nom affiché libre et non unique : l'identité repose sur
 -- user_credentials (ADR 0001).
