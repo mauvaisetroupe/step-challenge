@@ -1,6 +1,6 @@
--- Step Challenge — schéma PostgreSQL complet.
--- Pour une base neuve. Une base existante évolue via migrations/ (voir migrations/README.md).
--- Dernière migration incluse : 006_daily_activity.
+-- Step Challenge — schéma PostgreSQL complet après la migration V006.
+-- Migration de base de Flyway : appliquée seulement sur une base vide, à la
+-- place de V001 à V006. Figée : ne plus la modifier (voir README.md).
 
 -- name est un nom affiché libre et non unique : l'identité repose sur
 -- user_credentials (ADR 0001).
