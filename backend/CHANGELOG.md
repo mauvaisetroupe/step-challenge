@@ -20,7 +20,7 @@ Modèle :
 - …
 ```
 
-## 1.0.0 (non publiée)
+## 1.0.0 (2026-10-26)
 
 Première version publiée sous forme d'images.
 
