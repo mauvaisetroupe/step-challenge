@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import { after, beforeEach, describe, it } from 'node:test'
 
-import { RATE_LIMITS } from './rateLimit.js'
+import type { FastifyRequest } from 'fastify'
+
+import { createClientKey, RATE_LIMITS } from './rateLimit.js'
 import { bearer, buildTestApp, signInAs, type TestApp } from './test/app.js'
 import {
   createTestPool,
@@ -91,5 +93,36 @@ describe('rate limits', { skip: skipWithoutDatabase }, () => {
 
       assert.equal(response.statusCode, 200)
     }
+  })
+})
+
+describe('client address', () => {
+  const request = (headers: Record<string, string | string[]>) =>
+    ({ headers, ip: '10.0.0.1' }) as unknown as FastifyRequest
+
+  it('reads the configured header', () => {
+    const key = createClientKey('cf-connecting-ip')
+
+    assert.equal(key(request({ 'cf-connecting-ip': '203.0.113.1' })), '203.0.113.1')
+    assert.equal(key(request({ 'x-forwarded-for': '203.0.113.1' })), '10.0.0.1')
+  })
+
+  it('takes the address written by the proxy, last in a list', () => {
+    const key = createClientKey('x-forwarded-for')
+
+    assert.equal(
+      key(request({ 'x-forwarded-for': '198.51.100.9, 203.0.113.1' })),
+      '203.0.113.1',
+    )
+    assert.equal(
+      key(request({ 'x-forwarded-for': ['198.51.100.9', '203.0.113.1'] })),
+      '203.0.113.1',
+    )
+  })
+
+  it('uses the connection without header', () => {
+    const key = createClientKey('')
+
+    assert.equal(key(request({ 'cf-connecting-ip': '203.0.113.1' })), '10.0.0.1')
   })
 })

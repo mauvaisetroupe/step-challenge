@@ -25,25 +25,39 @@ export const RATE_LIMITS = {
 } as const
 
 /**
- * Client IP address. In production the API is reached through
- * Cloudflare, which sets CF-Connecting-IP to the real client address;
- * without it every user would share the limit of the Cloudflare
- * connection. The header can be forged by a client that reaches the
- * server directly, which the Cloudflare setup is expected to prevent.
+ * Client IP address, read from the header set by the reverse proxy
+ * (CLIENT_IP_HEADER, docs/exploitation.md): CF-Connecting-IP behind
+ * Cloudflare. Without it every user would share the limit of the proxy
+ * connection. A list (X-Forwarded-For) gives its last address, the one
+ * written by the proxy in front of the API: the first ones come from
+ * the client and can be forged. An empty header name uses the address
+ * of the connection.
+ *
+ * The header can be forged by a client that reaches the server
+ * directly, which the hosting is expected to prevent.
  */
-export function clientKey(request: FastifyRequest) {
-  const forwarded = request.headers['cf-connecting-ip']
+export function createClientKey(header: string) {
+  return (request: FastifyRequest) => {
+    const value = header ? request.headers[header] : undefined
+    const address = (Array.isArray(value) ? value.at(-1) : value)
+      ?.split(',')
+      .at(-1)
+      ?.trim()
 
-  return typeof forwarded === 'string' && forwarded ? forwarded : request.ip
+    return address || request.ip
+  }
 }
 
 /**
  * Registers the rate limit plugin without global limit: only routes
  * declaring `config.rateLimit` are limited.
  */
-export async function registerRateLimit(app: FastifyInstance) {
+export async function registerRateLimit(
+  app: FastifyInstance,
+  { clientIpHeader = 'cf-connecting-ip' }: { clientIpHeader?: string } = {},
+) {
   await app.register(rateLimit, {
     global: false,
-    keyGenerator: clientKey,
+    keyGenerator: createClientKey(clientIpHeader),
   })
 }
