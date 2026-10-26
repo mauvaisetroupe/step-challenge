@@ -6,6 +6,7 @@ import { createRequireAuth } from './auth/authenticate.js'
 import { createGoogleIdTokenVerifier } from './auth/google.js'
 import { ConfigError, loadConfig, type Config } from './config.js'
 import { createPool } from './db.js'
+import { checkSchemaVersion, expectedSchemaVersion } from './schemaVersion.js'
 import { registerRateLimit } from './rateLimit.js'
 import authRoutes from './routes/auth.js'
 import blockRoutes from './routes/blocks.js'
@@ -128,6 +129,14 @@ try {
   await pool.query('SELECT 1')
 
   app.log.info('Database connection successful')
+
+  const schema = await checkSchemaVersion(pool, await expectedSchemaVersion())
+
+  if (schema.warning) {
+    app.log.warn(schema.warning)
+  }
+
+  app.log.info(`Database schema at version ${schema.current}`)
   app.log.info(`Demo access ${config.demoAccessCode ? 'enabled' : 'disabled'}`)
   app.log.info(`Time zone ${config.timeZone}`)
 
