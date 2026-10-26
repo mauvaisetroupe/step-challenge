@@ -42,14 +42,14 @@ GOOGLE_CLIENT_ID=
 # CLIENT_IP_HEADER=cf-connecting-ip
 ```
 
-La liste complète (obligatoire ou non, défaut, secret) est dans [`docs/exploitation.md`](docs/exploitation.md#variables-denvironnement) ; le tableau ci-dessous précise le rôle de certaines.
+La liste complète (obligatoire ou non, défaut, secret) est dans [`docs/exploitation.md`](docs/exploitation.md#variables-denvironnement-de-lapi) ; le tableau ci-dessous précise le rôle de certaines.
 
 | Variable | Rôle |
 |---|---|
 | `DATABASE_*` | Connexion PostgreSQL |
 | `GOOGLE_CLIENT_ID` | Client ID OAuth **Web** du projet Google Cloud `step-challenge` ; vérifié dans le champ `aud` des ID tokens Google. Pas un secret |
 | `PORT` | Port d'écoute, 3000 par défaut |
-| `HOST` | Interface d'écoute, `0.0.0.0` (toutes) par défaut. En production, `127.0.0.1` : seul `cloudflared`, sur la même machine, joint le backend, ce qui garantit que l'en-tête `CF-Connecting-IP` utilisé par la limite de débit vient bien de Cloudflare |
+| `HOST` | Interface d'écoute, `0.0.0.0` (toutes) par défaut, à garder dans le conteneur. Sur l'ancien LXC de production, `127.0.0.1` : seul `cloudflared`, sur la même machine, joint le backend, ce qui garantit que l'en-tête `CF-Connecting-IP` utilisé par la limite de débit vient bien de Cloudflare |
 | `PUBLIC_BASE_URL` | Base des liens d'invitation (`<base>/i/<code>`) et des App Links, `https://step.architech.lu` par défaut |
 | `DEMO_ACCESS_CODE` | Code d'accès de démonstration des examinateurs des boutiques ([ADR 0006](docs/adr/0006-review-demo-access.md)). **Secret**, au moins 20 caractères aléatoires (sinon le serveur refuse de démarrer), par exemple `openssl rand -base64 30`. Absent : l'accès de démonstration est désactivé (`POST /api/auth/demo` répond 404). Le donner aux examinateurs dans la Play Console (Contenu de l'application → Accès à l'application) et le garder dans un gestionnaire de mots de passe ; le changer coupe l'accès |
 
@@ -104,7 +104,7 @@ npm run test:local
 
 ### Déploiement
 
-Migrations, `deploy.sh`, retour en arrière : voir [`docs/exploitation.md`](docs/exploitation.md).
+Images, variables, migrations, mises à jour et retour en arrière : voir [`docs/exploitation.md`](docs/exploitation.md) (pour l'exploitant). Publier une version du backend : voir [`docs/publication.md`](docs/publication.md).
 
 ## Application mobile
 
@@ -151,7 +151,7 @@ La connexion Google (`react-native-nitro-google-signin`, Android Credential Mana
 
 ### Build et publication
 
-Builds locaux avec EAS, envoi à Google Play et à Huawei AppGallery : voir [`docs/exploitation.md`](docs/exploitation.md). Clés de signature et empreintes : voir [`docs/signing.md`](docs/signing.md).
+Builds locaux avec EAS, envoi à Google Play et à Huawei AppGallery : voir [`docs/publication.md`](docs/publication.md). Clés de signature et empreintes : voir [`docs/signing.md`](docs/signing.md).
 
 ## Licence
 

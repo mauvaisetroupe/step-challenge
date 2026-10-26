@@ -658,7 +658,7 @@ Huawei a refusé la demande de permission Health Kit, pour deux raisons :
 ## Publication sur AppGallery
 
 * **Paquet : APK, sans App Signing.** AppGallery n'accepte un AAB qu'avec App Signing : soit Huawei génère sa propre clé (nouvelle empreinte à déclarer dans AGC, dans un client OAuth Google et dans `assetlinks.json`, clé ni visible ni exportable), soit on lui confie une clé privée (celle de Google Play ne s'exporte pas ; il faudrait celle d'importation). L'APK est signé avec la **clé d'importation** d'EAS, dont l'empreinte est déjà déclarée partout (voir [`docs/signing.md`](../docs/signing.md)) : Huawei le distribue tel quel.
-* **Build, vérification de l'APK et envoi** : voir [`docs/exploitation.md`](../docs/exploitation.md#huawei-appgallery).
+* **Build, vérification de l'APK et envoi** : voir [`docs/exploitation.md`](../docs/publication.md#huawei-appgallery).
 * **Fiche** : français (par défaut) et anglais, sans balises HTML (AppGallery les affiche telles quelles) ; icône `icons/playstore-icon.png` ; captures `docs/screenshots/french/` et `english/` (compte de démonstration, données fictives).
 * **Version** :
   * pays : France seulement (en ajouter se fait dans une nouvelle version, sans nouveau paquet) ;
