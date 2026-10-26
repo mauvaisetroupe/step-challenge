@@ -2,7 +2,7 @@
 
 Point d'étape pour reprendre le travail, notamment dans une nouvelle session d'assistant (Claude Code en local ou dans le cloud). À mettre à jour à chaque étape importante.
 
-**Dernière mise à jour : 2026-10-22**
+**Dernière mise à jour : 2026-10-26**
 
 ## En bref
 
@@ -40,13 +40,13 @@ Installation, lancement en local, tests, déploiement et build : voir le [README
 | Élément | État |
 |---|---|
 | API | https://step-api.architech.lu, derrière un tunnel Cloudflare (ADR 0005). Le backend n'écoute que sur `127.0.0.1` (`HOST`). Depuis la bascule du 2026-10-06, `step.architech.lu` est le site public chez OVH : le home lab ne sert plus que l'API |
-| Base | PostgreSQL, migrations 001 à 003 appliquées. Pas encore de sauvegarde automatique |
+| Base | PostgreSQL, migrations 001 à 006 appliquées à la main, sans historique Flyway (ligne de base à faire à la bascule, voir [`exploitation.md`](exploitation.md)). Pas encore de sauvegarde automatique |
 | Authentification ([ADR 0001](adr/0001-authentication.md)) | En production : connexion Google (OIDC), sessions de l'application |
 | Amis ([ADR 0002](adr/0002-friends.md)) | En production : invitations par lien ou code, classement entre amis, surnoms, limites de débit, App Links vérifiés |
 | Application | **1.9.0** envoyée en test fermé le 2026-10-11 (vue 1j par jour, sources des pas, orientation libre) |
 | Fiche Play Store | Descriptions et bannière refaites le 2026-10-04 |
 
-Déploiement de chaque partie (base, API, site, Google Play, AppGallery) : voir [`exploitation.md`](exploitation.md).
+Publication de chaque partie (versions du backend, site, Google Play, AppGallery) : voir [`publication.md`](publication.md). Exploitation des images du backend (variables, migrations, mises à jour) : voir [`exploitation.md`](exploitation.md).
 
 ## Reste à faire
 
@@ -130,7 +130,12 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 
 - [ ] **Alerte d'inactivité** (idée écartée pour l'instant, 2026-10-08) : vibrer vers 50 minutes d'inactivité. Obstacles : les pas de Garmin arrivent en retard dans Santé Connect ; WorkManager tourne au mieux toutes les 15 minutes et le mode Doze l'espace beaucoup quand le téléphone est posé immobile, justement à un bureau ; les alarmes exactes sont réservées par Google aux réveils et agendas ; un service permanent impose une notification visible et ne voit pas les pas de la montre. Les montres (Garmin) le font déjà au poignet. Si on y revient : version « approximative » sur le travailleur de l'ADR 0009, en option, heures de journée, autorisation de notifications, ADR, et mesure du Doze en dev d'abord.
 
-- [ ] **Hébergement du backend sur un VPS OVH, dans Docker** ([ADR 0011](adr/0011-backend-hosting.md), proposé, 2026-10-09) : VPS-1 dans l'UE, Debian, `ufw`, API, PostgreSQL et `cloudflared` dans une composition Docker sans port publié, `pg_dump` chiffré récupéré chaque nuit par le home lab, supervision de `/api/health`. Le tunnel Cloudflare est gardé dans un premier temps ; son retrait de l'API est une étape 2 à décider. À faire : commande du VPS, `Dockerfile` et composition de production testés en local, bascule.
+- [ ] **Backend livré en images** ([ADR 0011](adr/0011-backend-hosting.md), accepté, révisé le 2026-10-26) : le dépôt livre `step-challenge-migrations` (Flyway) et `step-challenge-api`, publiées par la CI (`sha-<commit>` sur `main`, `X.Y.Z` et `X.Y` sur un tag `api-vX.Y.Z`, notes tirées de `backend/CHANGELOG.md`), documentées pour l'exploitant dans [`exploitation.md`](exploitation.md) ; l'hébergement est tenu par l'exploitant, hors du dépôt. Fait le 2026-10-26 : configuration vérifiée au démarrage, `APP_TIMEZONE`, `CLIENT_IP_HEADER`, santé qui interroge la base, arrêt propre, migrations renommées pour Flyway (`B006__schema.sql` pour une base vide), vérification de la version du schéma par l'API, images testées sur le Mac (base vide, ligne de base, lecture seule, composition d'exemple), bases de dev et de test migrées par Flyway. **Le LXC du home lab n'est plus déployé** (sa base n'a pas d'historique Flyway). Reste :
+  - vérifier la première CI sur GitHub (images `sha-…`), puis passer les deux paquets GHCR en public ;
+  - essai sur le Mac avec une copie de la base de production (ligne de base à 6) et l'application de dev pointée dessus : connexion, synchronisation, classement ;
+  - dater la section 1.0.0 de `backend/CHANGELOG.md`, poser le tag `api-v1.0.0` ;
+  - choisir l'hôte (VM du home lab, puis VPS OVH au Canada ou en Europe, calendrier ouvert) ; à la bascule vers OVH : politique de confidentialité (sous-traitants OVH, Cloudflare, Google) et ADR 0011 si ce n'est pas le Canada ;
+  - après la bascule : retirer `deploy.sh` et `install-step-challenge.sh`, mettre à jour `exposure.md`.
 - [x] **1.8.1, heures de sommeil et rattrapage** (2026-10-09, ADR 0010 complété) : Paramètres → Activité (sommeil 23 h → 6 h par défaut) ; aucune inactivité comptée pendant ces heures, grisées sur la courbe de Stats → 1j ; transmises au travailleur Kotlin ; jeux d'essai complétés (12 journées). Minutes des 30 jours envoyées une fois après la mise à jour (et après un changement des heures de sommeil). À faire : test en dev, version 1.8.1.
 
 - [x] **1.8.2, R8 et reprise de la synchronisation** (2026-10-09) : la Play Console signalait un code non obscurci (« Obfuscation 2 % »). R8 et `shrinkResources` activés (`expo-build-properties` : `enableMinifyInReleaseBuilds`, `enableShrinkResourcesInReleaseBuilds`), avec des règles pour le SDK Huawei Health, qui n'en fournit pas (`extraProguardRules` dans `app.json`). Testé sur le Pixel en release : écrans, connexion, Santé Connect, invitation, travailleur natif. Corrigé au passage : une déconnexion annule la synchronisation en arrière-plan, et une reconnexion sans redémarrer l'application ne la reprogrammait pas ; le module la reprogramme maintenant à chaque nouveau jeton (`configure`). Reprise testée en dev ; `.aab` vérifié (code obscurci, `StepSyncWorker` gardé sous son nom, Huawei et Santé Connect conservés, 74 Mo au lieu de 79) ; acceptée le 2026-10-09 ; après la mise à jour du Pixel, la tâche `step-challenge-native-sync` est toujours programmée (6 h). Reste : une exécution automatique réussie après la mise à jour, dans l'historique.
@@ -145,7 +150,8 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 - **Build local et place disque** : `eas build --local` compile dans `$TMPDIR` et a besoin d'une dizaine de Go libres ; le 2026-10-11, il a échoué à 4,5 Go (« No space left on device » pendant la compilation C++ de Reanimated). Avant un build, vérifier `df -h` ; les anciennes versions de `~/.gradle/caches` et `~/.gradle/wrapper/dists`, le cache npm et le cache de build Docker se suppriment sans risque (garder la version de Gradle du projet, `gradle-wrapper.properties`).
 - **R8 (depuis la 1.8.2)** : une nouvelle bibliothèque native qui utilise la réflexion sans fournir de règles peut casser en production seulement. Le build de production échoue sur « Missing class » : ajouter les règles `-dontwarn`/`-keep` dans `extraProguardRules` (`app.json`), d'après `android/app/build/outputs/mapping/release/missing_rules.txt`. Tester en release avant d'envoyer (`APP_VARIANT=development` puis `./gradlew :app:assembleRelease`) ; cette version de dev cherche encore le JavaScript auprès de Metro.
 
-- **Tests du backend** : ils exigent une base PostgreSQL (`TEST_DATABASE_URL`). En local, `npm run test:local` utilise la base Docker de test. La CI GitHub (`.github/workflows/ci.yml`) les exécute à chaque push.
+- **Tests du backend** : ils exigent une base PostgreSQL migrée (`TEST_DATABASE_URL`). En local, `npm run test:local` utilise la base Docker de test, migrée par `npm run db:up` (à relancer après l'ajout d'une migration). La CI GitHub (`.github/workflows/ci.yml`) les exécute à chaque push, sur une base créée par l'image de migration.
+- **Migrations (Flyway)** : ne jamais modifier une migration déjà appliquée quelque part, `B006__schema.sql` compris (sommes de contrôle). Une nouvelle migration s'écrit `V007__….sql`, sans `BEGIN;` ni `COMMIT;` (voir `backend/migrations/README.md`).
 - **Synchronisation en arrière-plan en dev** : l'intervalle est de 15 minutes dans l'application de dev (`__DEV__`, `services/backgroundSync.ts`) contre 6 heures en production, pour tester le travailleur natif application fermée. L'application de dev synchronise donc souvent vers le backend local : des échecs « réseau » apparaissent dans l'historique quand il ne tourne pas. Forcer une exécution : `adb shell cmd jobscheduler run -f lu.architech.stepchallenge.dev <numéro>` (numéro dans `adb shell dumpsys jobscheduler`), refusé par WorkManager si le délai minimum n'est pas écoulé.
 - **Variante de développement** : `APP_VARIANT=development` donne une application séparée (`lu.architech.stepchallenge.dev`, schéma `stepchallenge-dev`), installable à côté de celle du Store. Elle n'a pas les App Links. Un lien d'invitation créé en dev (`https://step.architech.lu/i/…`) ouvre donc l'application **du Store**, qui interroge la production et répond « invitation invalide » : c'est normal. Pour tester en dev : `adb shell am start -W -a android.intent.action.VIEW -d "stepchallenge-dev://i/<code>" lu.architech.stepchallenge.dev`, ou Amis → J'ai un code.
 - **Dossier `android/` périmé** : il est généré et ignoré par git. Après une modification native d'`app.json` (icônes, écran de démarrage, permissions, App Links, plugins), le régénérer avant de reconstruire l'application de dev : `APP_VARIANT=development npx expo prebuild --clean --platform android`. Les builds de production (EAS) le régénèrent eux-mêmes.
