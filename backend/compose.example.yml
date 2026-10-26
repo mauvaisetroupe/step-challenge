@@ -1,0 +1,67 @@
+# EXEMPLE pour essayer Step Challenge : base, migrations, API.
+# Ce n'est pas une composition de production : sauvegardes, proxy HTTPS,
+# limites des journaux et secrets restent à la charge de l'exploitant
+# (docs/exploitation.md).
+#
+# Dans un dossier vide, avec ce fichier et un fichier .env :
+#
+#   STEP_CHALLENGE_VERSION=1.0.0
+#   DB_PASSWORD=<mot de passe>
+#   GOOGLE_CLIENT_ID=<client ID OAuth Web>
+#
+#   docker compose -f compose.example.yml up -d
+#   curl http://127.0.0.1:3000/api/health
+
+name: step-challenge-example
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: step_challenge
+      POSTGRES_USER: step_challenge
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'step_challenge', '-d', 'step_challenge']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Applique les migrations, puis s'arrête. Même version que l'API.
+  migrations:
+    image: ${MIGRATIONS_IMAGE:-ghcr.io/mauvaisetroupe/step-challenge-migrations}:${STEP_CHALLENGE_VERSION:?}
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/step_challenge
+      FLYWAY_USER: step_challenge
+      FLYWAY_PASSWORD: ${DB_PASSWORD:?}
+      # Une seule fois, pour reprendre une base migrée sans Flyway
+      # (voir docs/exploitation.md), puis retirer ces deux lignes :
+      # FLYWAY_BASELINE_ON_MIGRATE: 'true'
+      # FLYWAY_BASELINE_VERSION: '6'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    image: ${API_IMAGE:-ghcr.io/mauvaisetroupe/step-challenge-api}:${STEP_CHALLENGE_VERSION:?}
+    environment:
+      DATABASE_HOST: db
+      DATABASE_NAME: step_challenge
+      DATABASE_USER: step_challenge
+      DATABASE_PASSWORD: ${DB_PASSWORD:?}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?}
+      APP_TIMEZONE: Europe/Paris
+      # Sans proxy devant l'API : l'adresse de la connexion.
+      CLIENT_IP_HEADER: ''
+    ports:
+      - ${API_PUBLISH:-127.0.0.1:3000}:3000
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  db-data:

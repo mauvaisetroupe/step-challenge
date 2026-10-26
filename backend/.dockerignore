@@ -1,0 +1,7 @@
+# Build context of the API image: only what the Dockerfile copies.
+*
+!package.json
+!package-lock.json
+!tsconfig.json
+!src/
+!migrations/*.sql
