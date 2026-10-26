@@ -1,9 +1,11 @@
+import 'dotenv/config'
+
 import cors from '@fastify/cors'
 import Fastify from 'fastify'
 import { createRequireAuth } from './auth/authenticate.js'
 import { createGoogleIdTokenVerifier } from './auth/google.js'
-import { checkDatabase, pool } from './db.js'
-import { parseDemoAccessCode } from './demo/demoAccount.js'
+import { ConfigError, loadConfig, type Config } from './config.js'
+import { createPool } from './db.js'
 import { registerRateLimit } from './rateLimit.js'
 import authRoutes from './routes/auth.js'
 import blockRoutes from './routes/blocks.js'
@@ -19,21 +21,44 @@ const app = Fastify({
   logger: true,
 })
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+let config: Config
 
-if (!GOOGLE_CLIENT_ID) {
-  throw new Error('GOOGLE_CLIENT_ID is not configured')
+try {
+  config = loadConfig(process.env)
+} catch (error) {
+  if (!(error instanceof ConfigError)) {
+    throw error
+  }
+
+  app.log.fatal(error.message)
+  process.exit(1)
 }
 
-// Demo access for store reviewers (ADR 0006): disabled when absent.
-const DEMO_ACCESS_CODE = parseDemoAccessCode(process.env.DEMO_ACCESS_CODE)
+const pool = createPool(config)
 
-// Base of the invitation links shared by users (ADR 0002). The links and
-// their landing page are served by the public site (ADR 0005), not here.
-const PUBLIC_BASE_URL =
-  process.env.PUBLIC_BASE_URL ?? 'https://step.architech.lu'
+app.addHook('onClose', async () => {
+  await pool.end()
+})
 
-await registerRateLimit(app)
+// Stop cleanly when the container stops: requests in progress end, then
+// the pool closes (onClose).
+for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+  process.once(signal, async () => {
+    app.log.info(`${signal} received, shutting down`)
+
+    try {
+      await app.close()
+      process.exit(0)
+    } catch (error) {
+      app.log.error(error)
+      process.exit(1)
+    }
+  })
+}
+
+await registerRateLimit(app, {
+  clientIpHeader: config.clientIpHeader,
+})
 
 await app.register(cors, {
   origin: true,
@@ -41,6 +66,7 @@ await app.register(cors, {
 
 await app.register(healthRoutes, {
   prefix: '/api',
+  db: pool,
 })
 
 const requireAuth = createRequireAuth(pool)
@@ -49,10 +75,10 @@ await app.register(authRoutes, {
   prefix: '/api',
   db: pool,
   verifyGoogleIdToken: createGoogleIdTokenVerifier({
-    clientId: GOOGLE_CLIENT_ID,
+    clientId: config.googleClientId,
   }),
   requireAuth,
-  demoAccessCode: DEMO_ACCESS_CODE,
+  demoAccessCode: config.demoAccessCode,
 })
 
 await app.register(meRoutes, {
@@ -89,7 +115,7 @@ await app.register(invitationRoutes, {
   prefix: '/api',
   db: pool,
   requireAuth,
-  publicBaseUrl: PUBLIC_BASE_URL,
+  publicBaseUrl: config.publicBaseUrl,
 })
 
 await app.register(leaderboardRoutes, {
@@ -99,16 +125,18 @@ await app.register(leaderboardRoutes, {
 })
 
 try {
-  await checkDatabase()
+  await pool.query('SELECT 1')
 
   app.log.info('Database connection successful')
-  app.log.info(`Demo access ${DEMO_ACCESS_CODE ? 'enabled' : 'disabled'}`)
+  app.log.info(`Demo access ${config.demoAccessCode ? 'enabled' : 'disabled'}`)
+  app.log.info(`Time zone ${config.timeZone}`)
 
   await app.listen({
-    host: process.env.HOST ?? '0.0.0.0',
-    port: Number(process.env.PORT ?? 3000),
+    host: config.host,
+    port: config.port,
   })
 } catch (error) {
-  app.log.error(error)
+  app.log.fatal(error)
+  await pool.end().catch(() => {})
   process.exit(1)
 }

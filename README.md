@@ -38,7 +38,11 @@ GOOGLE_CLIENT_ID=
 # HOST=0.0.0.0
 # PUBLIC_BASE_URL=https://step.architech.lu
 # DEMO_ACCESS_CODE=
+# APP_TIMEZONE=Europe/Paris
+# CLIENT_IP_HEADER=cf-connecting-ip
 ```
+
+La liste complète (obligatoire ou non, défaut, secret) est dans [`docs/exploitation.md`](docs/exploitation.md#variables-denvironnement) ; le tableau ci-dessous précise le rôle de certaines.
 
 | Variable | Rôle |
 |---|---|
