@@ -684,7 +684,7 @@ Corrections de la 1.9.1 :
 * Émulateur « comme un Huawei » : AVD `Huawei_like_API29`, image `system-images;android-29;default;arm64-v8a` (sans Google Play, donc sans Santé Connect, qui fait partie du système depuis Android 14). L'APK de release s'y installe (pas d'application Play à remplacer) ; il n'a pas de podomètre.
 * Test sur un Pixel : build de développement avec `SIMULATE_NO_HEALTH_CONNECT=true` et `PHONE_STEP_COUNTER=true` (voir `app.config.ts`), après `npx expo prebuild --clean -p android`.
 
-**1.9.1 (versionCode 47) soumise, en examen au 2026-10-25**, avec les notes de version (App information → New features) en français et en anglais.
+**1.9.1 (versionCode 47) soumise le 2026-10-23, acceptée et publiée (avis reçu le 2026-10-27)**, avec les notes de version (App information → New features) en français et en anglais.
 
 Remarque pour les examinateurs (300 caractères au plus), saisie dans AppGallery Connect pour la 1.9.1 :
 
