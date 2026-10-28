@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -311,6 +312,8 @@ export default function StatsScreen() {
   // day.
   const [sourcesOpen, setSourcesOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  // Pull to refresh: the pull indicator replaces the loading spinner.
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // False on a phone without Health Connect (Huawei): the views then
   // read the database, as on the web.
@@ -536,6 +539,18 @@ export default function StatsScreen() {
     loadStats()
   }, [loadStats])
 
+  // Same load as on opening: today's steps are sent first, then the
+  // view is read again.
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+
+    try {
+      await loadStats()
+    } finally {
+      setRefreshing(false)
+    }
+  }, [loadStats])
+
   const totalSteps = useMemo(() => {
     if (period === '1y') {
       return monthlyStats.reduce(
@@ -563,6 +578,14 @@ export default function StatsScreen() {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
       >
         <View style={styles.periodSelector}>
           {PERIODS.map((item) => (
@@ -601,7 +624,7 @@ export default function StatsScreen() {
             />
           )}
 
-          {loading ? (
+          {loading && !refreshing ? (
             <View style={styles.loading}>
               <ActivityIndicator size="large" />
             </View>
