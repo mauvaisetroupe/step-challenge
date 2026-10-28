@@ -20,6 +20,18 @@ Modèle :
 - …
 ```
 
+## 1.1.0 (2026-10-28)
+
+### Exploitation
+
+- **Variables** : aucun changement.
+- **Migrations** : aucune (le schéma reste en version 6).
+- **PostgreSQL** : aucun changement.
+
+### Changements
+
+- `GET /api/leaderboard` accepte `offset` : `0` (par défaut) pour la semaine ou le mois en cours, `1` pour la période précédente. Une autre valeur renvoie une erreur 400. La réponse indique aussi `offset`, `start` et `end` (premier et dernier jour de la période, `AAAA-MM-JJ`). Un classement passé compte les amis d'aujourd'hui.
+
 ## 1.0.0 (2026-10-26)
 
 Première version publiée sous forme d'images.
