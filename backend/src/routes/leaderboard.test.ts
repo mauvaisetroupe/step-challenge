@@ -62,14 +62,11 @@ describe('GET /api/leaderboard', { skip: skipWithoutDatabase }, () => {
     const response = await getLeaderboard(app, alice.token)
 
     assert.equal(response.statusCode, 200)
-    assert.deepEqual(response.json(), {
-      period: 'week',
-      results: [
+    assert.deepEqual(response.json().results, [
         { id: bob.user.id, name: 'Bob', alias: null, steps: 5000, isMe: false },
         { id: alice.user.id, name: 'Alice', alias: null, steps: 3000, isMe: true },
         { id: carol.user.id, name: 'Carol', alias: null, steps: 0, isMe: false },
-      ],
-    })
+    ])
   })
 
   it('excludes people who are not my friends', async () => {
@@ -158,6 +155,86 @@ describe('GET /api/leaderboard', { skip: skipWithoutDatabase }, () => {
 
     assert.equal(response.json().period, 'month')
     assert.equal(response.json().results[0].steps, 1000)
+  })
+
+  it('gives the first and last day of the period', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+    const { rows } = await pool!.query(`
+      SELECT
+        to_char(date_trunc('week', CURRENT_DATE), 'YYYY-MM-DD') AS week_start,
+        to_char(date_trunc('week', CURRENT_DATE) + interval '6 days', 'YYYY-MM-DD') AS week_end,
+        to_char(date_trunc('month', CURRENT_DATE) - interval '1 month', 'YYYY-MM-DD') AS last_month_start,
+        to_char(date_trunc('month', CURRENT_DATE) - interval '1 day', 'YYYY-MM-DD') AS last_month_end
+    `)
+    const expected = rows[0]
+
+    const week = (await getLeaderboard(app, token)).json()
+    const lastMonth = (
+      await getLeaderboard(app, token, '?period=month&offset=1')
+    ).json()
+
+    assert.deepEqual(
+      { offset: week.offset, start: week.start, end: week.end },
+      { offset: 0, start: expected.week_start, end: expected.week_end },
+    )
+    assert.deepEqual(
+      { offset: lastMonth.offset, start: lastMonth.start, end: lastMonth.end },
+      {
+        offset: 1,
+        start: expected.last_month_start,
+        end: expected.last_month_end,
+      },
+    )
+  })
+
+  it('counts only the previous week with offset=1', async () => {
+    const app = await buildApp()
+    const { token, user } = await signInAs(app, 'alice')
+
+    await insertSteps(user.id, "date_trunc('week', CURRENT_DATE)::date", 1000)
+    await insertSteps(user.id, "date_trunc('week', CURRENT_DATE)::date - 1", 20)
+    await insertSteps(user.id, "date_trunc('week', CURRENT_DATE)::date - 7", 300)
+    await insertSteps(user.id, "date_trunc('week', CURRENT_DATE)::date - 8", 4000)
+
+    const response = await getLeaderboard(app, token, '?offset=1')
+
+    assert.equal(response.statusCode, 200)
+    assert.equal(response.json().results[0].steps, 320)
+  })
+
+  it('counts only the previous month with offset=1', async () => {
+    const app = await buildApp()
+    const { token, user } = await signInAs(app, 'alice')
+
+    await insertSteps(user.id, "date_trunc('month', CURRENT_DATE)::date", 1000)
+    await insertSteps(user.id, "date_trunc('month', CURRENT_DATE)::date - 1", 20)
+    await insertSteps(
+      user.id,
+      "(date_trunc('month', CURRENT_DATE) - interval '1 month')::date",
+      300,
+    )
+    await insertSteps(
+      user.id,
+      "(date_trunc('month', CURRENT_DATE) - interval '1 month')::date - 1",
+      4000,
+    )
+
+    const response = await getLeaderboard(app, token, '?period=month&offset=1')
+
+    assert.equal(response.statusCode, 200)
+    assert.equal(response.json().results[0].steps, 320)
+  })
+
+  it('rejects an invalid offset', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+
+    for (const offset of ['2', '-1', 'last', '1.5', '']) {
+      const response = await getLeaderboard(app, token, `?offset=${offset}`)
+
+      assert.equal(response.statusCode, 400, `offset=${offset}`)
+    }
   })
 
   it('rejects an unknown period', async () => {
