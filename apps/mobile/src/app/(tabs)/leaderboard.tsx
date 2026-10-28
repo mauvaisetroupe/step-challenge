@@ -1,5 +1,5 @@
-import { router } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
+import { router, useLocalSearchParams } from 'expo-router'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ActivityIndicator,
@@ -20,10 +20,19 @@ import { displayName } from '../../api/friends'
 import UserBadge from '../../components/UserBadge'
 import { syncLast30Days } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import PeriodNavigator from '@/components/leaderboard/PeriodNavigator'
 import { useFormatters } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Period = 'week' | 'month'
+
+function localDateKey(date: Date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
+}
 
 export default function LeaderboardScreen() {
   const styles = useThemedStyles(createStyles)
@@ -31,26 +40,65 @@ export default function LeaderboardScreen() {
   const { t } = useTranslation()
   const { formatNumber } = useFormatters()
 
+  // ?offset=1 from the home screen: last week's result.
+  const params = useLocalSearchParams<{ offset?: string }>()
   const [period, setPeriod] = useState<Period>('week')
+  // 0 for the current period, 1 for the previous one.
+  const [offset, setOffset] = useState(0)
   const [results, setResults] = useState<LeaderboardEntry[]>([])
+  const [bounds, setBounds] = useState<{ start?: string; end?: string }>({})
+  // An API without past leaderboards gives no dates: it would return the
+  // current period instead of the previous one.
+  const [supportsPast, setSupportsPast] = useState(false)
+  // Only the latest request updates the screen: changing period quickly
+  // starts several.
+  const requestRef = useRef(0)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (params.offset === '1') {
+      setPeriod('week')
+      setOffset(1)
+      // Consumed: coming back to the tab later shows the current week.
+      router.setParams({ offset: undefined })
+    }
+  }, [params.offset])
+
+  /** Reads the leaderboard shown; false when a newer request started. */
+  const fetchLeaderboard = useCallback(async () => {
+    const request = ++requestRef.current
+    const data = await getLeaderboard(period, offset)
+
+    if (request !== requestRef.current) {
+      return false
+    }
+
+    setResults(data.results)
+    setBounds({ start: data.start, end: data.end })
+
+    if (data.start != null) {
+      setSupportsPast(true)
+    }
+
+    return true
+  }, [period, offset])
+
   const loadLeaderboard = useCallback(async () => {
     setLoading(true)
     setError(null)
+    setBounds({})
 
     try {
-      const data = await getLeaderboard(period)
-
-      setResults(data.results)
+      if (await fetchLeaderboard()) {
+        setLoading(false)
+      }
     } catch {
       setError(t('leaderboard.loadError'))
-    } finally {
       setLoading(false)
     }
-  }, [period, t])
+  }, [fetchLeaderboard, t])
 
   useEffect(() => {
     loadLeaderboard()
@@ -76,9 +124,7 @@ export default function LeaderboardScreen() {
     }
 
     try {
-      const data = await getLeaderboard(period)
-
-      setResults(data.results)
+      await fetchLeaderboard()
     } catch (err) {
       console.error(
         'Leaderboard refresh error:',
@@ -91,10 +137,10 @@ export default function LeaderboardScreen() {
     }
   }
 
-  const periodLabel =
-    period === 'week'
-      ? t('leaderboard.thisWeek')
-      : t('leaderboard.thisMonth')
+  const selectPeriod = (value: Period) => {
+    setPeriod(value)
+    setOffset(0)
+  }
 
   const refreshDisabled = refreshing
 
@@ -136,7 +182,7 @@ export default function LeaderboardScreen() {
               period === 'week' &&
                 styles.periodButtonActive,
             ]}
-            onPress={() => setPeriod('week')}
+            onPress={() => selectPeriod('week')}
           >
             <Text
               style={[
@@ -155,7 +201,7 @@ export default function LeaderboardScreen() {
               period === 'month' &&
                 styles.periodButtonActive,
             ]}
-            onPress={() => setPeriod('month')}
+            onPress={() => selectPeriod('month')}
           >
             <Text
               style={[
@@ -198,9 +244,15 @@ export default function LeaderboardScreen() {
           </Pressable>
         </View>
 
-        <Text style={styles.periodTitle}>
-          {periodLabel}
-        </Text>
+        <PeriodNavigator
+          period={period}
+          offset={offset}
+          start={bounds.start}
+          end={bounds.end}
+          canGoBack={supportsPast}
+          today={localDateKey(new Date())}
+          onChange={setOffset}
+        />
 
         {loading ? (
           <View style={styles.center}>
@@ -419,13 +471,6 @@ const createStyles = (c: Colors) =>
     refreshText: {
       fontSize: 15,
       fontWeight: '600',
-      color: c.text,
-    },
-
-    periodTitle: {
-      fontSize: 20,
-      fontWeight: '700',
-      marginBottom: 12,
       color: c.text,
     },
 

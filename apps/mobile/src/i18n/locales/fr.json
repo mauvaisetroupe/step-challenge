@@ -286,6 +286,15 @@
       "you": "Toi",
       "titleRank": "Cette semaine : {{rank}} sur {{total}}"
     },
+    "lastWeek": {
+      "titleRank": "La semaine dernière : {{rank}} sur {{total}}",
+      "won_one": "Tu as gagné la semaine avec <b>{{steps}} pas</b> 🎉",
+      "won_many": "Tu as gagné la semaine avec <b>{{steps}} pas</b> 🎉",
+      "won_other": "Tu as gagné la semaine avec <b>{{steps}} pas</b> 🎉",
+      "winner_one": "<b>{{name}}</b> a gagné la semaine avec <b>{{steps}} pas</b>",
+      "winner_many": "<b>{{name}}</b> a gagné la semaine avec <b>{{steps}} pas</b>",
+      "winner_other": "<b>{{name}}</b> a gagné la semaine avec <b>{{steps}} pas</b>"
+    },
     "streak": {
       "title": "Série",
       "unavailable": "Série indisponible pour le moment.",
@@ -331,7 +340,12 @@
     "me": "toi",
     "steps_one": "{{steps}} pas",
     "steps_many": "{{steps}} pas",
-    "steps_other": "{{steps}} pas"
+    "steps_other": "{{steps}} pas",
+    "lastWeek": "La semaine dernière",
+    "lastMonth": "Le mois dernier",
+    "previous": "Période précédente",
+    "next": "Période suivante",
+    "provisional": "Résultat provisoire : les derniers pas de tes amis peuvent encore arriver."
   },
   "report": {
     "title": "Signaler {{name}}",

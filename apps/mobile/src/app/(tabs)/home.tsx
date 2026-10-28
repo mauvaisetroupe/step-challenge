@@ -22,6 +22,7 @@ import {
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import LastWeekCard from '@/components/home/LastWeekCard'
 import StreakCard from '@/components/home/StreakCard'
 import WeekRankCard from '@/components/home/WeekRankCard'
 import DayProgressRing from '@/components/stats/DayProgressRing'
@@ -31,6 +32,10 @@ import {
   type Streaks,
   type WeekRank,
 } from '@/services/insights'
+import {
+  isProvisional,
+  showsLastWeekRecap,
+} from '@/services/leaderboardPeriods'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 const DAILY_GOAL = 10_000
@@ -57,6 +62,11 @@ export default function HomeScreen() {
   const [noHealthConnect, setNoHealthConnect] = useState(false)
   const [rank, setRank] = useState<WeekRank | null>(null)
   const [rankError, setRankError] = useState(false)
+  // Monday to Wednesday: how last week ended.
+  const [lastWeek, setLastWeek] = useState<{
+    rank: WeekRank
+    provisional: boolean
+  } | null>(null)
   const [streaks, setStreaks] = useState<Streaks | null>(null)
   const [historyError, setHistoryError] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -125,10 +135,24 @@ export default function HomeScreen() {
         }
       }
 
-      const [board, history] = await Promise.allSettled([
+      const [board, history, lastBoard] = await Promise.allSettled([
         getLeaderboard('week'),
         getMySteps(HISTORY_START),
+        showsLastWeekRecap(new Date())
+          ? getLeaderboard('week', 1)
+          : Promise.resolve(null),
       ])
+
+      // Best effort, no error shown: the card is a reminder. An API
+      // without past leaderboards ignores the offset (no `end`).
+      const last = lastBoard.status === 'fulfilled' ? lastBoard.value : null
+      const lastRank = last?.end ? computeWeekRank(last.results) : null
+
+      setLastWeek(
+        last?.end && lastRank && lastRank.total > 1
+          ? { rank: lastRank, provisional: isProvisional(last.end, todayKey) }
+          : null,
+      )
 
       if (board.status === 'fulfilled') {
         setRank(computeWeekRank(board.value.results))
@@ -217,6 +241,16 @@ export default function HomeScreen() {
             goal={DAILY_GOAL}
             error={historyError}
           />
+
+          {lastWeek && (
+            <LastWeekCard
+              rank={lastWeek.rank}
+              provisional={lastWeek.provisional}
+              onOpenLeaderboard={() =>
+                router.push({ pathname: '/leaderboard', params: { offset: '1' } })
+              }
+            />
+          )}
 
           <WeekRankCard
             rank={rank}

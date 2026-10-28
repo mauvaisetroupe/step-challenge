@@ -62,9 +62,22 @@ export type LeaderboardEntry = {
   isMe: boolean
 }
 
-export async function getLeaderboard(period: 'week' | 'month') {
-  return apiFetch<{
-    period: 'week' | 'month'
-    results: LeaderboardEntry[]
-  }>(`/api/leaderboard?period=${period}`)
+export type Leaderboard = {
+  period: 'week' | 'month'
+  /**
+   * 0 for the current period, 1 for the previous one. Missing from an
+   * API older than past leaderboards, which ignores the offset and
+   * always returns the current period.
+   */
+  offset?: number
+  /** First and last day of the period, YYYY-MM-DD (same API version). */
+  start?: string
+  end?: string
+  results: LeaderboardEntry[]
+}
+
+export async function getLeaderboard(period: 'week' | 'month', offset = 0) {
+  return apiFetch<Leaderboard>(
+    `/api/leaderboard?period=${period}&offset=${offset}`,
+  )
 }

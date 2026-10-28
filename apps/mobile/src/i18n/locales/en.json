@@ -278,6 +278,13 @@
       "you": "You",
       "titleRank": "This week: {{rank}} of {{total}}"
     },
+    "lastWeek": {
+      "titleRank": "Last week: {{rank}} of {{total}}",
+      "won_one": "You won the week with <b>{{steps}} step</b> 🎉",
+      "won_other": "You won the week with <b>{{steps}} steps</b> 🎉",
+      "winner_one": "<b>{{name}}</b> won the week with <b>{{steps}} step</b>",
+      "winner_other": "<b>{{name}}</b> won the week with <b>{{steps}} steps</b>"
+    },
     "streak": {
       "title": "Streak",
       "unavailable": "Streak unavailable for now.",
@@ -318,7 +325,12 @@
     "emptyAction": "Invite friends →",
     "me": "you",
     "steps_one": "{{steps}} step",
-    "steps_other": "{{steps}} steps"
+    "steps_other": "{{steps}} steps",
+    "lastWeek": "Last week",
+    "lastMonth": "Last month",
+    "previous": "Previous period",
+    "next": "Next period",
+    "provisional": "Provisional result: your friends' latest steps may still come in."
   },
   "report": {
     "title": "Report {{name}}",
