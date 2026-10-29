@@ -387,11 +387,17 @@ export default function StatsScreen() {
 
           await requestPermission(HEALTH_PERMISSIONS)
 
-          // Sends today's Health Connect total to the backend before
-          // displaying: the 1-year view then includes today. Not needed
-          // to show a past day.
-          if (!pastDay) {
+          // Sends today's Health Connect total to the backend. The
+          // 1-year view reads the database: it waits for it, to include
+          // today. The other views read Health Connect: the network must
+          // not hold them, the total is sent in the background. Not
+          // needed to show a past day.
+          if (period === '1y') {
             await syncTodaySteps()
+          } else if (!pastDay) {
+            syncTodaySteps().catch((err) => {
+              console.error('Background sync of today failed:', err)
+            })
           }
         } catch (err) {
           // The other views need Health Connect. The 1-year view reads
@@ -539,8 +545,9 @@ export default function StatsScreen() {
     loadStats()
   }, [loadStats])
 
-  // Same load as on opening: today's steps are sent first, then the
-  // view is read again.
+  // Same load as on opening: today's steps are sent (first for the
+  // 1-year view, in the background for the others), then the view is
+  // read again.
   const refresh = useCallback(async () => {
     setRefreshing(true)
 
