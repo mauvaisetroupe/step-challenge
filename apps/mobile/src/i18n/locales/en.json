@@ -406,7 +406,8 @@
     }
   },
   "errors": {
-    "sessionExpired": "Session expired, please sign in again"
+    "sessionExpired": "Session expired, please sign in again",
+    "timeout": "The server is not answering. Check your connection and try again later"
   },
   "diagnostic": {
     "description": "Checks the connection to Health Connect, the permissions and the access to the server.",

@@ -14,6 +14,17 @@ export class UnauthenticatedError extends Error {
   }
 }
 
+/**
+ * The backend did not answer in time (REQUEST_TIMEOUT_MS): bad network,
+ * or a dead connection that Android kept open.
+ */
+export class TimeoutError extends Error {
+  constructor(readonly path: string) {
+    super(i18n.t('errors.timeout'))
+    this.name = 'TimeoutError'
+  }
+}
+
 /** The backend answered with an error status. */
 export class ApiError extends Error {
   constructor(
@@ -25,6 +36,13 @@ export class ApiError extends Error {
     this.name = 'ApiError'
   }
 }
+
+/**
+ * Longest wait for a request, answer body included. React Native sets no
+ * timeout on Android: a request on a dead connection (switch from Wi-Fi
+ * to mobile data, poor network) would otherwise never end.
+ */
+const REQUEST_TIMEOUT_MS = 15_000
 
 type Listener = () => void
 
@@ -60,6 +78,8 @@ async function readErrorCode(response: Response) {
  *   throws UnauthenticatedError.
  * - On any other error status, throws ApiError with the backend error
  *   code (e.g. "display_name_required").
+ * - Without an answer after REQUEST_TIMEOUT_MS, aborts the request and
+ *   throws TimeoutError.
  *
  * Returns the parsed JSON body, or undefined when there is none.
  */
@@ -88,25 +108,39 @@ export async function apiFetch<T = unknown>(
     headers['Content-Type'] = 'application/json'
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
-  if (response.status === 401 && authenticated) {
-    await clearSessionToken()
-    signedOutListeners.forEach((listener) => listener())
-    throw new UnauthenticatedError()
+  try {
+    const response = await fetch(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: controller.signal,
+    })
+
+    if (response.status === 401 && authenticated) {
+      await clearSessionToken()
+      signedOutListeners.forEach((listener) => listener())
+      throw new UnauthenticatedError()
+    }
+
+    if (!response.ok) {
+      throw new ApiError(response.status, await readErrorCode(response), path)
+    }
+
+    // Some successes have no body (204, or 201 for a created report or
+    // block): there is nothing to parse.
+    const text = await response.text()
+
+    return (text ? JSON.parse(text) : undefined) as T
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new TimeoutError(path)
+    }
+
+    throw error
+  } finally {
+    clearTimeout(timeout)
   }
-
-  if (!response.ok) {
-    throw new ApiError(response.status, await readErrorCode(response), path)
-  }
-
-  // Some successes have no body (204, or 201 for a created report or
-  // block): there is nothing to parse.
-  const text = await response.text()
-
-  return (text ? JSON.parse(text) : undefined) as T
 }

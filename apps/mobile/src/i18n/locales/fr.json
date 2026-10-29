@@ -421,7 +421,8 @@
     }
   },
   "errors": {
-    "sessionExpired": "Session expirée, reconnecte-toi"
+    "sessionExpired": "Session expirée, reconnecte-toi",
+    "timeout": "Le serveur ne répond pas. Vérifie ta connexion et réessaie plus tard"
   },
   "diagnostic": {
     "description": "Vérifie la connexion à Santé Connect, les autorisations et l'accès au serveur.",
