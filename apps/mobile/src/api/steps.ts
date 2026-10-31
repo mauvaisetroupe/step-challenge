@@ -60,6 +60,16 @@ export type LeaderboardEntry = {
   alias: string | null
   steps: number
   isMe: boolean
+  /**
+   * First day of steps in the database, YYYY-MM-DD, or null without any.
+   * Missing from an API older than newcomers.
+   */
+  firstDay?: string | null
+  /**
+   * No steps before the start of the period: arrived during it, out of
+   * competition. Still ranked by steps.
+   */
+  newcomer?: boolean
 }
 
 export type Leaderboard = {

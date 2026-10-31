@@ -345,7 +345,10 @@
     "lastMonth": "Le mois dernier",
     "previous": "Période précédente",
     "next": "Période suivante",
-    "provisional": "Résultat provisoire : les derniers pas de tes amis peuvent encore arriver."
+    "provisional": "Résultat provisoire : les derniers pas de tes amis peuvent encore arriver.",
+    "newcomer": "Nouveau",
+    "outOfCompetition": "Hors concours : arrivée en cours de période",
+    "outOfCompetitionSince": "Hors concours : premiers pas le {{date}}"
   },
   "report": {
     "title": "Signaler {{name}}",

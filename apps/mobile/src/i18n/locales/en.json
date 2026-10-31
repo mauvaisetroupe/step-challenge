@@ -330,7 +330,10 @@
     "lastMonth": "Last month",
     "previous": "Previous period",
     "next": "Next period",
-    "provisional": "Provisional result: your friends' latest steps may still come in."
+    "provisional": "Provisional result: your friends' latest steps may still come in.",
+    "newcomer": "New",
+    "outOfCompetition": "Out of competition: joined during the period",
+    "outOfCompetitionSince": "Out of competition: first steps on {{date}}"
   },
   "report": {
     "title": "Report {{name}}",

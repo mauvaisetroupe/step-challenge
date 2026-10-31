@@ -21,6 +21,7 @@ import UserBadge from '../../components/UserBadge'
 import { syncLast30Days } from '../../services/stepSync'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import PeriodNavigator from '@/components/leaderboard/PeriodNavigator'
+import { parseDateKey } from '@/services/leaderboardPeriods'
 import { useFormatters } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
@@ -38,7 +39,7 @@ export default function LeaderboardScreen() {
   const styles = useThemedStyles(createStyles)
   const { colors } = useTheme()
   const { t } = useTranslation()
-  const { formatNumber } = useFormatters()
+  const { formatNumber, formatDate } = useFormatters()
 
   // ?offset=1 from the home screen: last week's result.
   const params = useLocalSearchParams<{ offset?: string }>()
@@ -295,7 +296,11 @@ export default function LeaderboardScreen() {
             {results.map((user, index) => (
               <View
                 key={user.id}
-                style={[styles.row, user.isMe && styles.rowMe]}
+                style={[
+                  styles.row,
+                  user.isMe && styles.rowMe,
+                  user.newcomer && styles.rowNewcomer,
+                ]}
               >
                 <View style={styles.rank}>
                   {index < 3 ? (
@@ -318,18 +323,38 @@ export default function LeaderboardScreen() {
                 </View>
 
                 <View style={styles.names}>
-                  <Text
-                    style={styles.name}
-                    numberOfLines={1}
-                  >
-                    {displayName(user)}
-                    {user.isMe && (
-                      <Text style={styles.me}> · {t('leaderboard.me')}</Text>
+                  <View style={styles.nameLine}>
+                    <Text
+                      style={[styles.name, styles.nameText]}
+                      numberOfLines={1}
+                    >
+                      {displayName(user)}
+                      {user.isMe && (
+                        <Text style={styles.me}> · {t('leaderboard.me')}</Text>
+                      )}
+                    </Text>
+                    {user.newcomer && (
+                      <Text style={styles.newcomerBadge}>
+                        {t('leaderboard.newcomer')}
+                      </Text>
                     )}
-                  </Text>
+                  </View>
                   {user.alias && user.alias !== user.name && (
                     <Text style={styles.realName} numberOfLines={1}>
                       {user.name}
+                    </Text>
+                  )}
+                  {user.newcomer && (
+                    <Text style={styles.realName} numberOfLines={1}>
+                      {user.firstDay
+                        ? t('leaderboard.outOfCompetitionSince', {
+                            date: formatDate(parseDateKey(user.firstDay), {
+                              weekday: 'short',
+                              day: 'numeric',
+                              month: 'short',
+                            }),
+                          })
+                        : t('leaderboard.outOfCompetition')}
                     </Text>
                   )}
                 </View>
@@ -491,6 +516,33 @@ const createStyles = (c: Colors) =>
       backgroundColor: c.primarySoft,
       borderWidth: 1,
       borderColor: c.primary,
+    },
+
+    // Arrived during the period: still in the steps order, but out of
+    // competition.
+    rowNewcomer: {
+      opacity: 0.6,
+    },
+
+    nameLine: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+
+    nameText: {
+      flexShrink: 1,
+    },
+
+    newcomerBadge: {
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+      borderRadius: 6,
+      overflow: 'hidden',
+      fontSize: 11,
+      fontWeight: '700',
+      color: c.warning,
+      backgroundColor: c.warningSoft,
     },
 
     me: {
