@@ -60,13 +60,62 @@ describe('GET /api/leaderboard', { skip: skipWithoutDatabase }, () => {
     await insertSteps(bob.user.id, 'CURRENT_DATE', 5000)
 
     const response = await getLeaderboard(app, alice.token)
+    const results = response
+      .json()
+      .results.map(
+        ({ firstDay, newcomer, ...entry }: Record<string, unknown>) => entry,
+      )
 
     assert.equal(response.statusCode, 200)
-    assert.deepEqual(response.json().results, [
+    assert.deepEqual(results, [
         { id: bob.user.id, name: 'Bob', alias: null, steps: 5000, isMe: false },
         { id: alice.user.id, name: 'Alice', alias: null, steps: 3000, isMe: true },
         { id: carol.user.id, name: 'Carol', alias: null, steps: 0, isMe: false },
     ])
+  })
+
+  it('flags newcomers with no steps before the start of the period', async () => {
+    const app = await buildApp()
+    const alice = await signInAs(app, 'alice', 'Alice')
+    const bob = await signInAs(app, 'bob', 'Bob')
+    const carol = await signInAs(app, 'carol', 'Carol')
+
+    await befriend(app, alice.token, bob.token)
+    await befriend(app, alice.token, carol.token)
+    // Alice has steps before this week, Bob only from today, Carol none.
+    await insertSteps(alice.user.id, "date_trunc('week', CURRENT_DATE)::date - 3", 100)
+    await insertSteps(alice.user.id, 'CURRENT_DATE', 3000)
+    await insertSteps(bob.user.id, 'CURRENT_DATE', 5000)
+
+    const { rows } = await pool!.query(`
+      SELECT
+        to_char(date_trunc('week', CURRENT_DATE) - interval '3 days', 'YYYY-MM-DD') AS alice,
+        to_char(CURRENT_DATE, 'YYYY-MM-DD') AS bob
+    `)
+    const results = (await getLeaderboard(app, alice.token)).json().results
+    const byName = Object.fromEntries(
+      results.map((entry: { name: string; firstDay: string | null; newcomer: boolean }) => [
+        entry.name,
+        { firstDay: entry.firstDay, newcomer: entry.newcomer },
+      ]),
+    )
+
+    assert.deepEqual(byName, {
+      Alice: { firstDay: rows[0].alice, newcomer: false },
+      Bob: { firstDay: rows[0].bob, newcomer: true },
+      Carol: { firstDay: null, newcomer: true },
+    })
+  })
+
+  it('counts a first step on the first day of the period as on time', async () => {
+    const app = await buildApp()
+    const { token, user } = await signInAs(app, 'alice')
+
+    await insertSteps(user.id, "date_trunc('week', CURRENT_DATE)::date", 1000)
+
+    const results = (await getLeaderboard(app, token)).json().results
+
+    assert.equal(results[0].newcomer, false)
   })
 
   it('excludes people who are not my friends', async () => {
