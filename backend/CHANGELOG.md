@@ -20,6 +20,18 @@ Modèle :
 - …
 ```
 
+## 1.2.0 (2026-10-31)
+
+### Exploitation
+
+- **Variables** : aucun changement.
+- **Migrations** : aucune (le schéma reste en version 6).
+- **PostgreSQL** : aucun changement.
+
+### Changements
+
+- Classement : chaque entrée donne `firstDay` (premier jour de pas en base) et `newcomer` (aucun pas avant le début de la période : arrivé pendant celle-ci, hors concours, toujours classé selon ses pas).
+
 ## 1.1.0 (2026-10-28)
 
 ### Exploitation
