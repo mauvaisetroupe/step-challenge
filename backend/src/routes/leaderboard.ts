@@ -24,10 +24,12 @@ const leaderboardRoutes: FastifyPluginAsync<
    * the current week or month, or the previous one (offset=1). Each
    * entry carries the name chosen by the user and the alias I gave them,
    * if any; isMe flags my own entry. A past period ranks today's
-   * friends, not those of that time. firstDay is the first day of steps
-   * in the database; newcomer flags who has none before the start of the
-   * period: they arrived during it and cannot catch up (out of
-   * competition, still ranked by steps).
+   * friends, not those of that time. firstDay is the first day with
+   * steps in the database. newcomer flags who created their account
+   * during the period and has no steps before its start: they cannot
+   * catch up (out of competition, still ranked by steps). Days without
+   * steps do not count: the app sends the last 30 days of Health
+   * Connect at sign-in, with 0 for the days it has no data for.
    */
   app.get('/leaderboard', async (request, reply) => {
     const { period = 'week', offset: offsetParam = '0' } = request.query as {
@@ -87,11 +89,14 @@ const leaderboardRoutes: FastifyPluginAsync<
         COALESCE(SUM(ds.steps), 0)::integer AS steps,
         u.id = $1 AS "isMe",
         to_char(first.day, 'YYYY-MM-DD') AS "firstDay",
-        first.day IS NULL OR first.day > $2::date AS newcomer
+        u.created_at::date > $2::date
+          AND (first.day IS NULL OR first.day > $2::date) AS newcomer
       FROM visible v
       JOIN users u ON u.id = v.id
       LEFT JOIN LATERAL (
-        SELECT min(date) AS day FROM daily_steps WHERE user_id = u.id
+        SELECT min(date) FILTER (WHERE steps > 0) AS day
+        FROM daily_steps
+        WHERE user_id = u.id
       ) first ON true
       LEFT JOIN friend_aliases fa
         ON fa.owner_id = $1 AND fa.friend_id = u.id
@@ -99,7 +104,7 @@ const leaderboardRoutes: FastifyPluginAsync<
         ON ds.user_id = u.id
         AND ds.date BETWEEN $2::date AND $3::date
         AND ds.date <= CURRENT_DATE
-      GROUP BY u.id, u.name, fa.alias, first.day
+      GROUP BY u.id, u.name, u.created_at, fa.alias, first.day
       ORDER BY steps DESC, lower(COALESCE(fa.alias, u.name)), u.id
       `,
       [request.auth!.userId, start, end],

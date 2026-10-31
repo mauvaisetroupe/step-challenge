@@ -20,6 +20,18 @@ Modèle :
 - …
 ```
 
+## 1.2.1 (2026-10-31)
+
+### Exploitation
+
+- **Variables** : aucun changement.
+- **Migrations** : aucune (le schéma reste en version 6).
+- **PostgreSQL** : aucun changement.
+
+### Changements
+
+- Classement : `newcomer` ne vaut plus que pour un compte créé pendant la période et sans pas avant son début. Les jours à 0, que l'application envoie à la connexion pour les 30 derniers jours, ne comptent plus : un nouvel arrivé n'était jamais signalé. `firstDay` est le premier jour avec des pas.
+
 ## 1.2.0 (2026-10-31)
 
 ### Exploitation

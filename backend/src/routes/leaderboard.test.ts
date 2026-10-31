@@ -107,6 +107,57 @@ describe('GET /api/leaderboard', { skip: skipWithoutDatabase }, () => {
     })
   })
 
+  it('ignores the days without steps sent at sign-in', async () => {
+    const app = await buildApp()
+    const { token, user } = await signInAs(app, 'alice')
+
+    // The app sends the last 30 days, with 0 when Health Connect has no data.
+    await pool!.query(
+      `INSERT INTO daily_steps (user_id, date, steps)
+       SELECT $1, day::date, 0
+       FROM generate_series(CURRENT_DATE - 29, CURRENT_DATE - 1, interval '1 day') AS day`,
+      [user.id],
+    )
+    await insertSteps(user.id, 'CURRENT_DATE', 4000)
+
+    const results = (await getLeaderboard(app, token)).json().results
+
+    assert.equal(results[0].newcomer, true)
+    assert.equal(
+      results[0].firstDay,
+      (await pool!.query(`SELECT to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today`))
+        .rows[0].today,
+    )
+  })
+
+  it('counts a newcomer with Health Connect history as on time', async () => {
+    const app = await buildApp()
+    const { token, user } = await signInAs(app, 'alice')
+
+    await insertSteps(user.id, "date_trunc('week', CURRENT_DATE)::date - 1", 8000)
+    await insertSteps(user.id, 'CURRENT_DATE', 4000)
+
+    const results = (await getLeaderboard(app, token)).json().results
+
+    assert.equal(results[0].newcomer, false)
+  })
+
+  it('does not flag an old account coming back after days without steps', async () => {
+    const app = await buildApp()
+    const { token, user } = await signInAs(app, 'alice')
+
+    await pool!.query(
+      `UPDATE users SET created_at = now() - interval '60 days' WHERE id = $1`,
+      [user.id],
+    )
+    await insertSteps(user.id, "date_trunc('week', CURRENT_DATE)::date - 1", 0)
+    await insertSteps(user.id, 'CURRENT_DATE', 4000)
+
+    const results = (await getLeaderboard(app, token)).json().results
+
+    assert.equal(results[0].newcomer, false)
+  })
+
   it('counts a first step on the first day of the period as on time', async () => {
     const app = await buildApp()
     const { token, user } = await signInAs(app, 'alice')
