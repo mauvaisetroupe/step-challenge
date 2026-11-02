@@ -1,8 +1,15 @@
 # Modération des signalements
 
-Procédure de traitement des signalements d'utilisateurs, décidée par l'[ADR 0004 — Signalement et blocage](adr/0004-user-reporting-and-blocking.md). Le seul contenu que les utilisateurs créent est leur **nom affiché** ; le traitement est manuel.
+Procédure de traitement des signalements d'utilisateurs, décidée par l'[ADR 0004 — Signalement et blocage](../adr/0004-user-reporting-and-blocking.md). Le seul contenu que les utilisateurs créent est leur **nom affiché** ; le traitement est manuel.
 
-Les requêtes s'exécutent sur la base de production (Adminer → « Requête SQL »).
+Les requêtes s'exécutent sur la base de production, sur le VPS (dépôt `vps-infra`), depuis le Mac :
+
+```bash
+ssh -t vps-ovh 'sudo -iu step sh -c "cd app && docker compose exec db psql -U step_challenge -d step_challenge"'
+```
+
+Une requête qui modifie (réinitialiser un nom, supprimer un compte) se tape dans une transaction (`BEGIN;` … `COMMIT;`),
+après avoir relu le résultat du `SELECT`.
 
 ## Fréquence
 
@@ -116,7 +123,7 @@ WHERE id = '00000000-0000-0000-0000-000000000000'
 
 ## Signalements venant du compte de démonstration
 
-Les examinateurs Google et Huawei se connectent au compte de démonstration ([ADR 0006](adr/0006-review-demo-access.md)) et testent souvent le signalement. Ces signalements ne concernent aucune personne réelle : **les classer sans suite**, sans autre action.
+Les examinateurs Google et Huawei se connectent au compte de démonstration ([ADR 0006](../adr/0006-review-demo-access.md)) et testent souvent le signalement. Ces signalements ne concernent aucune personne réelle : **les classer sans suite**, sans autre action.
 
 On les reconnaît (colonne `demonstration` de l'étape 1) :
 

@@ -2,7 +2,7 @@
 
 Point d'étape pour reprendre le travail, notamment dans une nouvelle session d'assistant (Claude Code en local ou dans le cloud). À mettre à jour à chaque étape importante.
 
-**Dernière mise à jour : 2026-10-29**
+**Dernière mise à jour : 2026-11-02**
 
 ## En bref
 
@@ -15,9 +15,9 @@ Step Challenge est une application Android de défi de pas entre amis : gratuite
 | Site public (`step.architech.lu`) | Hugo, bilingue, déployé chez OVH par une GitHub Action : présentation, aide, pages légales, page d'invitation `/i/<code>`, `assetlinks.json` | `site/` |
 | Icônes et visuels du Store | SVG (Inkscape) et script d'export | `icons/` |
 | Décisions d'architecture | ADR | `docs/adr/` |
-| Intégration Huawei (en pause) | Notes et plan | `huawei/README.md` |
+| Intégration Huawei (en pause) | Notes et plan | [`explanation/huawei-integration.md`](explanation/huawei-integration.md) |
 
-Installation, lancement en local, tests, déploiement et build : voir le [README](../README.md).
+Toute la documentation (installation, lancement en local, tests, publication, référence) : [`docs/README.md`](README.md).
 
 ## Conventions de travail
 
@@ -25,6 +25,8 @@ Installation, lancement en local, tests, déploiement et build : voir le [README
 - **ADR d'abord** : toute décision de conception importante passe par un ADR dans `docs/adr/`, validé avant l'implémentation.
 - **Commits unitaires** : un commit par changement cohérent, messages au format Conventional Commits (`feat(mobile): …`, `fix(backend): …`, `chore: …`). Le mainteneur fait ses commits lui-même : en session locale, proposer les commandes `git add` et `git commit` plutôt que commiter. Dans une session cloud, travailler sur une branche et ouvrir une pull request, jamais de push sur `main`.
 - **Expo a changé** : lire la documentation de la version utilisée (https://docs.expo.dev/versions/v57.0.0/) avant d'écrire du code (voir `AGENTS.md`).
+- **Documentation** : dans `docs/`, rangée selon Diátaxis ([index](README.md)) : `tutorials/`, `how-to/` (une tâche chacun), `reference/`, `explanation/` ; `exploitation.md` et `STATUS.md` restent à la racine de `docs/` (d'autres dépôts y renvoient). Le mainteneur doit pouvoir tout faire avec ces pages seules : un changement de commande, d'étape de publication, de réglage d'une console ou d'emplacement de fichier met à jour la page dans le même changement.
+- **Versions** : un commit du backend qui demande une action à l'exploitant (variable, PostgreSQL, migration lourde ou sans retour en arrière) est marqué `!` et dit quoi faire (ligne `BREAKING CHANGE: …`) : les notes de version sont tirées de git ([CI](reference/ci.md#notes-de-version-de-lapi)). La version de l'application se commite `chore(mobile): X.Y.Z`, puis se tague `mobile-vX.Y.Z` après l'envoi.
 - **Formatage** : le projet n'utilise pas Prettier. Ne pas reformater des fichiers entiers ; suivre le style existant (pas de point-virgule, guillemets simples).
 - **Explications bienvenues** : le mainteneur est architecte logiciel, plus à l'aise côté backend que côté mobile.
 - **Valider avant de changer de cap** : si le mainteneur remet en cause une approche, proposer un plan révisé et attendre son accord avant de modifier des fichiers.
@@ -39,14 +41,14 @@ Installation, lancement en local, tests, déploiement et build : voir le [README
 
 | Élément | État |
 |---|---|
-| API | https://step-api.architech.lu, derrière un tunnel Cloudflare (ADR 0005). Le backend n'écoute que sur `127.0.0.1` (`HOST`). Depuis la bascule du 2026-10-06, `step.architech.lu` est le site public chez OVH : le home lab ne sert plus que l'API. Version **1.1.0** en production (vérifié le 2026-10-29 : les flèches des classements précédents apparaissent dans la 1.10.0) |
-| Base | PostgreSQL, migrations 001 à 006 appliquées à la main, sans historique Flyway (ligne de base à faire à la bascule, voir [`exploitation.md`](exploitation.md)). Pas encore de sauvegarde automatique |
+| API | https://step-api.architech.lu, derrière un tunnel Cloudflare (ADR 0005), sur le **VPS** depuis le 2026-10-27, en images (ADR 0011), exploitée depuis le dépôt `vps-infra` ; LXC du home lab supprimé le 2026-11-01. `step.architech.lu` est le site public chez OVH. Version en service : `ssh -t vps-ovh sudo -iu step grep VERSION app/.env` (dernière publiée : `api-v1.2.1`) |
+| Base | PostgreSQL 18 sur le VPS, migrée par Flyway (ligne de base à 6 à la bascule, voir [`exploitation.md`](exploitation.md)). Sauvegardes par `vps-infra` (avant chaque déploiement, et régulières) |
 | Authentification ([ADR 0001](adr/0001-authentication.md)) | En production : connexion Google (OIDC), sessions de l'application |
 | Amis ([ADR 0002](adr/0002-friends.md)) | En production : invitations par lien ou code, classement entre amis, surnoms, limites de débit, App Links vérifiés |
 | Application | **1.10.0** (versionCode 48) publiée en test fermé le 2026-10-28 (classements de la semaine et du mois précédents, carte « La semaine dernière » sur l'Accueil, tirer pour actualiser dans Statistiques), fonctionne sur le Pixel. **1.9.1** sur AppGallery depuis le 2026-10-27 |
 | Fiche Play Store | Descriptions et bannière refaites le 2026-10-04 |
 
-Publication de chaque partie (versions du backend, site, Google Play, AppGallery) : voir [`publication.md`](publication.md). Exploitation des images du backend (variables, migrations, mises à jour) : voir [`exploitation.md`](exploitation.md).
+Publication de chaque partie : [l'API](how-to/release-the-api.md), [Google Play](how-to/publish-on-google-play.md), [AppGallery](how-to/publish-on-appgallery.md), [le site](how-to/update-the-public-site.md) ; l'ordre : [Versions et livraisons](explanation/versions-and-releases.md). Exploitation des images du backend (variables, migrations, mises à jour) : voir [`exploitation.md`](exploitation.md).
 
 ## Reste à faire
 
@@ -77,13 +79,13 @@ Publication de chaque partie (versions du backend, site, Google Play, AppGallery
 
 Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 
-- [x] **Signalement et blocage des utilisateurs** ([ADR 0004](adr/0004-user-reporting-and-blocking.md)) : backend (migration 004, `/api/blocks`, `/api/reports`), application (signaler, bloquer, débloquer, signaler une invitation, mention des conditions à la création du compte, liens légaux dans les Paramètres) et procédure de modération ([`moderation.md`](moderation.md)) faits le 2026-10-05. Reste :
+- [x] **Signalement et blocage des utilisateurs** ([ADR 0004](adr/0004-user-reporting-and-blocking.md)) : backend (migration 004, `/api/blocks`, `/api/reports`), application (signaler, bloquer, débloquer, signaler une invitation, mention des conditions à la création du compte, liens légaux dans les Paramètres) et procédure de modération ([`moderation.md`](how-to/moderate-reports.md)) faits le 2026-10-05. Reste :
   - la mise en production : migration 004, déploiement du backend, puis nouvelle version de l'application (avec la nouvelle URL d'API, ADR 0005) ;
   - le formulaire Data safety (signalements), à vérifier.
 - [x] **Liste des invitations actives** dans l'écran Amis, avec révocation (date de création, expiration, nombre d'acceptations). Testée sur téléphone le 2026-10-05, livrée avec la prochaine version.
-- [x] **Site public Hugo** ([ADR 0005](adr/0005-public-site-and-domains.md)) : développé le 2026-10-05 dans `site/` (voir [`site/README.md`](../site/README.md)), publié sur `step.architech.lu` le 2026-10-06. Squelette bilingue (anglais à la racine, français sous `/fr/`, adresses en `.html` : `/privacy.html` reste l'URL de la page, sans redirection ; drapeau vers la même page), pages légales reprises de `backend/public/` et traduites (contact provisoire d'`agreement.html` remplacé par `support@architech.lu`), accueil, aide Santé Connect et Huawei (« pas encore disponible »), FAQ, page `/i/<code>`, `assetlinks.json` (identique à celui du backend), `.htaccess`, GitHub Action `deploy-site.yml` (Hugo 0.167.0, envoi en SFTP par `site/scripts/deploy-sftp.sh`, sauté tant que la configuration manque). Le `.htaccess` de l'ADR bouclait sur `/i/` (erreur 500) : corrigé, et l'ADR précisé. La section « Contenus et comportement » de l'[ADR 0004](adr/0004-user-reporting-and-blocking.md) est dans les conditions d'utilisation depuis le 2026-10-05.
+- [x] **Site public Hugo** ([ADR 0005](adr/0005-public-site-and-domains.md)) : développé le 2026-10-05 dans `site/` (voir [Mettre à jour le site](how-to/update-the-public-site.md)), publié sur `step.architech.lu` le 2026-10-06. Squelette bilingue (anglais à la racine, français sous `/fr/`, adresses en `.html` : `/privacy.html` reste l'URL de la page, sans redirection ; drapeau vers la même page), pages légales reprises de `backend/public/` et traduites (contact provisoire d'`agreement.html` remplacé par `support@architech.lu`), accueil, aide Santé Connect et Huawei (« pas encore disponible »), FAQ, page `/i/<code>`, `assetlinks.json` (identique à celui du backend), `.htaccess`, GitHub Action `deploy-site.yml` (Hugo 0.167.0, envoi en SFTP par `site/scripts/deploy-sftp.sh`, sauté tant que la configuration manque). Le `.htaccess` de l'ADR bouclait sur `/i/` (erreur 500) : corrigé, et l'ADR précisé. La section « Contenus et comportement » de l'[ADR 0004](adr/0004-user-reporting-and-blocking.md) est dans les conditions d'utilisation depuis le 2026-10-05.
 
-- [x] **Accès de démonstration pour les examinateurs** ([ADR 0006](adr/0006-review-demo-access.md), accepté) : développé le 2026-10-05. Backend (migration 005, `POST /api/auth/demo`, compte et amis fictifs recréés et rafraîchis à chaque connexion, tests), lien « Accès démonstration » sur l'écran de connexion, [`exposure.md`](exposure.md) et [`moderation.md`](moderation.md) (signalements venant du compte de démonstration). Mise en production : voir la liste du mainteneur.
+- [x] **Accès de démonstration pour les examinateurs** ([ADR 0006](adr/0006-review-demo-access.md), accepté) : développé le 2026-10-05. Backend (migration 005, `POST /api/auth/demo`, compte et amis fictifs recréés et rafraîchis à chaque connexion, tests), lien « Accès démonstration » sur l'écran de connexion, [`exposure.md`](reference/exposure.md) et [`moderation.md`](how-to/moderate-reports.md) (signalements venant du compte de démonstration). Mise en production : voir la liste du mainteneur.
 - [x] **Données de démonstration** pour les captures d'écran : `npm run seed:demo` (voir le [README](../README.md)), pour la base de **développement** uniquement, avec le même code que l'accès de démonstration : 6 amis aux prénoms fictifs, pas crédibles sur plusieurs semaines, et en option les pas du compte lui-même.
 - [x] **Statistiques sur un an** : depuis le 2026-10-05, la vue « 1a » de l'écran Statistiques lit la base (`GET /api/me/steps`, somme par mois dans l'application), sur Android aussi ; les vues 1j, 7j et 30j restent sur Santé Connect. Vérifié sur le web (totaux mensuels identiques à ceux de la base). **À tester sur téléphone** :
   - la vue 1a montre les mois antérieurs à la première autorisation Santé Connect (ils étaient vides) et des totaux cohérents avec le classement du mois ;
@@ -146,7 +148,7 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 
 - [x] **Classements de la semaine et du mois précédents** (2026-10-28) : `GET /api/leaderboard?period=…&offset=1` (0 par défaut, 1 au plus) rend la période précédente, avec `offset`, `start` et `end` (premier et dernier jour) ; testé. Classement : flèches ‹ › autour du titre, dates de la période, mention « Résultat provisoire » jusqu'à deux jours après la fin (les pas du dimanche soir arrivent à la synchronisation suivante de chaque ami ; `services/leaderboardPeriods.ts`, testé). Accueil : du lundi au mercredi, carte « La semaine dernière : 2ᵉ sur 7 » (voisins, vainqueur), qui ouvre le Classement sur la semaine dernière. Un classement passé compte les amis d'aujourd'hui. Une API plus ancienne ignore `offset` : l'application le détecte (pas de `start`) et masque alors la flèche et la carte. L'onglet garde la période choisie quand on le quitte, comme le choix Semaine/Mois. **Testé le 2026-10-28 sur l'émulateur Pixel_8** (variante de dev, API locale, compte de démonstration) : carte de l'Accueil un mercredi (voisins, vainqueur, sans mention provisoire), appui vers « Last week » (19 au 25 oct.), › vers la semaine en cours, Mois puis ‹ vers « Last month » (1ᵉʳ au 30 sept.), chiffres identiques à ceux de l'API. Publié dans la 1.10.0 (2026-10-28), avec l'API 1.1.0 en production ; flèches vues sur le Pixel le 2026-10-29. **Reste à tester sur téléphone** : mention provisoire lundi et mardi, carte absente quand on est seul, tirer pour actualiser sur une période passée.
 
-- [x] **Écrans bloqués sur le chargement** (2026-10-29) : délai de 15 s sur tous les appels à l'API (`apiFetch`, message « Le serveur ne répond pas… ») ; les vues 1j, 7j et 30j de Statistiques n'attendent plus l'envoi des pas du jour pour afficher Santé Connect. Appels réseau de chaque écran décrits dans [`architecture.md`](architecture.md). À publier dans la prochaine version (1.10.1).
+- [x] **Écrans bloqués sur le chargement** (2026-10-29) : délai de 15 s sur tous les appels à l'API (`apiFetch`, message « Le serveur ne répond pas… ») ; les vues 1j, 7j et 30j de Statistiques n'attendent plus l'envoi des pas du jour pour afficher Santé Connect. Appels réseau de chaque écran décrits dans [`architecture.md`](explanation/architecture.md). À publier dans la prochaine version (1.10.1).
 
 - [ ] **Grands écrans : orientation libre** (dans la 1.9.0, 2026-10-09) : avertissement Play Console, Android 16 ignorera le verrou portrait sur tablettes et pliants. `"orientation": "default"` dans `app.json` ; écran de connexion défilant et limité à 480 de large. À faire : vérifier tous les écrans en paysage (téléphone et émulateur de tablette).
 
@@ -169,7 +171,7 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 - **Web et langue** : l'export web statique est rendu en anglais ; dans un navigateur en français, React signale une différence au chargement (erreur 418) et refait le rendu côté client. Sans effet sur Android.
 - **Paramètres** : un menu (`(tabs)/settings/index.tsx`) et un écran par section dans `(tabs)/settings/`, éléments communs dans `components/settings/ui.tsx`.
 - **Écrans des onglets** : chacun est enveloppé dans un `SafeAreaView` limité au bord haut, avec un titre fixe (`components/TabScreenHeader.tsx`).
-- **Clés de signature** : une fonction qui marche en local mais pas avec l'application du Store (ou l'inverse) vient presque toujours d'une empreinte non déclarée. Voir [`signing.md`](signing.md).
+- **Clés de signature** : une fonction qui marche en local mais pas avec l'application du Store (ou l'inverse) vient presque toujours d'une empreinte non déclarée. Voir [`signing.md`](reference/android-signing.md).
 - **Compte de démonstration Google Play** : Google bloquait les connexions des examinateurs au compte Gmail de démonstration (« appareil inconnu »). Remplacé depuis la 1.3.1 par l'accès de démonstration de l'[ADR 0006](adr/0006-review-demo-access.md) : première connexion réussie d'un examinateur le 2026-10-06. Le code est dans la Play Console (Policy → App content → Sign-in details) : le changer impose de le mettre à jour là aussi.
 - **Comptes fictifs** (ADR 0006) : le compte de démonstration (identifiant de connexion de type `demo`) et ses 6 amis fictifs (identifiants `de300000-0000-4000-8000-…`, sans identifiant de connexion). À exclure de toute statistique d'usage. Ne pas les modifier à la main : chaque connexion de démonstration les remet dans leur état d'origine.
 - **Comptes inconnus en base** : le robot de test de Google Play crée des comptes pendant l'examen d'une version (nom aléatoire, aucun pas), en plus du compte de démonstration des examinateurs. Ne jamais rendre « tout le monde » ami : `backend/scripts/seed-tester-friendships.sql` prend une liste explicite de comptes.

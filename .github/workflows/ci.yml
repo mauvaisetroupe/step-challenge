@@ -5,7 +5,7 @@ on:
     branches: [main]
     # Backend versions (ADR 0011): api-v1.0.0 publishes the images 1.0.0
     # and 1.0, and the release notes. Mobile versions are tagged
-    # mobile-vX.Y.Z (docs/publication.md) and trigger nothing here.
+    # mobile-vX.Y.Z (docs/how-to/publish-on-google-play.md) and trigger nothing here.
     tags: ['api-v*']
   pull_request:
 
@@ -140,34 +140,29 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
-  # GitHub Release of a backend version, with its notes for the operator
-  # taken from backend/CHANGELOG.md: fails if the version has none.
+  # GitHub Release of a backend version, its notes written from git
+  # (.github/release-notes.sh), nothing by hand: what the operator must
+  # read (commits marked « ! »), the new migrations, the backend commits
+  # since the previous version. A release candidate (api-v1.3.0-rc.1)
+  # gets no release.
   release:
     name: Release notes
-    if: startsWith(github.ref, 'refs/tags/api-v')
+    if: startsWith(github.ref, 'refs/tags/api-v') && !contains(github.ref_name, '-rc')
     needs: [images]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v5
-      - name: Extract the notes of this version
-        run: |
-          version="${GITHUB_REF_NAME#api-v}"
-          awk -v version="$version" '
-            $0 ~ "^## " { found = ($2 == version) ; next }
-            found { print }
-          ' backend/CHANGELOG.md > notes.md
-          if [ ! -s notes.md ]; then
-            echo "::error::backend/CHANGELOG.md has no section '## $version'"
-            exit 1
-          fi
-          echo "VERSION=$version" >> "$GITHUB_ENV"
+        with:
+          # The whole history and the tags: the previous version
+          fetch-depth: 0
+      - run: .github/release-notes.sh "$GITHUB_REF_NAME" > notes.md
       - name: Create the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
           gh release create "$GITHUB_REF_NAME"
-          --title "API $VERSION"
+          --title "API ${GITHUB_REF_NAME#api-v}"
           --notes-file notes.md
           --verify-tag

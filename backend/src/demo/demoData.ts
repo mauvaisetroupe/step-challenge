@@ -33,7 +33,7 @@ export type DemoFriend = StepProfile & {
 /**
  * The fictitious friends. They have no sign-in credential: nobody can
  * open a session as one of them. Their ids are fixed, so that they are
- * recognizable (docs/moderation.md) and reused at each refresh.
+ * recognizable (docs/how-to/moderate-reports.md) and reused at each refresh.
  */
 export const DEMO_FRIENDS: readonly DemoFriend[] = [
   { id: 'de300000-0000-4000-8000-000000000001', name: 'Camille', base: 11_500, weekend: 1.3 },

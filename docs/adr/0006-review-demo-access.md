@@ -23,7 +23,7 @@ Utiliser une adresse d'un autre domaine (par exemple `@architech.lu`) ne change 
 
 - Un examinateur entre dans l'application, depuis n'importe quel appareil et n'importe quel pays, avec des identifiants fournis dans la Play Console.
 - Aucun affaiblissement de la connexion des vrais utilisateurs ; aucune donnée personnelle nouvelle (pas d'adresse e-mail, ADR 0001).
-- Surface d'attaque minimale : l'accès de démonstration ne mène qu'à un compte sans donnée réelle (règle de [`docs/exposure.md`](../exposure.md)).
+- Surface d'attaque minimale : l'accès de démonstration ne mène qu'à un compte sans donnée réelle (règle de [`docs/reference/exposure.md`](../reference/exposure.md)).
 - L'examinateur voit l'application **en fonctionnement** (classement, amis), pas un écran vide.
 
 ## Options étudiées
@@ -114,7 +114,7 @@ Le serveur accepte un **code d'accès** secret, défini dans sa configuration, q
 
 ### Documentation
 
-- [`docs/exposure.md`](../exposure.md) : ajouter `POST /api/auth/demo` aux exceptions sans session du home lab, avec ses protections.
+- [`docs/reference/exposure.md`](../reference/exposure.md) : ajouter `POST /api/auth/demo` aux exceptions sans session du home lab, avec ses protections.
 - Politique de confidentialité : rien à ajouter (aucune donnée réelle).
 
 ## Conséquences
@@ -140,4 +140,4 @@ Le serveur accepte un **code d'accès** secret, défini dans sa configuration, q
 
 - **Libellé et emplacement** de l'entrée « Accès démonstration » : assez visible pour un examinateur guidé par les instructions, assez discret pour ne pas intriguer les utilisateurs. *Implémenté :* petit lien gris, centré en bas de l'écran de connexion ; à ajuster à l'usage.
 - **Examinateurs Huawei** : vérifier qu'AppGallery Connect permet de fournir un code d'accès de la même façon.
-- ~~**Signalements venant du compte de démonstration**~~ : traité dans [`docs/moderation.md`](../moderation.md) (repérage par l'auteur de type `demo` ou par l'ami fictif signalé, classement sans suite groupé).
+- ~~**Signalements venant du compte de démonstration**~~ : traité dans [`docs/how-to/moderate-reports.md`](../how-to/moderate-reports.md) (repérage par l'auteur de type `demo` ou par l'ami fictif signalé, classement sans suite groupé).

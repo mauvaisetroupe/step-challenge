@@ -14,7 +14,7 @@ Le schéma de la base est créé et mis à jour par **Flyway**, dans l'image de 
 1. Un nouveau fichier `V<numéro suivant>__<description>.sql` (par exemple `V007__weekly_goal.sql`), **sans** `BEGIN;` ni `COMMIT;` : Flyway exécute chaque migration dans une transaction. `V001` à `V006`, écrites pour `psql`, en contiennent ; elles ne s'exécutent plus (ligne de base ou `B006`).
 2. **Ne jamais modifier** un fichier déjà appliqué quelque part, `B006` compris : Flyway compare leurs sommes de contrôle et refuse de migrer si l'une a changé.
 3. Compatible avec la version précédente de l'API quand c'est possible (colonne ajoutée plutôt que renommée), pour qu'un retour à l'image précédente reste possible.
-4. Si elle est lourde (table réécrite, index sur une grande table) ou empêche le retour en arrière, le signaler dans les notes de version (`../CHANGELOG.md`).
+4. Si elle est lourde (table réécrite, index sur une grande table) ou empêche le retour en arrière, marquer son commit `!` et dire quoi faire (`feat(backend)!: …` avec une ligne `BREAKING CHANGE: …`) : il apparaîtra dans « À lire avant de déployer » des notes de version ([Publier une version de l'API](../../docs/how-to/release-the-api.md)). Les notes listent toutes les migrations ajoutées.
 5. `npm run db:up` l'applique aux bases de dev et de test.
 
 Une instruction qui ne peut pas s'exécuter dans une transaction (`CREATE INDEX CONCURRENTLY`) demande un réglage de Flyway propre à ce fichier (voir sa documentation).

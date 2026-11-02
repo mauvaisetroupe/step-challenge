@@ -8,7 +8,7 @@ const {
 
 // Huawei AppGallery Connect configuration of the app (app id, keys).
 // Downloaded from AppGallery Connect, ignored by git: see
-// agconnect-services.example.json and huawei/README.md.
+// agconnect-services.example.json and docs/explanation/huawei-integration.md.
 const CONFIG_FILE = 'agconnect-services.json';
 
 // EAS builds don't upload git-ignored files: they get the configuration

@@ -4,9 +4,9 @@ Inventaire de tout ce qui est accessible **sans authentification**, et de l'endr
 
 ## Règle
 
-**Ce qui est hébergé sur le home lab est authentifié.** Les seules exceptions sont celles qui ne peuvent pas l'être par nature (l'entrée dans l'authentification elle-même), listées ci-dessous avec leur justification. Tout contenu public est servi par l'hébergement public, pas par le home lab.
+**Ce qui est hébergé avec l'API (home lab jusqu'au 2026-10-27, VPS depuis) est authentifié.** Les seules exceptions sont celles qui ne peuvent pas l'être par nature (l'entrée dans l'authentification elle-même), listées ci-dessous avec leur justification. Tout contenu public est servi par l'hébergement public, pas par le home lab.
 
-Voir l'[ADR 0005 — Site public et séparation des domaines](adr/0005-public-site-and-domains.md).
+Voir l'[ADR 0005 — Site public et séparation des domaines](../adr/0005-public-site-and-domains.md).
 
 ## Hébergement public : `step.architech.lu` (OVH, derrière Cloudflare)
 
@@ -20,15 +20,15 @@ Site statique généré par Hugo (`site/`). Aucun code serveur, aucune base de d
 | `/i/<code>` | Page d'atterrissage d'une invitation : explique comment installer l'application | Ouverte par un invité qui n'a pas encore l'application ni de compte. Le code n'est que dans l'adresse ; la page ne contacte aucun serveur |
 | `/.well-known/assetlinks.json` | Package et empreintes des certificats de signature (publics) | Lu par Android et les serveurs de Google pour vérifier les App Links, sans identifiant |
 
-## Home lab : API (`step-api.architech.lu`, tunnel Cloudflare)
+## API : `step-api.architech.lu` (VPS, tunnel Cloudflare)
 
 Toutes les routes `/api/*` exigent une session (`requireAuth`), **sauf** :
 
 | Route | Rôle | Pourquoi sans session | Protections |
 |---|---|---|---|
 | `POST /api/auth/google` | Connexion : échange un jeton d'identité Google contre une session | C'est l'entrée de l'authentification. La requête porte un jeton signé par Google pour le client OAuth de l'application, vérifié par le serveur | Limite de débit (`RATE_LIMITS.signIn`), schéma strict (taille du jeton bornée) |
-| `POST /api/auth/demo` | Accès de démonstration des examinateurs ([ADR 0006](adr/0006-review-demo-access.md)) : un code d'accès contre une session sur le compte de démonstration, et sur lui seul | Les examinateurs Google et Huawei ne peuvent pas se connecter avec Google depuis leurs appareils de test. Le compte ne contient que des données fictives | **N'existe pas** (404) sans `DEMO_ACCESS_CODE` dans la configuration ; code d'au moins 20 caractères (sinon le serveur refuse de démarrer), comparé en temps constant ; limite de débit stricte (`RATE_LIMITS.demoSignIn`, 10 par heure) ; schéma strict. Changer ou retirer le code coupe l'accès |
-| `GET /api/health` | Contrôle de vie : 200 `{"status":"ok"}` si la base répond, 503 sinon | Utilisé par le contrôle de santé de l'image, `deploy.sh` (ancien LXC) et la supervision | Ne renvoie aucune donnée. Peut être restreint par une règle Cloudflare si besoin |
+| `POST /api/auth/demo` | Accès de démonstration des examinateurs ([ADR 0006](../adr/0006-review-demo-access.md)) : un code d'accès contre une session sur le compte de démonstration, et sur lui seul | Les examinateurs Google et Huawei ne peuvent pas se connecter avec Google depuis leurs appareils de test. Le compte ne contient que des données fictives | **N'existe pas** (404) sans `DEMO_ACCESS_CODE` dans la configuration ; code d'au moins 20 caractères (sinon le serveur refuse de démarrer), comparé en temps constant ; limite de débit stricte (`RATE_LIMITS.demoSignIn`, 10 par heure) ; schéma strict. Changer ou retirer le code coupe l'accès |
+| `GET /api/health` | Contrôle de vie : 200 `{"status":"ok"}` si la base répond, 503 sinon | Utilisé par le contrôle de santé de l'image, `deploy-app` (dépôt `vps-infra`) et la supervision | Ne renvoie aucune donnée. Peut être restreint par une règle Cloudflare si besoin |
 
 Réponses génériques, inévitables pour tout serveur HTTP : `404` pour une route inconnue, réponses CORS aux requêtes `OPTIONS`.
 

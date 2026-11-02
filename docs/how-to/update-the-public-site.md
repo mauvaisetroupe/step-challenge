@@ -1,12 +1,12 @@
-# Site public
+# Mettre à jour le site public
 
-Site statique de Step Challenge, généré par [Hugo](https://gohugo.io) et publié sur l'hébergement OVH sous `https://step.architech.lu` ([ADR 0005](../docs/adr/0005-public-site-and-domains.md)).
+Site statique de Step Challenge, généré par [Hugo](https://gohugo.io) et publié sur l'hébergement OVH sous `https://step.architech.lu` ([ADR 0005](../adr/0005-public-site-and-domains.md)). Les fichiers sont dans `site/`.
 
 Gabarits maison, sans thème tiers. Aucun service tiers : ni statistiques, ni polices, ni scripts externes, ni cookie.
 
 ## Lancer en local
 
-Installer **la version de Hugo figée dans la GitHub Action** (`hugo-version` dans [`.github/workflows/deploy-site.yml`](../.github/workflows/deploy-site.yml), aujourd'hui **0.167.0**), par exemple :
+Installer **la version de Hugo figée dans la GitHub Action** (`hugo-version` dans [`.github/workflows/deploy-site.yml`](../../.github/workflows/deploy-site.yml), aujourd'hui **0.167.0**), par exemple :
 
 ```bash
 # macOS (Homebrew installe la dernière version : vérifier avec hugo version)
@@ -51,7 +51,7 @@ hugo --minify      # construction complète dans site/public/ (ignoré par git)
 
 ### Fichiers particuliers de `static/`
 
-- **`.well-known/assetlinks.json`** : vérification des App Links par Android. Package et empreintes SHA-256 des clés Google Play et d'importation (voir [`docs/signing.md`](../docs/signing.md)). Doit être servi en `application/json`, sans redirection.
+- **`.well-known/assetlinks.json`** : vérification des App Links par Android. Package et empreintes SHA-256 des clés Google Play et d'importation (voir [Signature Android](../reference/android-signing.md)). Doit être servi en `application/json`, sans redirection.
 - **`.htaccess`** : règles Apache (réécriture de `/i/<code>` vers `/i/index.html`, type JSON pour `assetlinks.json`).
 - **`i/index.html`** : page d'un invité qui n'a pas l'application. Un script lit le code dans l'adresse ; aucune ressource externe, `noindex`, `no-referrer`, et une `Content-Security-Policy` qui interdit tout appel extérieur : le code d'invitation ne doit fuiter vers personne. Page bilingue, langue choisie d'après le navigateur.
 - **`images/logo.svg`** : dérivé de `icons/app-icon-foreground.svg` (chaussure blanche agrandie sur le fond bleu `#1389FC`). À régénérer si l'icône change.
@@ -75,12 +75,21 @@ hugo --minify      # construction complète dans site/public/ (ignoré par git)
 
 Le HTML brut est désactivé dans le Markdown (`unsafe = false`) : un besoin de mise en forme particulière passe par un gabarit ou un shortcode.
 
+## Publier
+
+Un push sur `main` qui touche `site/` construit le site et l'envoie chez OVH : rien d'autre à faire. Vérifier ensuite
+la page modifiée en ligne, dans les deux langues (`/page.html` et `/fr/page.html`). L'action se relance à la main
+depuis l'onglet Actions de GitHub (`workflow_dispatch`).
+
+Une page légale (confidentialité, conditions, suppression du compte) se met à jour **avant** l'envoi d'une version de
+l'application qui en dépend : les examinateurs des boutiques la lisent.
+
 ## Déploiement
 
-La GitHub Action [`deploy-site.yml`](../.github/workflows/deploy-site.yml) :
+La GitHub Action [`deploy-site.yml`](../../.github/workflows/deploy-site.yml) :
 
 - sur une **pull request** qui touche `site/` : construit le site et vérifie la présence des fichiers cachés (contrôle seulement) ;
-- sur un **push sur `main`** qui touche `site/` (ou lancement manuel) : construit, puis envoie `site/public/` chez OVH en **SFTP** avec [`scripts/deploy-sftp.sh`](scripts/deploy-sftp.sh) (lftp).
+- sur un **push sur `main`** qui touche `site/` (ou lancement manuel) : construit, puis envoie `site/public/` chez OVH en **SFTP** avec [`site/scripts/deploy-sftp.sh`](../../site/scripts/deploy-sftp.sh) (lftp).
 
 Tant que la configuration ci-dessous n'est pas complète, l'envoi est **sauté** (avec un avertissement) : la construction tourne, rien n'est envoyé.
 

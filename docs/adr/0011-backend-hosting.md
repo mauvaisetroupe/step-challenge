@@ -100,6 +100,8 @@ Cloudflare tient déjà le rôle de périphérie (TLS, WAF, limitation de débit
 - les images ne sont publiées qu'après les tests de la CI ; elles sont publiques, comme le dépôt ;
 - chaque version a ses **notes** (GitHub Releases, tirées de `backend/CHANGELOG.md`) avec ce qui change pour l'exploitant : variable ajoutée ou retirée, migration lourde, version de PostgreSQL exigée.
 
+  *Précisé le 2026-11-02 :* les notes ne s'écrivent plus à la main. `.github/release-notes.sh` les tire de git, comme CountRep (son ADR 0017) : les commits du backend marqués `!` (Conventional Commits, `feat(backend)!: …` avec une ligne `BREAKING CHANGE: …` qui dit quoi faire) dans « À lire avant de déployer », les migrations ajoutées, puis les commits du backend depuis la version précédente. Le script échoue si une migration publiée a été modifiée ou supprimée. `backend/CHANGELOG.md` est retiré ; les notes des versions 1.0.0 à 1.2.1 restent dans les GitHub Releases.
+
 **Une composition d'exemple** (base, migration, API) pour essayer les images, présentée comme un exemple et non comme la production.
 
 ### Ce que tient l'exploitant, hors de ce dépôt

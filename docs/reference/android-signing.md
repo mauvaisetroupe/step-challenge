@@ -2,6 +2,8 @@
 
 Une application Android est identifiée par son **nom de package** et par le **certificat** qui la signe. Plusieurs services vérifient ce certificat au moyen de son **empreinte** (SHA-1 ou SHA-256) : il faut la leur déclarer.
 
+Le pourquoi : [Les clés de signature Android](../explanation/android-signing.md).
+
 Les empreintes ne sont pas des secrets : elles identifient une clé publique (`assetlinks.json` en publie deux). Les **clés** elles-mêmes (keystores, mots de passe) ne doivent jamais être commitées.
 
 ## Les trois clés
@@ -35,11 +37,11 @@ La clé de debug est celle du **modèle React Native** : la même dans tous les 
 |---|---|---|---|
 | **App Links** : `site/static/.well-known/assetlinks.json` (servi par le site public) | SHA-256 | Google Play, importation | Android vérifie que l'application qui ouvre les liens `https://step.architech.lu/i/…` est bien la nôtre. La clé de debug est volontairement absente : la variante de développement utilise son propre schéma d'URL |
 | **Connexion Google** : Google Cloud → API et services → Identifiants → un **client OAuth Android** par empreinte | SHA-1 | Google Play et importation (package de production) ; debug (package `.dev` de la variante de développement) | Google n'accepte la connexion que depuis une application dont le package et l'empreinte correspondent à un client Android |
-| **Huawei** : AppGallery Connect → Project settings → General information | SHA-256 | Google Play, importation, debug | HMS Core vérifie l'application avant d'autoriser Health Kit (voir `huawei/README.md`, section 14) |
+| **Huawei** : AppGallery Connect → Project settings → General information | SHA-256 | Google Play, importation, debug | HMS Core vérifie l'application avant d'autoriser Health Kit (voir [l'intégration Huawei](../explanation/huawei-integration.md), section 14) |
 
 ## Quand faut-il y revenir ?
 
 - **Nouveau service** qui identifie l'application : y déclarer au minimum la clé **Google Play**, celle des utilisateurs.
 - **Nouvel ordinateur** : rien à faire, la clé de debug est la même partout.
-- **Changement de la clé d'importation** (perte, rotation) : mettre à jour les trois services. Après un ajout chez Huawei, re-télécharger `agconnect-services.json` et mettre à jour la variable EAS (voir `huawei/README.md`).
+- **Changement de la clé d'importation** (perte, rotation) : mettre à jour les trois services. Après un ajout chez Huawei, re-télécharger `agconnect-services.json` et mettre à jour la variable EAS (voir [l'intégration Huawei](../explanation/huawei-integration.md)).
 - **Symptôme typique d'une empreinte manquante** : la fonction marche avec un build local mais pas avec l'application du Store (ou l'inverse). C'est presque toujours la clé Google Play qui manque.

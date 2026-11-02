@@ -17,7 +17,7 @@ flowchart
     API --> DB[(PostgreSQL)]
 ```
 
-- **Santé Connect** est la référence pour les jours récents : l'application le lit directement, sans réseau. Sur un téléphone sans Santé Connect (Huawei), le podomètre du téléphone le remplace pour aujourd'hui seulement, quand le build l'a (voir `huawei/README.md`).
+- **Santé Connect** est la référence pour les jours récents : l'application le lit directement, sans réseau. Sur un téléphone sans Santé Connect (Huawei), le podomètre du téléphone le remplace pour aujourd'hui seulement, quand le build l'a (voir [l'intégration Huawei](huawei-integration.md)).
 - **La base** garde un total par jour et par utilisateur (`daily_steps`). Elle sert au classement entre amis, à l'historique long (vue 1 an, séries de l'accueil) et à tout ce qui n'a pas Santé Connect (web, Huawei).
 - L'envoi des pas est **idempotent** : le backend ne garde un jour que si le total reçu est plus élevé que celui qu'il a (ou si les minutes d'activité changent). Envoyer trop souvent ne coûte qu'une requête.
 

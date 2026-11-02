@@ -32,7 +32,7 @@ type ReportBody = {
 
 /**
  * Reports (ADR 0004), handled by hand by the maintainer
- * (docs/moderation.md). The reported person is not told.
+ * (docs/how-to/moderate-reports.md). The reported person is not told.
  */
 const reportRoutes: FastifyPluginAsync<ReportRoutesOptions> = async (
   app,

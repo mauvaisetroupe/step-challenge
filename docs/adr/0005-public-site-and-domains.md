@@ -35,7 +35,7 @@ Deux besoins nouveaux :
 
 ## Règle
 
-**Ce qui est hébergé sur le home lab est authentifié.** Les seules exceptions sont celles qui ne peuvent pas l'être par nature : l'entrée dans l'authentification (`POST /api/auth/google`, protégée par le jeton Google et une limite de débit) et le contrôle de vie (`GET /api/health`, sans donnée). Tout contenu public est servi par l'hébergement public. L'inventaire est tenu dans [`docs/exposure.md`](../exposure.md).
+**Ce qui est hébergé sur le home lab est authentifié.** Les seules exceptions sont celles qui ne peuvent pas l'être par nature : l'entrée dans l'authentification (`POST /api/auth/google`, protégée par le jeton Google et une limite de débit) et le contrôle de vie (`GET /api/health`, sans donnée). Tout contenu public est servi par l'hébergement public. L'inventaire est tenu dans [`docs/exposure.md`](../reference/exposure.md).
 
 ## Options étudiées
 
@@ -94,7 +94,7 @@ Sous-domaine **à un seul niveau** pour l'API : le certificat Cloudflare gratuit
 
 ### Invitations et App Links sur le site statique
 
-- `static/.well-known/assetlinks.json` : même contenu qu'aujourd'hui (package et empreintes Google Play et d'importation, voir [`docs/signing.md`](../signing.md)). Servi en `application/json`, en HTTPS, **sans redirection** (Android ne les suit pas pour ce fichier).
+- `static/.well-known/assetlinks.json` : même contenu qu'aujourd'hui (package et empreintes Google Play et d'importation, voir [Signature Android](../reference/android-signing.md)). Servi en `application/json`, en HTTPS, **sans redirection** (Android ne les suit pas pour ce fichier).
 - `static/.htaccess` :
 
   ```apache
@@ -123,7 +123,7 @@ Sous-domaine **à un seul niveau** pour l'API : le certificat Cloudflare gratuit
   - vérifier que `.htaccess` et `.well-known/` sont envoyés (exclusions par défaut de l'action) ;
   - **pas de commit de l'état de synchronisation** dans le dépôt depuis la CI : l'action conserve déjà son état sur le serveur (`.ftp-deploy-sync-state.json`), et un commit automatique sur `main` entrerait en concurrence avec les push du mainteneur ;
   - secrets du dépôt : `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` ; dossier distant dédié au site sur l'hébergement OVH.
-- *Précisé le 2026-10-05 à l'implémentation :* l'hébergement OVH propose SFTP (port 22) ; l'envoi se fait donc en **SFTP** avec lftp (`site/scripts/deploy-sftp.sh`) plutôt qu'avec `FTP-Deploy-Action`. Le dossier distant est un miroir du site généré (fichiers retirés supprimés, tout renvoyé à chaque fois), la clé d'hôte du serveur est vérifiée (variable `SFTP_KNOWN_HOSTS`), et le script refuse un dossier distant non vide qui ne porte pas le marqueur `.step-challenge-site`. Variables du dépôt en plus des trois secrets : `SITE_REMOTE_DIR` et `SFTP_KNOWN_HOSTS`. Voir `site/README.md`.
+- *Précisé le 2026-10-05 à l'implémentation :* l'hébergement OVH propose SFTP (port 22) ; l'envoi se fait donc en **SFTP** avec lftp (`site/scripts/deploy-sftp.sh`) plutôt qu'avec `FTP-Deploy-Action`. Le dossier distant est un miroir du site généré (fichiers retirés supprimés, tout renvoyé à chaque fois), la clé d'hôte du serveur est vérifiée (variable `SFTP_KNOWN_HOSTS`), et le script refuse un dossier distant non vide qui ne porte pas le marqueur `.step-challenge-site`. Variables du dépôt en plus des trois secrets : `SITE_REMOTE_DIR` et `SFTP_KNOWN_HOSTS`. Voir `docs/how-to/update-the-public-site.md`.
 - **Préversion** : avant la bascule, le site est publié sous un nom temporaire pour vérification.
 
 ### Backend

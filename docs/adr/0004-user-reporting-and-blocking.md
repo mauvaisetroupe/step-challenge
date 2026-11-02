@@ -106,7 +106,7 @@ Liste de mots interdits à la saisie du nom, masquage automatique d'un nom aprè
 
 ### Modération
 
-- **Traitement manuel** par le mainteneur, avec une procédure écrite (`docs/moderation.md`) : requêtes SQL pour lister les signalements en attente, actions possibles, et traçabilité de la décision dans la table.
+- **Traitement manuel** par le mainteneur, avec une procédure écrite (`docs/how-to/moderate-reports.md`) : requêtes SQL pour lister les signalements en attente, actions possibles, et traçabilité de la décision dans la table.
 - **Actions** :
   - **réinitialiser le nom** de la personne signalée (« Utilisateur ») ; elle pourra le changer à nouveau ;
   - **supprimer le compte** dans les cas graves ou répétés, avec la procédure existante de suppression ;

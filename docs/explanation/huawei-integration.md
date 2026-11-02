@@ -1,5 +1,7 @@
 # Huawei Health Kit — Intégration Expo / Step Challenge
 
+> Journal de l'intégration Huawei (Health Kit, AppGallery), tenu au fil du chantier ; anciennement `huawei/README.md`. Les documents de la demande d'accès restent dans `huawei/`. Publier une version : [Publier sur AppGallery](../how-to/publish-on-appgallery.md).
+
 ## Objectif
 
 Ajouter le support **Huawei Health Kit** à l'application Expo Step Challenge, sans casser le support existant :
@@ -635,7 +637,7 @@ Sans fichier de configuration (clone du dépôt public, CI), ou pour un autre pa
 
 ### Empreintes déclarées dans AppGallery Connect
 
-Les trois empreintes SHA-256 doivent être déclarées : clé de debug (builds locaux), clé d'envoi, et **clé de signature Google Play**, qui signe l'application installée depuis le Store. Valeurs et emplacements : voir [`docs/signing.md`](../docs/signing.md).
+Les trois empreintes SHA-256 doivent être déclarées : clé de debug (builds locaux), clé d'envoi, et **clé de signature Google Play**, qui signe l'application installée depuis le Store. Valeurs et emplacements : voir [Signature Android](../reference/android-signing.md).
 
 ### Constat du 2026-10-04
 
@@ -657,8 +659,8 @@ Huawei a refusé la demande de permission Health Kit, pour deux raisons :
 
 ## Publication sur AppGallery
 
-* **Paquet : APK, sans App Signing.** AppGallery n'accepte un AAB qu'avec App Signing : soit Huawei génère sa propre clé (nouvelle empreinte à déclarer dans AGC, dans un client OAuth Google et dans `assetlinks.json`, clé ni visible ni exportable), soit on lui confie une clé privée (celle de Google Play ne s'exporte pas ; il faudrait celle d'importation). L'APK est signé avec la **clé d'importation** d'EAS, dont l'empreinte est déjà déclarée partout (voir [`docs/signing.md`](../docs/signing.md)) : Huawei le distribue tel quel.
-* **Build, vérification de l'APK et envoi** : voir [`docs/exploitation.md`](../docs/publication.md#huawei-appgallery).
+* **Paquet : APK, sans App Signing.** AppGallery n'accepte un AAB qu'avec App Signing : soit Huawei génère sa propre clé (nouvelle empreinte à déclarer dans AGC, dans un client OAuth Google et dans `assetlinks.json`, clé ni visible ni exportable), soit on lui confie une clé privée (celle de Google Play ne s'exporte pas ; il faudrait celle d'importation). L'APK est signé avec la **clé d'importation** d'EAS, dont l'empreinte est déjà déclarée partout (voir [Signature Android](../reference/android-signing.md)) : Huawei le distribue tel quel.
+* **Build, vérification de l'APK et envoi** : voir [Publier sur AppGallery](../how-to/publish-on-appgallery.md).
 * **Fiche** : français (par défaut) et anglais, sans balises HTML (AppGallery les affiche telles quelles) ; icône `icons/playstore-icon.png` ; captures `docs/screenshots/french/` et `english/` (compte de démonstration, données fictives).
 * **Version** :
   * pays : France seulement (en ajouter se fait dans une nouvelle version, sans nouveau paquet) ;

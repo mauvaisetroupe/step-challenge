@@ -26,7 +26,7 @@ L'ADR 0001 a esquissé un client web : même jeton d'identité Google, session p
 ### Critères de décision
 
 - Aucune donnée de session lisible par le JavaScript de la page (résistance aux failles XSS).
-- Aucun affaiblissement de l'application Android ni de la règle d'exposition ([`docs/exposure.md`](../exposure.md)) : le home lab ne sert que l'API authentifiée, le client web est du contenu statique chez OVH.
+- Aucun affaiblissement de l'application Android ni de la règle d'exposition ([`docs/reference/exposure.md`](../reference/exposure.md)) : le home lab ne sert que l'API authentifiée, le client web est du contenu statique chez OVH.
 - Le même code pour l'application et le site, autant que possible.
 - Une première version utile rapidement : **le classement** d'abord.
 
@@ -120,7 +120,7 @@ Le client web **affiche** les pas synchronisés par le téléphone ; il n'en ajo
 
 ### Documentation
 
-- [`docs/exposure.md`](../exposure.md) : le client web dans l'hébergement public ; aucune nouvelle route sans session côté home lab.
+- [`docs/reference/exposure.md`](../reference/exposure.md) : le client web dans l'hébergement public ; aucune nouvelle route sans session côté home lab.
 - Politique de confidentialité : accès par le web, et cookie de session (strictement nécessaire au service : pas de bannière de consentement).
 
 ## Conséquences
