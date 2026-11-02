@@ -33,6 +33,7 @@ Faire tourner :
 - [Intégration continue](reference/ci.md) : jobs, tags, images, notes de version
 - [Comptes, consoles et secrets](reference/accounts-and-secrets.md) : où est quoi, qui le garde
 - [Signature Android](reference/android-signing.md) : les trois clés, leurs empreintes, où elles sont déclarées
+- [Badges, points et niveaux](reference/badges.md) : catalogue, règles d'attribution, courbe des niveaux (brouillon)
 - [Surface d'exposition](reference/exposure.md) : tout ce qui est accessible sans authentification
 - [Exploitation](exploitation.md) : pour qui héberge l'API (images, variables, démarrage, mises à jour, retour en
   arrière). Elle reste à la racine de `docs/` : l'ADR 0011 et le dépôt `vps-infra` y renvoient.
