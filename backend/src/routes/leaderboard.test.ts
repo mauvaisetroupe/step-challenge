@@ -39,6 +39,20 @@ async function insertSteps(userId: string, dateSql: string, steps: number) {
   )
 }
 
+/**
+ * The second day of the previous week: a day inside a whole period, never
+ * its first, whatever the day the tests run (on the first day of a period,
+ * an account created "today" is on time, not a newcomer).
+ */
+const PREVIOUS_WEEK_SECOND_DAY = "(date_trunc('week', CURRENT_DATE)::date - 6)"
+
+async function setCreatedAt(userId: string, dateSql: string) {
+  await pool!.query(
+    `UPDATE users SET created_at = (${dateSql})::timestamptz + interval '12 hours' WHERE id = $1`,
+    [userId],
+  )
+}
+
 function getLeaderboard(app: TestApp, token: string, query = '') {
   return app.inject({
     method: 'GET',
@@ -82,17 +96,21 @@ describe('GET /api/leaderboard', { skip: skipWithoutDatabase }, () => {
 
     await befriend(app, alice.token, bob.token)
     await befriend(app, alice.token, carol.token)
-    // Alice has steps before this week, Bob only from today, Carol none.
-    await insertSteps(alice.user.id, "date_trunc('week', CURRENT_DATE)::date - 3", 100)
-    await insertSteps(alice.user.id, 'CURRENT_DATE', 3000)
-    await insertSteps(bob.user.id, 'CURRENT_DATE', 5000)
+    // On the previous week, whatever the day today: Bob and Carol joined
+    // on its second day. Alice has steps before it, Bob only from his
+    // first day, Carol none.
+    await setCreatedAt(bob.user.id, PREVIOUS_WEEK_SECOND_DAY)
+    await setCreatedAt(carol.user.id, PREVIOUS_WEEK_SECOND_DAY)
+    await insertSteps(alice.user.id, `${PREVIOUS_WEEK_SECOND_DAY} - 4`, 100)
+    await insertSteps(alice.user.id, PREVIOUS_WEEK_SECOND_DAY, 3000)
+    await insertSteps(bob.user.id, PREVIOUS_WEEK_SECOND_DAY, 5000)
 
     const { rows } = await pool!.query(`
       SELECT
-        to_char(date_trunc('week', CURRENT_DATE) - interval '3 days', 'YYYY-MM-DD') AS alice,
-        to_char(CURRENT_DATE, 'YYYY-MM-DD') AS bob
+        to_char(${PREVIOUS_WEEK_SECOND_DAY} - 4, 'YYYY-MM-DD') AS alice,
+        to_char(${PREVIOUS_WEEK_SECOND_DAY}, 'YYYY-MM-DD') AS bob
     `)
-    const results = (await getLeaderboard(app, alice.token)).json().results
+    const results = (await getLeaderboard(app, alice.token, '?offset=1')).json().results
     const byName = Object.fromEntries(
       results.map((entry: { name: string; firstDay: string | null; newcomer: boolean }) => [
         entry.name,
@@ -111,22 +129,25 @@ describe('GET /api/leaderboard', { skip: skipWithoutDatabase }, () => {
     const app = await buildApp()
     const { token, user } = await signInAs(app, 'alice')
 
-    // The app sends the last 30 days, with 0 when Health Connect has no data.
+    // Joined on the second day of the previous week, whatever the day
+    // today. The app sends the last 30 days, with 0 when Health Connect
+    // has no data.
+    await setCreatedAt(user.id, PREVIOUS_WEEK_SECOND_DAY)
     await pool!.query(
       `INSERT INTO daily_steps (user_id, date, steps)
        SELECT $1, day::date, 0
-       FROM generate_series(CURRENT_DATE - 29, CURRENT_DATE - 1, interval '1 day') AS day`,
+       FROM generate_series(${PREVIOUS_WEEK_SECOND_DAY} - 29, ${PREVIOUS_WEEK_SECOND_DAY} - 1, interval '1 day') AS day`,
       [user.id],
     )
-    await insertSteps(user.id, 'CURRENT_DATE', 4000)
+    await insertSteps(user.id, PREVIOUS_WEEK_SECOND_DAY, 4000)
 
-    const results = (await getLeaderboard(app, token)).json().results
+    const results = (await getLeaderboard(app, token, '?offset=1')).json().results
 
     assert.equal(results[0].newcomer, true)
     assert.equal(
       results[0].firstDay,
-      (await pool!.query(`SELECT to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today`))
-        .rows[0].today,
+      (await pool!.query(`SELECT to_char(${PREVIOUS_WEEK_SECOND_DAY}, 'YYYY-MM-DD') AS day`))
+        .rows[0].day,
     )
   })
 
