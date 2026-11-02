@@ -12,8 +12,8 @@ Le détail de la configuration reste à sa place, cette page y renvoie : backend
 |---|---|---|---|
 | Backend (API et migrations) | Images `ghcr.io/mauvaisetroupe/step-challenge-api` et `step-challenge-migrations` | CI GitHub (`ci.yml`, job `images`), puis déploiement par l'exploitant ([`exploitation.md`](exploitation.md)) | Tag git `api-vX.Y.Z` |
 | Site public (`step.architech.lu`) | Hébergement mutualisé OVH | GitHub Action `deploy-site.yml` (Hugo puis SFTP) | Push sur `main` qui touche `site/` |
-| Application Android, Google Play | Play Console, test fermé | Build EAS en local (`.aab`), envoi dans la Play Console | À la main |
-| Application Android, Huawei AppGallery | AppGallery Connect | Build EAS en local (APK signé avec la clé d'envoi), envoi dans AppGallery Connect | À la main |
+| Application Android, Google Play | Play Console, test fermé | Build EAS en local (`.aab`), envoi dans la Play Console | À la main, puis tag git `mobile-vX.Y.Z` |
+| Application Android, Huawei AppGallery | AppGallery Connect | Build EAS en local (APK signé avec la clé d'envoi), envoi dans AppGallery Connect | À la main, même tag que Google Play |
 
 Jusqu'à la bascule de l'ADR 0011, la production de l'API reste sur l'ancien conteneur LXC du home lab (voir « Ancienne production » plus bas).
 
@@ -63,7 +63,8 @@ Secrets GitHub, garde-fou du dossier distant, envoi à la main et vérification 
 
 ### Avant le build
 
-- **Version** : monter `version` dans `apps/mobile/app.json` (affichée aux utilisateurs, et dans les notes de version). Le `versionCode` n'est pas à toucher : EAS l'incrémente à chaque build de production (`appVersionSource: remote`, `autoIncrement`).
+- **Version** : monter `version` dans `apps/mobile/app.json` (affichée aux utilisateurs, et dans les notes de version), et commiter avec le message `chore(mobile): X.Y.Z`. Le `versionCode` n'est pas à toucher : EAS l'incrémente à chaque build de production (`appVersionSource: remote`, `autoIncrement`).
+- **Tout commiter** : EAS refuse de construire avec des modifications non commitées dans le dépôt, `backend/` compris (`requireCommit` dans `eas.json`). Le build correspond ainsi exactement à un commit, celui que marquera le tag.
 - **Place disque** : un build local compile dans `$TMPDIR` et demande une dizaine de Go libres (`df -h`). Les anciennes versions de `~/.gradle/caches` et `~/.gradle/wrapper/dists`, le cache npm et le cache de build Docker se suppriment sans risque.
 - **R8** : une nouvelle bibliothèque native peut casser en production seulement (code obscurci). Tester en release avant d'envoyer, et ajouter les règles manquantes dans `extraProguardRules` (`app.json`), d'après `android/app/build/outputs/mapping/release/missing_rules.txt`.
 
@@ -79,6 +80,17 @@ npx eas-cli build --platform android --profile production --local
 Le build produit un `.aab` signé avec la clé d'importation. Dans la Play Console : test fermé → nouvelle version → envoyer le `.aab`, notes de version (français et anglais), puis envoyer pour examen. Google re-signe avec sa propre clé (voir [`signing.md`](signing.md)).
 
 Si la version change les autorisations ou les données collectées, mettre à jour avant l'envoi le formulaire Data safety et la déclaration « Health apps » de la Play Console (et la politique de confidentialité du site).
+
+### Taguer la version
+
+Une fois la version envoyée (Google Play, et AppGallery s'il est construit depuis le même commit), marquer le commit construit :
+
+```bash
+git tag mobile-v1.12.0
+git push origin mobile-v1.12.0
+```
+
+Le tag `mobile-v*` ne déclenche rien dans la CI (seuls les `api-v*` publient des images). Il sert à retrouver le code d'une version : `git show mobile-v1.12.0`, ou `git diff mobile-v1.12.0..HEAD -- apps/mobile` pour ce qui a changé depuis. Les versions jusqu'à la 1.11.0 n'ont pas de tag.
 
 ### Huawei AppGallery
 

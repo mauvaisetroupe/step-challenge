@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     # Backend versions (ADR 0011): api-v1.0.0 publishes the images 1.0.0
-    # and 1.0, and the release notes.
+    # and 1.0, and the release notes. Mobile versions are tagged
+    # mobile-vX.Y.Z (docs/publication.md) and trigger nothing here.
     tags: ['api-v*']
   pull_request:
 
