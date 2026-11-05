@@ -13,7 +13,8 @@
     "db:reset": "docker compose -f docker-compose.dev.yml --profile migrations down -v && npm run db:up",
     "dev:local": "DOTENV_CONFIG_PATH=.env.development tsx watch src/server.ts",
     "test:local": "TEST_DATABASE_URL=postgres://postgres:test@localhost:55432/step_challenge_test npm test",
-    "seed:demo": "tsx --env-file=.env.development src/demo/seedDevelopment.ts"
+    "seed:demo": "tsx --env-file=.env.development src/demo/seedDevelopment.ts",
+    "badges:award-all": "tsx src/badges/awardAll.ts"
   },
   "keywords": [],
   "author": "",
