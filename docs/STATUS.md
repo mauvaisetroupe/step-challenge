@@ -2,7 +2,7 @@
 
 Point d'étape pour reprendre le travail, notamment dans une nouvelle session d'assistant (Claude Code en local ou dans le cloud). À mettre à jour à chaque étape importante.
 
-**Dernière mise à jour : 2026-11-02**
+**Dernière mise à jour : 2026-11-05**
 
 ## En bref
 
@@ -151,6 +151,14 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 - [x] **Écrans bloqués sur le chargement** (2026-10-29) : délai de 15 s sur tous les appels à l'API (`apiFetch`, message « Le serveur ne répond pas… ») ; les vues 1j, 7j et 30j de Statistiques n'attendent plus l'envoi des pas du jour pour afficher Santé Connect. Appels réseau de chaque écran décrits dans [`architecture.md`](explanation/architecture.md). À publier dans la prochaine version (1.10.1).
 
 - [ ] **Grands écrans : orientation libre** (dans la 1.9.0, 2026-10-09) : avertissement Play Console, Android 16 ignorera le verrou portrait sur tablettes et pliants. `"orientation": "default"` dans `app.json` ; écran de connexion défilant et limité à 480 de large. À faire : vérifier tous les écrans en paysage (téléphone et émulateur de tablette).
+
+- [ ] **Badges, points et niveaux** ([spécification](reference/badges.md), 2026-11-05) : backend (migration `V007__badges.sql`, `src/badges/`, `GET /api/me/badges`, `GET /api/friends/:id/badges`, `level` dans le classement, attribution après chaque envoi de pas) et application (5ᵉ onglet Badges avec un point pour les nouveaux badges, carte du niveau sur l'Accueil, niveau dans le Classement, badges d'un ami par appui sur sa ligne). Textes traduits par le backend (exception à l'ADR 0007). Testé : tests du backend et de l'application, `tsc`, `check:i18n`. **Pas encore essayé sur le web ni sur téléphone.** Avant la publication :
+  - fixer `BADGE_PERIODS_FROM` (`backend/src/badges/award.ts`, aujourd'hui `2026-11`) au mois de mise en service : les badges de semaine, de mois et de classement partent de ce mois ;
+  - API d'abord (migration 7, puis image), application ensuite : sans l'API, l'onglet affiche « pas encore disponibles » ;
+  - nouveau build natif pas nécessaire a priori (pas de module natif ajouté), mais l'onglet et le point (`NativeTabs.Trigger.Badge`, affiché ou retiré selon l'état) sont à vérifier sur Android ;
+  - à tester sur téléphone : onglet et point des nouveaux badges (gagné par le worker application fermée), carte de l'Accueil, niveau et appui dans le Classement, badges d'un ami, langue changée (textes relus), calibrage des niveaux sur de vraies données ;
+  - politique de confidentialité : le niveau et les badges sont visibles par les amis (déduits des pas, déjà visibles) ; à mentionner.
+- [ ] **Compatibilité de l'API** ([ADR 0012](adr/0012-api-backward-compatibility.md), accepté) : les routes des badges ont leur schéma de réponse. Reste : schémas des routes existantes, `openapi.json` et `oasdiff` dans la CI, en-tête `X-Client`, requêtes de référence.
 
 ## Pièges connus
 

@@ -1,6 +1,6 @@
 # Badges, points et niveaux
 
-Spécification fonctionnelle. **Statut : brouillon (2026-11-02)**, questions tranchées, à valider avant l'implémentation.
+Spécification fonctionnelle. **Statut : implémentée (2026-11-05)**, à tester avant la mise en production. Fonctionnement technique : [architecture](../explanation/architecture.md#badges).
 
 Inspiré du système de Garmin Connect : chaque badge rapporte des points, les points s'additionnent, et le total donne un niveau, de plus en plus long à atteindre. Tout est automatique : aucun administrateur ne crée ni n'attribue de badge.
 

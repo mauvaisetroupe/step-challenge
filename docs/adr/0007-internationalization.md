@@ -55,6 +55,7 @@ Le backend ne renvoie que des codes d'erreur (`invalid_demo_code`…), jamais de
 - Le message joint à une invitation est dans la langue de celui qui invite ; la page `/i/<code>` du site est bilingue.
 - Un nouveau build natif est nécessaire (module expo-localization, déclaration des langues pour Android 13).
 - La fiche du Store se traduit à part, dans la Play Console.
+- **Exception, les badges** (2026-11-05, [spécification](../reference/badges.md)) : leurs textes sont traduits par le backend, selon l'en-tête `Accept-Language` envoyé par l'application, pour qu'un badge ajouté au catalogue s'affiche sans nouvelle version. Les autres textes de l'application restent dans ses fichiers.
 
 ## Points ouverts
 
