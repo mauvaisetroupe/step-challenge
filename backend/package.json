@@ -8,7 +8,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "db:up": "docker compose -f docker-compose.dev.yml up -d --wait && docker compose -f docker-compose.dev.yml run --rm --build dev-migrations && docker compose -f docker-compose.dev.yml run --rm test-migrations",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d --wait && docker compose -f docker-compose.dev.yml run --rm --build dev-migrations && docker compose -f docker-compose.dev.yml run --rm --build test-migrations",
     "db:down": "docker compose -f docker-compose.dev.yml --profile migrations down",
     "db:reset": "docker compose -f docker-compose.dev.yml --profile migrations down -v && npm run db:up",
     "dev:local": "DOTENV_CONFIG_PATH=.env.development tsx watch src/server.ts",
