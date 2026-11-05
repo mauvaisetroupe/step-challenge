@@ -4,6 +4,7 @@ import type { Pool } from 'pg'
 import { createRequireAuth } from '../auth/authenticate.js'
 import { GOOGLE_ISSUER, InvalidIdTokenError } from '../auth/google.js'
 import authRoutes from '../routes/auth.js'
+import badgeRoutes from '../routes/badges.js'
 import blockRoutes from '../routes/blocks.js'
 import friendRoutes from '../routes/friends.js'
 import invitationRoutes from '../routes/invitations.js'
@@ -27,6 +28,12 @@ export async function fakeVerifyGoogleIdToken(idToken: string) {
     subject: idToken.slice('valid:'.length),
   }
 }
+
+/**
+ * Period badges from long ago in tests, so that past weeks and months
+ * earn badges whatever the day the tests run.
+ */
+export const TEST_BADGE_PERIODS_FROM = '2000-01'
 
 /** Demo access code to pass to buildTestApp (ADR 0006). */
 export const TEST_DEMO_ACCESS_CODE = 'test-demo-access-code-0123456789'
@@ -63,6 +70,7 @@ export async function buildTestApp(
     prefix: '/api',
     db,
     requireAuth,
+    badgePeriodsFrom: TEST_BADGE_PERIODS_FROM,
   })
 
   await app.register(blockRoutes, {
@@ -94,6 +102,13 @@ export async function buildTestApp(
     prefix: '/api',
     db,
     requireAuth,
+  })
+
+  await app.register(badgeRoutes, {
+    prefix: '/api',
+    db,
+    requireAuth,
+    badgePeriodsFrom: TEST_BADGE_PERIODS_FROM,
   })
 
   return app

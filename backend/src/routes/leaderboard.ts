@@ -2,6 +2,8 @@ import type { FastifyPluginAsync } from 'fastify'
 import type { Pool } from 'pg'
 
 import type { RequireAuth } from '../auth/authenticate.js'
+import { levelOf } from '../badges/levels.js'
+import { leaderboardEntries } from '../leaderboard/entries.js'
 
 export type LeaderboardRoutesOptions = {
   db: Pool
@@ -21,15 +23,9 @@ const leaderboardRoutes: FastifyPluginAsync<
 
   /**
    * Leaderboard of the signed-in user and their friends (ADR 0002) for
-   * the current week or month, or the previous one (offset=1). Each
-   * entry carries the name chosen by the user and the alias I gave them,
-   * if any; isMe flags my own entry. A past period ranks today's
-   * friends, not those of that time. firstDay is the first day with
-   * steps in the database. newcomer flags who created their account
-   * during the period and has no steps before its start: they cannot
-   * catch up (out of competition, still ranked by steps). Days without
-   * steps do not count: the app sends the last 30 days of Health
-   * Connect at sign-in, with 0 for the days it has no data for.
+   * the current week or month, or the previous one (offset=1); isMe
+   * flags my own entry, level is the badge level of each person (see
+   * leaderboardEntries for the other fields).
    */
   app.get('/leaderboard', async (request, reply) => {
     const { period = 'week', offset: offsetParam = '0' } = request.query as {
@@ -73,41 +69,11 @@ const leaderboardRoutes: FastifyPluginAsync<
     )
     const { start, end } = bounds.rows[0]
 
-    const result = await db.query(
-      `
-      WITH visible AS (
-        SELECT $1::uuid AS id
-        UNION
-        SELECT CASE WHEN user_low = $1 THEN user_high ELSE user_low END
-        FROM friendships
-        WHERE user_low = $1 OR user_high = $1
-      )
-      SELECT
-        u.id,
-        u.name,
-        fa.alias,
-        COALESCE(SUM(ds.steps), 0)::integer AS steps,
-        u.id = $1 AS "isMe",
-        to_char(first.day, 'YYYY-MM-DD') AS "firstDay",
-        u.created_at::date > $2::date
-          AND (first.day IS NULL OR first.day > $2::date) AS newcomer
-      FROM visible v
-      JOIN users u ON u.id = v.id
-      LEFT JOIN LATERAL (
-        SELECT min(date) FILTER (WHERE steps > 0) AS day
-        FROM daily_steps
-        WHERE user_id = u.id
-      ) first ON true
-      LEFT JOIN friend_aliases fa
-        ON fa.owner_id = $1 AND fa.friend_id = u.id
-      LEFT JOIN daily_steps ds
-        ON ds.user_id = u.id
-        AND ds.date BETWEEN $2::date AND $3::date
-        AND ds.date <= CURRENT_DATE
-      GROUP BY u.id, u.name, u.created_at, fa.alias, first.day
-      ORDER BY steps DESC, lower(COALESCE(fa.alias, u.name)), u.id
-      `,
-      [request.auth!.userId, start, end],
+    const results = await leaderboardEntries(
+      db,
+      request.auth!.userId,
+      start,
+      end,
     )
 
     return reply.send({
@@ -115,7 +81,10 @@ const leaderboardRoutes: FastifyPluginAsync<
       offset,
       start,
       end,
-      results: result.rows,
+      results: results.map(({ badgePoints, ...entry }) => ({
+        ...entry,
+        level: levelOf(badgePoints).level,
+      })),
     })
   })
 }

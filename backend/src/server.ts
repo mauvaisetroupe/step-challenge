@@ -9,6 +9,7 @@ import { createPool } from './db.js'
 import { checkSchemaVersion, expectedSchemaVersion } from './schemaVersion.js'
 import { registerRateLimit } from './rateLimit.js'
 import authRoutes from './routes/auth.js'
+import badgeRoutes from './routes/badges.js'
 import blockRoutes from './routes/blocks.js'
 import friendRoutes from './routes/friends.js'
 import healthRoutes from './routes/health.js'
@@ -120,6 +121,12 @@ await app.register(invitationRoutes, {
 })
 
 await app.register(leaderboardRoutes, {
+  prefix: '/api',
+  db: pool,
+  requireAuth,
+})
+
+await app.register(badgeRoutes, {
   prefix: '/api',
   db: pool,
   requireAuth,

@@ -77,7 +77,7 @@ describe('GET /api/leaderboard', { skip: skipWithoutDatabase }, () => {
     const results = response
       .json()
       .results.map(
-        ({ firstDay, newcomer, ...entry }: Record<string, unknown>) => entry,
+        ({ firstDay, newcomer, level, ...entry }: Record<string, unknown>) => entry,
       )
 
     assert.equal(response.statusCode, 200)

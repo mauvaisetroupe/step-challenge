@@ -60,13 +60,13 @@ export type EvaluationContext = {
   periodsFrom: string
 }
 
-type Run = { start: string; length: number }
+export type Run = { start: string; length: number }
 
 function award(badgeId: string, occurrence: string, earnedOn: string): Award {
   return { badgeId, occurrence, points: BADGES[badgeId].points, earnedOn }
 }
 
-function isSuccessful(day: DayRecord) {
+export function isSuccessful(day: DayRecord) {
   return day.steps >= DAILY_GOAL
 }
 
@@ -74,11 +74,11 @@ function isSuccessful(day: DayRecord) {
  * A finished successful day without any inactive minute. Today can
  * still gain some, and a day without minutes sent does not count.
  */
-function isNonSedentary(day: DayRecord, today: string) {
+export function isNonSedentary(day: DayRecord, today: string) {
   return day.date < today && isSuccessful(day) && day.inactiveMinutes === 0
 }
 
-function activityScore(day: DayRecord) {
+export function activityScore(day: DayRecord) {
   return day.activeMinutes === null || day.veryActiveMinutes === null
     ? 0
     : day.activeMinutes + 2 * day.veryActiveMinutes
@@ -113,7 +113,7 @@ function nthDate(
 }
 
 /** Runs of consecutive successful days, oldest first. */
-function successfulRuns(days: DayRecord[]) {
+export function successfulRuns(days: DayRecord[]) {
   const runs: Run[] = []
   let current: Run | null = null
 
@@ -134,7 +134,7 @@ function successfulRuns(days: DayRecord[]) {
   return runs
 }
 
-function groupBy(days: DayRecord[], key: (date: string) => string) {
+export function groupBy(days: DayRecord[], key: (date: string) => string) {
   const groups = new Map<string, DayRecord[]>()
 
   for (const day of days) {

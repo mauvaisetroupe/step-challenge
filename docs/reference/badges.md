@@ -62,10 +62,10 @@ Points de 1 à 4. Les seuils sont des propositions, à ajuster après un essai s
 | Mois parfait | Tous les jours du mois réussis | 4 |
 | Défi du mois | Un défi différent chaque mois, voir ci-dessous | 2 |
 
-**Défi du mois** : la liste ci-dessous tourne, un défi par mois, dans l'ordre (le même pour tout le monde, sans intervention). Avec N défis, chacun revient tous les N mois ; en ajouter un allonge simplement le cycle.
+**Défi du mois** : la liste ci-dessous tourne, un défi par mois, dans l'ordre (le même pour tout le monde, sans intervention). Avec N défis, chacun revient tous les N mois ; en ajouter un allonge simplement le cycle. La rotation suit le calendrier (numéro du mois), pas la date de mise en service : le premier mois n'a pas forcément le premier défi.
 
 - 5 jours à 15 000 pas ;
-- 4 semaines actives (OMS) ;
+- 4 semaines actives (OMS), parmi les semaines dont le dimanche tombe dans le mois ;
 - 8 jours de week-end réussis ;
 - une série de 14 jours commencée dans le mois ;
 - 3 jours à 20 000 pas ;
@@ -136,10 +136,10 @@ Le défi du mois « 1 journée non sédentaire » reprend la même définition.
 
 Règles :
 
-- attribué **une fois la période définitive** (fin + 2 jours), jamais pendant ;
+- attribué **une fois la période définitive** (fin + 2 jours), jamais pendant ; une période est évaluée pendant les 4 semaines (ou les 2 mois) qui suivent, à chaque synchronisation et à l'ouverture des badges ;
 - même classement que l'écran Classement : les amis au moment de l'attribution, les ex æquo partagent le rang (deux premiers ex æquo gagnent tous deux) ;
 - **au moins 3 participants** ayant des pas dans la période, moi compris : sans cela, être premier avec un seul ami serait trop facile ;
-- un **nouveau venu** de la période (marqué `newcomer` par le classement, hors concours) ne gagne pas de badge de classement et ne compte pas parmi les 3 participants ;
+- un **nouveau venu** de la période (marqué `newcomer` par le classement, hors concours) ne gagne pas de badge de classement, ne compte pas parmi les 3 participants et ne fait reculer personne : un nouveau venu devant moi ne me prend pas le podium ;
 - un badge obtenu reste acquis, même si l'ami est retiré ou bloqué ensuite.
 
 ## Points et niveaux

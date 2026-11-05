@@ -2,10 +2,13 @@ import type { FastifyPluginAsync } from 'fastify'
 import type { Pool } from 'pg'
 
 import type { RequireAuth } from '../auth/authenticate.js'
+import { awardBadges, BADGE_PERIODS_FROM } from '../badges/award.js'
 
 export type MeStepsRoutesOptions = {
   db: Pool
   requireAuth: RequireAuth
+  /** First month of the period badges; tests move it back. */
+  badgePeriodsFrom?: string
 }
 
 /** Plausibility bound: about 70 km of walking in a day. */
@@ -64,7 +67,7 @@ const minutesSchema = {
 
 const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
   app,
-  { db, requireAuth },
+  { db, requireAuth, badgePeriodsFrom = BADGE_PERIODS_FROM },
 ) => {
   app.addHook('onRequest', requireAuth)
 
@@ -82,6 +85,10 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
    *
    * Returns the dates that were actually recorded (new day, higher
    * total or new minutes), so the app can report what a sync changed.
+   *
+   * Then awards the badges (docs/reference/badges.md), for the app and
+   * for the background sync alike. A failure there is logged and never
+   * fails the sync: the next one, or opening the badges, catches up.
    */
   app.post<{
     Body: { days: DayEntry[] }
@@ -203,6 +210,12 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
           ),
         ],
       )
+
+      try {
+        await awardBadges(db, request.auth!.userId, badgePeriodsFrom)
+      } catch (error) {
+        request.log.error(error, 'Badges not awarded after a sync')
+      }
 
       return reply.send({
         updatedDates: result.rows.map((row) => row.date).sort(),

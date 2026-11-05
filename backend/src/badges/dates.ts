@@ -39,6 +39,13 @@ export function weekKey(date: string) {
   return `${year}-W${String(week).padStart(2, '0')}`
 }
 
+/** Monday of an ISO week (YYYY-Www): week 1 holds January 4. */
+export function startOfWeekKey(week: string) {
+  const [year, number] = week.split('-W').map(Number)
+
+  return addDays(weekStart(`${year}-01-04`), (number - 1) * 7)
+}
+
 /** YYYY-MM. */
 export function monthKey(date: string) {
   return date.slice(0, 7)
