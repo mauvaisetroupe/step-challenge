@@ -12,7 +12,12 @@ import { BADGES } from '../badges/catalogue.js'
 import { monthKey } from '../badges/dates.js'
 import { levelOf } from '../badges/levels.js'
 import { currentProgress } from '../badges/progress.js'
-import { badgeTexts, localeOf, type Locale } from '../badges/texts.js'
+import {
+  badgeTexts,
+  localeOf,
+  type BadgeTexts,
+  type Locale,
+} from '../badges/texts.js'
 import { areFriends } from '../friends/friendships.js'
 
 export type BadgeRoutesOptions = {
@@ -48,7 +53,7 @@ const badgeReportSchema = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['id', 'family', 'kind', 'occurrence', 'count', 'points', 'earnedOn', 'createdAt', 'name', 'period', 'description'],
+        required: ['id', 'family', 'kind', 'occurrence', 'count', 'points', 'earnedOn', 'createdAt', 'name', 'period', 'description', 'occurrences'],
         properties: {
           ...badgeProperties,
           kind: { type: 'string' },
@@ -56,6 +61,20 @@ const badgeReportSchema = {
           count: { type: 'integer' },
           earnedOn: { type: 'string' },
           createdAt: { type: 'string' },
+          occurrences: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['occurrence', 'period', 'description', 'earnedOn', 'points'],
+              properties: {
+                occurrence: { type: 'string' },
+                period: { type: ['string', 'null'] },
+                description: { type: 'string' },
+                earnedOn: { type: 'string' },
+                points: { type: 'integer' },
+              },
+            },
+          },
         },
       },
     },
@@ -83,6 +102,30 @@ const badgeReportSchema = {
   },
 } as const
 
+type EarnedOccurrence = {
+  occurrence: string
+  period: string | null
+  /** The challenge of a month changes from one month to the next. */
+  description: string
+  earnedOn: string
+  points: number
+}
+
+/** A badge earned once or more, with each time it was earned. */
+type EarnedGroup = BadgeTexts & {
+  id: string
+  family: string
+  kind: string
+  /** Latest occurrence, its period in `period`. */
+  occurrence: string
+  count: number
+  points: number
+  earnedOn: string
+  /** Latest award: the app flags the badge as new after its last look. */
+  createdAt: string
+  occurrences: EarnedOccurrence[]
+}
+
 type BadgeRow = {
   badgeId: string
   occurrence: string
@@ -92,8 +135,8 @@ type BadgeRow = {
 }
 
 /**
- * Level, badges earned (most recent first, a repeatable badge once with
- * its count), progress of the badges of the current week and month, and
+ * Level, badges earned (most recent first, a badge earned several times
+ * once, with its count and each occurrence), progress of the badges of the current week and month, and
  * unique badges not earned yet. Badges this version does not know are
  * left out of the lists, their points still count.
  */
@@ -119,30 +162,41 @@ async function badgeReport(
   )
   const points = rows.reduce((total, row) => total + row.points, 0)
   const earnedKeys = new Set(rows.map((row) => `${row.badgeId} ${row.occurrence}`))
-  const earned = new Map<string, Record<string, unknown> & { count: number; points: number }>()
+  const earned = new Map<string, EarnedGroup>()
 
+  // One entry per badge, whatever its kind: rows come most recent first,
+  // so the first one gives the texts and the latest dates.
   for (const row of rows) {
     const definition = BADGES[row.badgeId]
-    const key =
-      definition?.kind === 'repeatable'
-        ? row.badgeId
-        : `${row.badgeId} ${row.occurrence}`
-    const existing = earned.get(key)
-
-    // Rows come most recent first: the first one gives the dates.
-    if (existing) {
-      existing.count++
-      existing.points += row.points
-      continue
-    }
-
     const texts = badgeTexts(locale, row.badgeId, row.occurrence)
 
     if (!definition || !texts) {
       continue
     }
 
-    earned.set(key, {
+    const createdAt = row.createdAt.toISOString()
+    const occurrence = {
+      occurrence: row.occurrence,
+      period: texts.period,
+      description: texts.description,
+      earnedOn: row.earnedOn,
+      points: row.points,
+    }
+    const existing = earned.get(row.badgeId)
+
+    if (existing) {
+      existing.count++
+      existing.points += row.points
+      existing.occurrences.push(occurrence)
+
+      if (createdAt > existing.createdAt) {
+        existing.createdAt = createdAt
+      }
+
+      continue
+    }
+
+    earned.set(row.badgeId, {
       id: row.badgeId,
       family: definition.family,
       kind: definition.kind,
@@ -150,8 +204,9 @@ async function badgeReport(
       count: 1,
       points: row.points,
       earnedOn: row.earnedOn,
-      createdAt: row.createdAt.toISOString(),
+      createdAt,
       ...texts,
+      occurrences: [occurrence],
     })
   }
 

@@ -122,6 +122,26 @@ describe('GET /api/me/badges', { skip: skipWithoutDatabase }, () => {
     )
   })
 
+  it('shows a week badge once, with each week it was earned', async () => {
+    const app = await buildApp()
+    const alice = await signInAs(app, 'alice')
+
+    // Two whole weeks at 10 000 a day, three weeks ago.
+    await insertDays(alice.user.id, "date_trunc('week', CURRENT_DATE)::date - 21", 10_000, 14)
+
+    const body = (await getBadges(app, alice.token)).json()
+    const week = body.earned.find(
+      (badge: { id: string }) => badge.id === 'week.70000',
+    )
+
+    assert.equal(week.count, 2)
+    assert.equal(week.points, 2)
+    assert.equal(week.occurrences.length, 2)
+    assert.ok(week.occurrences[0].earnedOn > week.occurrences[1].earnedOn)
+    assert.match(week.occurrences[0].period, /^Week of /)
+    assert.equal(week.occurrences[0].description, '70,000 steps in the week.')
+  })
+
   it('shows the progress of the current week', async () => {
     const app = await buildApp()
     const alice = await signInAs(app, 'alice')
