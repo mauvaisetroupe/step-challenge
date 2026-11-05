@@ -1,6 +1,6 @@
 # ADR 0012 — Compatibilité ascendante de l'API : un contrat vérifié par la CI
 
-- **Statut** : Proposé
+- **Statut** : Accepté
 - **Date** : 2026-11-02
 - **Décideur** : mauvaisetroupe
 
@@ -107,6 +107,8 @@ Si un retrait est nécessaire :
 
 ### Ordre de mise en place
 
+Les badges passent en premier : leurs routes naissent avec un schéma de réponse, et les routes existantes suivent.
+
 1. Schémas de réponse, route par route (sans changer les réponses : les tests existants le vérifient).
 2. `openapi.json` et sa vérification « à jour ». La comparaison `oasdiff` démarre au premier tag `api-v*` qui contient le fichier.
 3. En-tête `X-Client` dans l'API (journal), puis dans l'application et le travailleur, à la version suivante.
@@ -119,7 +121,7 @@ Si un retrait est nécessaire :
 - ✅ Le contrat sert de documentation de l'API, au client web et aux badges.
 - ✅ Plus de champ envoyé par accident dans une réponse.
 - ⚠️ Chaque changement de route touche son schéma de réponse et `openapi.json` : un peu plus de travail par changement.
-- ⚠️ Écrire les schémas des 23 routes est un chantier en soi, à faire avant les badges.
+- ⚠️ Écrire les schémas des 23 routes existantes est un chantier en soi ; les routes des badges en ont un dès leur création.
 - ⚠️ Une action GitHub ou un binaire de plus (`oasdiff`) dans la CI, à figer par version.
 - ⚠️ Le contrat ne voit pas un changement de sens d'un champ ; les requêtes de référence en couvrent une partie seulement.
 
