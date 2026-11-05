@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import type { Pool } from 'pg'
 
 import type { RequireAuth } from '../auth/authenticate.js'
+import { levelOf } from '../badges/levels.js'
 import { areFriends, endFriendship } from '../friends/friendships.js'
 
 export type FriendRoutesOptions = {
@@ -23,24 +24,35 @@ const friendRoutes: FastifyPluginAsync<FriendRoutesOptions> = async (
 
   /**
    * My friends, with the alias I gave them (ADR 0002, "Reconnaître ses
-   * amis"). Sorted by the name I see.
+   * amis") and their badge level. Sorted by the name I see.
    */
   app.get('/friends', async (request, reply) => {
     const result = await db.query(
       `
-      SELECT u.id, u.name, fa.alias, f.created_at AS since
+      SELECT u.id, u.name, fa.alias, f.created_at AS since,
+             badges.points AS "badgePoints"
       FROM friendships f
       JOIN users u
         ON u.id = CASE WHEN f.user_low = $1 THEN f.user_high ELSE f.user_low END
       LEFT JOIN friend_aliases fa
         ON fa.owner_id = $1 AND fa.friend_id = u.id
+      LEFT JOIN LATERAL (
+        SELECT COALESCE(SUM(points), 0)::integer AS points
+        FROM user_badges
+        WHERE user_id = u.id
+      ) badges ON true
       WHERE f.user_low = $1 OR f.user_high = $1
       ORDER BY lower(COALESCE(fa.alias, u.name)), u.id
       `,
       [request.auth!.userId],
     )
 
-    return reply.send(result.rows)
+    return reply.send(
+      result.rows.map(({ badgePoints, ...friend }) => ({
+        ...friend,
+        level: levelOf(badgePoints).level,
+      })),
+    )
   })
 
   /**

@@ -260,6 +260,14 @@ export default function FriendsScreen() {
 
   const friendActions = (friend: Friend) => [
     {
+      label: t('friends.actions.badges'),
+      onPress: () =>
+        router.push({
+          pathname: '/friend-badges/[id]',
+          params: { id: friend.id, name: displayName(friend) },
+        }),
+    },
+    {
       label: t('friends.actions.rename'),
       onPress: () => {
         setRenameError(null)
@@ -374,7 +382,12 @@ export default function FriendsScreen() {
               style={styles.row}
               onPress={() => setActionsFor(friend)}
             >
-              <UserBadge userId={friend.id} name={displayName(friend)} />
+              <UserBadge
+                userId={friend.id}
+                name={displayName(friend)}
+                level={friend.level}
+                ringColor={colors.surface}
+              />
               <View style={styles.names}>
                 <Text style={styles.name} numberOfLines={1}>
                   {displayName(friend)}

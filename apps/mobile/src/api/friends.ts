@@ -9,6 +9,8 @@ export type Friend = {
   /** Name I gave this friend, if any. Only I can see it. */
   alias: string | null
   since: string
+  /** Badge level. Missing from an API older than badges. */
+  level?: number
 }
 
 export type Invitation = {

@@ -162,6 +162,7 @@
       "since": "Blocked on {{date}}"
     },
     "actions": {
+      "badges": "See badges",
       "rename": "Rename",
       "report": "Report"
     },
@@ -337,8 +338,7 @@
     "provisional": "Provisional result: your friends' latest steps may still come in.",
     "newcomer": "New",
     "outOfCompetition": "Out of competition: joined during the period",
-    "outOfCompetitionSince": "Out of competition: first steps on {{date}}",
-    "level": "Lvl {{level}}"
+    "outOfCompetitionSince": "Out of competition: first steps on {{date}}"
   },
   "report": {
     "title": "Report {{name}}",

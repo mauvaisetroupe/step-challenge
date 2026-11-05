@@ -80,6 +80,11 @@ describe('GET /api/friends', { skip: skipWithoutDatabase }, () => {
       ],
     )
 
+    assert.deepEqual(
+      friends.map((f: { level: number }) => f.level),
+      [1, 1],
+    )
+
     const bobFriends = (await listFriends(app, bob.token)).json()
 
     assert.deepEqual(
