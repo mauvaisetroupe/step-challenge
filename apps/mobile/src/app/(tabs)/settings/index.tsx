@@ -8,25 +8,30 @@ import TabScreenHeader from '@/components/TabScreenHeader'
 import { NavRow } from '@/components/settings/ui'
 import { LANGUAGE_NAMES, useFormatters, useLanguage } from '@/i18n'
 import { HUAWEI_HEALTH_READY } from '@/services/huaweiHealthReady'
+import { useBadgeSummary, useHasNewBadges } from '@/services/newBadges'
 import { useSleepHours } from '@/services/sleepHours'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Entry = {
   title: string
   detail?: string
+  tag?: string
   href: Href
 }
 
 /**
- * Settings menu: one entry per section, each opening its own screen.
+ * More menu: my account and my badges, then the settings, one entry per
+ * section, each opening its own screen.
  */
 export default function SettingsScreen() {
   const styles = useThemedStyles(createStyles)
   const { preference } = useTheme()
   const language = useLanguage()
   const { t } = useTranslation()
-  const { formatDate } = useFormatters()
+  const { formatDate, formatNumber } = useFormatters()
   const sleepHours = useSleepHours()
+  const badges = useBadgeSummary()
+  const hasNewBadges = useHasNewBadges()
 
   const formatTime = (minute: number) =>
     formatDate(new Date(2000, 0, 1, Math.floor(minute / 60), minute % 60), {
@@ -36,13 +41,33 @@ export default function SettingsScreen() {
 
   const groups: { title: string; entries: Entry[] }[] = [
     {
-      title: t('settings.groups.general'),
+      title: t('settings.groups.me'),
       entries: [
         {
           title: t('settings.account.title'),
           detail: t('settings.account.detail'),
           href: '/settings/account',
         },
+        {
+          title: t('settings.badges.title'),
+          // Known once the home screen has read them.
+          detail: badges
+            ? t('home.level.title', {
+                level: badges.level,
+                points: t('badges.points', {
+                  count: badges.points,
+                  points: formatNumber(badges.points),
+                }),
+              })
+            : t('settings.badges.detail'),
+          tag: hasNewBadges ? t('badges.new') : undefined,
+          href: '/badges',
+        },
+      ],
+    },
+    {
+      title: t('settings.groups.general'),
+      entries: [
         {
           title: t('settings.appearance.title'),
           detail: t(`settings.appearance.options.${preference}.label`),
@@ -116,7 +141,7 @@ export default function SettingsScreen() {
     // Top edge only: keeps the content below the status bar (camera,
     // clock, battery); the tab bar handles the bottom.
     <SafeAreaView edges={['top']} style={styles.screen}>
-      <TabScreenHeader title={t('tabs.settings')} />
+      <TabScreenHeader title={t('tabs.more')} />
 
       <ScrollView
         style={styles.screen}
@@ -133,6 +158,7 @@ export default function SettingsScreen() {
                   key={entry.title}
                   title={entry.title}
                   detail={entry.detail}
+                  tag={entry.tag}
                   onPress={() => router.push(entry.href)}
                   last={index === group.entries.length - 1}
                 />

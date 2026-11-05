@@ -3,11 +3,11 @@
     "home": "Home",
     "stats": "Stats",
     "leaderboard": "Leaderboard",
-    "badges": "Badges",
-    "settings": "Settings"
+    "more": "More"
   },
   "settings": {
     "groups": {
+      "me": "Me",
       "general": "General",
       "steps": "Step data",
       "information": "Information"
@@ -15,6 +15,10 @@
     "account": {
       "title": "Account",
       "detail": "Display name, sign-out, deletion"
+    },
+    "badges": {
+      "title": "My badges",
+      "detail": "Badges, points and level"
     },
     "appearance": {
       "title": "Appearance",
@@ -476,6 +480,7 @@
     "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which need Health Connect, not available on this phone."
   },
   "badges": {
+    "title": "Badges",
     "level": "Level {{level}}",
     "levelBound": "Lvl {{level}} · {{points}}",
     "points_one": "{{points}} point",

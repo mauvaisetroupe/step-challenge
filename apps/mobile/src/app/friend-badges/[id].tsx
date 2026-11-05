@@ -64,7 +64,7 @@ export default function FriendBadgesScreen() {
     <>
       <Stack.Screen
         options={{
-          title: name ? t('badges.friendTitle', { name }) : t('tabs.badges'),
+          title: name ? t('badges.friendTitle', { name }) : t('badges.title'),
         }}
       />
 

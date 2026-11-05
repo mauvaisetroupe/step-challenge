@@ -10,7 +10,6 @@ import {
   Text,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 
 import {
   getMyBadges,
@@ -18,15 +17,16 @@ import {
   type BadgeReport,
 } from '@/api/badges'
 import BadgeReportView from '@/components/badges/BadgeReportView'
-import TabScreenHeader from '@/components/TabScreenHeader'
 import { useLanguage } from '@/i18n'
 import { markBadgesSeen, noteBadgeReport } from '@/services/newBadges'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 /**
- * My badges, points and level (docs/reference/badges.md). Opening the
- * tab marks the new badges as seen; they stay highlighted until the
- * next visit.
+ * My badges, points and level (docs/reference/badges.md), opened from
+ * the level card of the home screen, my row in the leaderboard or the
+ * More menu: the badges are an extra, not a tab. Opening the screen
+ * marks the new badges as seen; they stay highlighted until the next
+ * visit.
  */
 export default function BadgesScreen() {
   const styles = useThemedStyles(createStyles)
@@ -82,9 +82,7 @@ export default function BadgesScreen() {
   }, [load])
 
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
-      <TabScreenHeader title={t('tabs.badges')} />
-
+    <View style={styles.screen}>
       {!report && !error ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -113,7 +111,7 @@ export default function BadgesScreen() {
           )}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   )
 }
 

@@ -60,8 +60,12 @@ function ThemedNavigation() {
           options={{ headerShown: true, title: t('invitation.title') }}
         />
         <Stack.Screen
+          name="badges"
+          options={{ headerShown: true, title: t('badges.title') }}
+        />
+        <Stack.Screen
           name="friend-badges/[id]"
-          options={{ headerShown: true, title: t('tabs.badges') }}
+          options={{ headerShown: true, title: t('badges.title') }}
         />
       </Stack>
     </NavigationThemeProvider>

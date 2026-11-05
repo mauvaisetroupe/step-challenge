@@ -73,11 +73,14 @@ export function InfoRow({
 export function NavRow({
   title,
   detail,
+  tag,
   onPress,
   last = false,
 }: {
   title: string
   detail?: string
+  /** Short highlighted word after the title ("New"). */
+  tag?: string
   onPress: () => void
   last?: boolean
 }) {
@@ -94,7 +97,10 @@ export function NavRow({
       accessibilityRole="button"
     >
       <View style={styles.navText}>
-        <Text style={styles.navTitle}>{title}</Text>
+        <View style={styles.navTitleLine}>
+          <Text style={styles.navTitle}>{title}</Text>
+          {tag ? <Text style={styles.tag}>{tag}</Text> : null}
+        </View>
         {detail ? (
           <Text style={styles.navDetail} numberOfLines={1}>
             {detail}
@@ -243,9 +249,26 @@ const createStyles = (c: Colors) =>
       paddingVertical: 10,
     },
 
+    navTitleLine: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+
     navTitle: {
       fontSize: 16,
       color: c.text,
+    },
+
+    tag: {
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+      borderRadius: 6,
+      overflow: 'hidden',
+      fontSize: 11,
+      fontWeight: '700',
+      color: c.onPrimary,
+      backgroundColor: c.primary,
     },
 
     navDetail: {

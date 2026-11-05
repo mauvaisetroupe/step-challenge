@@ -5,7 +5,7 @@ import type { BadgeReport } from '../api/badges'
 
 /**
  * New badges: awarded by the backend since the badges were last seen in
- * the app, background syncs included. A dot on the Badges tab says so,
+ * the app, background syncs included. A dot on the More tab says so,
  * and the screen highlights them. The date of the last look stays on
  * the phone.
  */
@@ -14,6 +14,8 @@ const STORAGE_KEY = '@step-challenge/badges-last-seen'
 
 /** Latest award known, ISO date. */
 let latest: string | null = null
+/** Level and points of the latest report, for the More menu. */
+let summary: { level: number; points: number } | null = null
 /** Latest award already seen, ISO date. */
 let lastSeen: string | null = null
 let loaded: Promise<void> | null = null
@@ -43,8 +45,13 @@ export function noteBadgeReport(report: BadgeReport) {
     null,
   )
 
-  if (newest !== latest) {
+  if (
+    newest !== latest ||
+    report.level !== summary?.level ||
+    report.points !== summary?.points
+  ) {
     latest = newest
+    summary = { level: report.level, points: report.points }
     notify()
   }
 
@@ -84,4 +91,9 @@ function subscribe(listener: () => void) {
 
 export function useHasNewBadges() {
   return useSyncExternalStore(subscribe, hasNewBadges)
+}
+
+/** Level and points last read from the backend; null before any read. */
+export function useBadgeSummary() {
+  return useSyncExternalStore(subscribe, () => summary)
 }

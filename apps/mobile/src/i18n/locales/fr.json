@@ -3,11 +3,11 @@
     "home": "Accueil",
     "stats": "Stats",
     "leaderboard": "Classement",
-    "badges": "Badges",
-    "settings": "Paramètres"
+    "more": "Plus"
   },
   "settings": {
     "groups": {
+      "me": "Moi",
       "general": "Général",
       "steps": "Données de pas",
       "information": "Informations"
@@ -15,6 +15,10 @@
     "account": {
       "title": "Compte",
       "detail": "Nom affiché, déconnexion, suppression"
+    },
+    "badges": {
+      "title": "Mes badges",
+      "detail": "Badges, points et niveau"
     },
     "appearance": {
       "title": "Apparence",
@@ -491,6 +495,7 @@
     "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui nécessitent Santé Connect, non disponible sur ce téléphone."
   },
   "badges": {
+    "title": "Badges",
     "level": "Niveau {{level}}",
     "levelBound": "Niv. {{level}} · {{points}}",
     "points_one": "{{points}} point",

@@ -48,7 +48,7 @@ Le démarrage de l'application ne fait **aucune** requête : `src/app/index.tsx`
 | Statistiques sans Santé Connect (web, Huawei) | Huawei : `POST /api/me/steps` (podomètre), puis `GET /api/me/steps?from=…` pour 7 j, 30 j et 1 an | Oui |
 | Classement, à l'ouverture et au changement de période | `GET /api/leaderboard?period=…&offset=…` | Oui |
 | Classement, tirer pour rafraîchir | `POST /api/me/steps` (30 jours), puis `GET /api/leaderboard` | Oui. Un échec de l'envoi n'empêche pas l'affichage |
-| Badges, à chaque affichage de l'onglet et en tirant pour rafraîchir | `GET /api/me/badges` | Oui |
+| Badges (écran ouvert depuis le menu Plus, la carte du niveau ou le Classement), à chaque affichage et en tirant pour rafraîchir | `GET /api/me/badges` | Oui |
 | Badges d'un ami (appui sur une ligne du Classement) | `GET /api/friends/:id/badges` | Oui |
 | Paramètres → Synchronisation → « Synchroniser maintenant » | `POST /api/me/steps` (30 jours avec minutes d'activité) | Oui |
 | Paramètres → Compte | `GET /api/me`, et `PATCH` / `DELETE /api/me` sur action | Oui |
@@ -161,7 +161,7 @@ Règles du jeu : [spécification](../reference/badges.md). Code : `backend/src/b
 - **Quand** : après chaque `POST /api/me/steps` (application et worker natif ; un échec est journalisé, la synchronisation réussit quand même) et à chaque `GET /api/me/badges`. Les badges de classement attendent que la période soit définitive (fin + 2 jours) et sont évalués sur les 4 dernières semaines et les 2 derniers mois, avec la même requête que le classement (`src/leaderboard/entries.ts`).
 - **Stocké** : une ligne par badge obtenu (`user_badges`), avec ses points figés à l'obtention. Le total et le niveau (`levels.ts`) se calculent à la lecture.
 - **Textes** traduits par le backend (`texts.ts`, `Accept-Language`) : un badge ajouté au catalogue s'affiche sans nouvelle version de l'application (exception à l'ADR 0007).
-- **Nouveaux badges** : l'application garde la date du dernier badge vu (AsyncStorage, `services/newBadges.ts`) ; un point sur l'onglet Badges signale les badges attribués depuis, y compris par la synchronisation en arrière-plan.
+- **Nouveaux badges** : l'application garde la date du dernier badge vu (AsyncStorage, `services/newBadges.ts`) ; un point sur l'onglet Plus et la mention « Nouveau » sur la ligne « Mes badges » signalent les badges attribués depuis, y compris par la synchronisation en arrière-plan.
 
 ## Points ouverts
 
