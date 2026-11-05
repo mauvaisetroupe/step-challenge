@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native'
 
+import { useTheme } from '@/theme'
+
 /**
  * Colors with enough contrast for white text (WCAG AA), spread across
  * the color wheel so that neighbours in a leaderboard are easy to tell
@@ -53,16 +55,28 @@ type UserBadgeProps = {
   userId: string
   name: string
   size?: number
+  /** Badge level, shown in a small circle at the bottom right. */
+  level?: number
+  /**
+   * Background behind the badge: the ring of the level circle, so that
+   * it stands out from the initial.
+   */
+  ringColor?: string
 }
 
 /**
- * Round badge with the user's initial, colored from their id.
+ * Round badge with the user's initial, colored from their id, and
+ * optionally the user's badge level.
  */
 export default function UserBadge({
   userId,
   name,
   size = 36,
+  level,
+  ringColor,
 }: UserBadgeProps) {
+  const { colors } = useTheme()
+
   return (
     <View
       style={[
@@ -80,6 +94,22 @@ export default function UserBadge({
       <Text style={[styles.initial, { fontSize: size * 0.45 }]}>
         {getInitial(name)}
       </Text>
+
+      {level != null && (
+        <View
+          style={[
+            styles.level,
+            {
+              backgroundColor: colors.primary,
+              borderColor: ringColor ?? colors.background,
+            },
+          ]}
+        >
+          <Text style={[styles.levelText, { color: colors.onPrimary }]}>
+            {level}
+          </Text>
+        </View>
+      )}
     </View>
   )
 }
@@ -93,5 +123,23 @@ const styles = StyleSheet.create({
   initial: {
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+
+  level: {
+    position: 'absolute',
+    right: -5,
+    bottom: -5,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 3,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  levelText: {
+    fontSize: 10,
+    fontWeight: '800',
   },
 })

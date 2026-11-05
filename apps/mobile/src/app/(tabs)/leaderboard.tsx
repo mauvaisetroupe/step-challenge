@@ -330,7 +330,12 @@ export default function LeaderboardScreen() {
                 </View>
 
                 <View style={styles.badge}>
-                  <UserBadge userId={user.id} name={displayName(user)} />
+                  <UserBadge
+                    userId={user.id}
+                    name={displayName(user)}
+                    level={user.level}
+                    ringColor={user.isMe ? colors.primarySoft : colors.surface}
+                  />
                 </View>
 
                 <View style={styles.names}>
@@ -347,11 +352,6 @@ export default function LeaderboardScreen() {
                     {user.newcomer && (
                       <Text style={styles.newcomerBadge}>
                         {t('leaderboard.newcomer')}
-                      </Text>
-                    )}
-                    {user.level != null && (
-                      <Text style={styles.level}>
-                        {t('leaderboard.level', { level: user.level })}
                       </Text>
                     )}
                   </View>
@@ -530,12 +530,6 @@ const createStyles = (c: Colors) =>
 
     rowPressed: {
       opacity: 0.7,
-    },
-
-    level: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: c.primary,
     },
 
     rowMe: {
