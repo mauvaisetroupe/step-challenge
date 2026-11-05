@@ -3,6 +3,7 @@
     "home": "Home",
     "stats": "Stats",
     "leaderboard": "Leaderboard",
+    "badges": "Badges",
     "settings": "Settings"
   },
   "settings": {
@@ -302,6 +303,9 @@
       "titleDays_other": "Streak: {{days}} days in a row",
       "isRecord_one": "Current streak of {{days}} day: it's your record!",
       "isRecord_other": "Current streak of {{days}} days: it's your record!"
+    },
+    "level": {
+      "title": "Level {{level}} · {{points}}"
     }
   },
   "common": {
@@ -333,7 +337,8 @@
     "provisional": "Provisional result: your friends' latest steps may still come in.",
     "newcomer": "New",
     "outOfCompetition": "Out of competition: joined during the period",
-    "outOfCompetitionSince": "Out of competition: first steps on {{date}}"
+    "outOfCompetitionSince": "Out of competition: first steps on {{date}}",
+    "level": "Lvl {{level}}"
   },
   "report": {
     "title": "Report {{name}}",
@@ -469,5 +474,24 @@
     "activityScore": "The activity score is computed from your steps minute by minute, which needs Health Connect, not available on this phone.",
     "sync": "Background sync needs Health Connect, which is not available on this phone.",
     "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which need Health Connect, not available on this phone."
+  },
+  "badges": {
+    "level": "Level {{level}}",
+    "points_one": "{{points}} point",
+    "points_other": "{{points}} points",
+    "toNextLevel_one": "{{points}} point to level {{level}}",
+    "toNextLevel_other": "{{points}} points to level {{level}}",
+    "inProgress": "In progress",
+    "earned": "Earned",
+    "locked": "To unlock",
+    "new": "New",
+    "times": "× {{n}}",
+    "earnedOn": "Earned on {{date}}",
+    "reward": "+{{points}}",
+    "progress": "{{value}} / {{target}}",
+    "none": "No badge yet: the first ones come with your steps.",
+    "loadError": "Cannot load the badges.",
+    "unavailable": "Badges are not available on the server yet.",
+    "friendTitle": "Badges of {{name}}"
   }
 }

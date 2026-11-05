@@ -294,13 +294,24 @@ export default function LeaderboardScreen() {
             )}
 
             {results.map((user, index) => (
-              <View
+              // A tap opens the badges: mine in their tab, a friend's
+              // in their own screen.
+              <Pressable
                 key={user.id}
-                style={[
+                style={({ pressed }) => [
                   styles.row,
                   user.isMe && styles.rowMe,
                   user.newcomer && styles.rowNewcomer,
+                  pressed && styles.rowPressed,
                 ]}
+                onPress={() =>
+                  user.isMe
+                    ? router.push('/badges')
+                    : router.push({
+                        pathname: '/friend-badges/[id]',
+                        params: { id: user.id, name: displayName(user) },
+                      })
+                }
               >
                 <View style={styles.rank}>
                   {index < 3 ? (
@@ -338,6 +349,11 @@ export default function LeaderboardScreen() {
                         {t('leaderboard.newcomer')}
                       </Text>
                     )}
+                    {user.level != null && (
+                      <Text style={styles.level}>
+                        {t('leaderboard.level', { level: user.level })}
+                      </Text>
+                    )}
                   </View>
                   {user.alias && user.alias !== user.name && (
                     <Text style={styles.realName} numberOfLines={1}>
@@ -365,7 +381,7 @@ export default function LeaderboardScreen() {
                     steps: formatNumber(user.steps),
                   })}
                 </Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
@@ -510,6 +526,16 @@ const createStyles = (c: Colors) =>
       backgroundColor: c.surface,
       borderRadius: 12,
       paddingHorizontal: 14,
+    },
+
+    rowPressed: {
+      opacity: 0.7,
+    },
+
+    level: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: c.primary,
     },
 
     rowMe: {

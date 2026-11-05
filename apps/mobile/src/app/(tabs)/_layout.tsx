@@ -2,11 +2,14 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs'
 
 import { useTranslation } from 'react-i18next'
 
+import { useHasNewBadges } from '@/services/newBadges'
 import { useTheme } from '@/theme'
 
 export default function TabsLayout() {
   const { colors } = useTheme()
   const { t } = useTranslation()
+  // A dot on the Badges tab: badges awarded since the last look.
+  const hasNewBadges = useHasNewBadges()
 
   return (
     <NativeTabs
@@ -48,6 +51,17 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>
           {t('tabs.leaderboard')}
         </NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="badges">
+        <NativeTabs.Trigger.Icon
+          sf="rosette"
+          md="military_tech"
+        />
+        <NativeTabs.Trigger.Label>
+          {t('tabs.badges')}
+        </NativeTabs.Trigger.Label>
+        {hasNewBadges && <NativeTabs.Trigger.Badge />}
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">

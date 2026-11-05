@@ -3,6 +3,7 @@
     "home": "Accueil",
     "stats": "Stats",
     "leaderboard": "Classement",
+    "badges": "Badges",
     "settings": "Paramètres"
   },
   "settings": {
@@ -316,6 +317,9 @@
       "isRecord_one": "Série actuelle de {{days}} jour, c'est ton record !",
       "isRecord_many": "Série actuelle de {{days}} jours, c'est ton record !",
       "isRecord_other": "Série actuelle de {{days}} jours, c'est ton record !"
+    },
+    "level": {
+      "title": "Niveau {{level}} · {{points}}"
     }
   },
   "common": {
@@ -348,7 +352,8 @@
     "provisional": "Résultat provisoire : les derniers pas de tes amis peuvent encore arriver.",
     "newcomer": "Nouveau",
     "outOfCompetition": "Hors concours : arrivée en cours de période",
-    "outOfCompetitionSince": "Hors concours : premiers pas le {{date}}"
+    "outOfCompetitionSince": "Hors concours : premiers pas le {{date}}",
+    "level": "Niv. {{level}}"
   },
   "report": {
     "title": "Signaler {{name}}",
@@ -484,5 +489,26 @@
     "activityScore": "Le score d'activité se calcule à partir de tes pas minute par minute, ce qui nécessite Santé Connect, non disponible sur ce téléphone.",
     "sync": "La synchronisation en arrière-plan nécessite Santé Connect, qui n'est pas disponible sur ce téléphone.",
     "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui nécessitent Santé Connect, non disponible sur ce téléphone."
+  },
+  "badges": {
+    "level": "Niveau {{level}}",
+    "points_one": "{{points}} point",
+    "points_many": "{{points}} points",
+    "points_other": "{{points}} points",
+    "toNextLevel_one": "{{points}} point avant le niveau {{level}}",
+    "toNextLevel_many": "{{points}} points avant le niveau {{level}}",
+    "toNextLevel_other": "{{points}} points avant le niveau {{level}}",
+    "inProgress": "En cours",
+    "earned": "Obtenus",
+    "locked": "À débloquer",
+    "new": "Nouveau",
+    "times": "× {{n}}",
+    "earnedOn": "Obtenu le {{date}}",
+    "reward": "+{{points}}",
+    "progress": "{{value}} / {{target}}",
+    "none": "Pas encore de badge : les premiers viendront avec tes pas.",
+    "loadError": "Impossible de charger les badges.",
+    "unavailable": "Les badges ne sont pas encore disponibles sur le serveur.",
+    "friendTitle": "Badges de {{name}}"
   }
 }

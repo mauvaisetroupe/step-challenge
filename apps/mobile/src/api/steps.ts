@@ -70,6 +70,8 @@ export type LeaderboardEntry = {
    * competition. Still ranked by steps.
    */
   newcomer?: boolean
+  /** Badge level. Missing from an API older than badges. */
+  level?: number
 }
 
 export type Leaderboard = {

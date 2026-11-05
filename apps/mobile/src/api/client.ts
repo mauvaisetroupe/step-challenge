@@ -72,7 +72,9 @@ async function readErrorCode(response: Response) {
 /**
  * Calls the Step Challenge API with the session token.
  *
- * - Adds `Authorization: Bearer <token>` when signed in.
+ * - Adds `Authorization: Bearer <token>` when signed in, and the app
+ *   language in `Accept-Language`: the backend translates the texts it
+ *   sends (badges).
  * - Sends and parses JSON.
  * - On 401, forgets the session, notifies onSignedOut listeners and
  *   throws UnauthenticatedError.
@@ -92,7 +94,9 @@ export async function apiFetch<T = unknown>(
   } = {},
 ): Promise<T> {
   const { method = 'GET', body, authenticated = true } = init
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = {
+    'Accept-Language': i18n.language,
+  }
 
   if (authenticated) {
     const token = await getSessionToken()

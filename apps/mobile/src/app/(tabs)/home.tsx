@@ -13,6 +13,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { getLeaderboard, getMySteps, type DayStat } from '../../api/steps'
+import { getMyBadges, type BadgeReport } from '@/api/badges'
+import { noteBadgeReport } from '@/services/newBadges'
 import {
   getHealthConnectLast30Days,
   isHealthConnectAvailable,
@@ -23,6 +25,7 @@ import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import LastWeekCard from '@/components/home/LastWeekCard'
+import LevelCard from '@/components/home/LevelCard'
 import StreakCard from '@/components/home/StreakCard'
 import WeekRankCard from '@/components/home/WeekRankCard'
 import DayProgressRing from '@/components/stats/DayProgressRing'
@@ -69,6 +72,8 @@ export default function HomeScreen() {
   } | null>(null)
   const [streaks, setStreaks] = useState<Streaks | null>(null)
   const [historyError, setHistoryError] = useState(false)
+  // Badge level; null without badges on the server (older API) or on error.
+  const [badges, setBadges] = useState<BadgeReport | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const loading = useRef(false)
@@ -135,13 +140,23 @@ export default function HomeScreen() {
         }
       }
 
-      const [board, history, lastBoard] = await Promise.allSettled([
+      // Badges after the sync above: today's steps can earn some.
+      const [board, history, lastBoard, badgeReport] = await Promise.allSettled([
         getLeaderboard('week'),
         getMySteps(HISTORY_START),
         showsLastWeekRecap(new Date())
           ? getLeaderboard('week', 1)
           : Promise.resolve(null),
+        getMyBadges(),
       ])
+
+      // Best effort, no error shown: the card disappears.
+      if (badgeReport.status === 'fulfilled') {
+        noteBadgeReport(badgeReport.value)
+        setBadges(badgeReport.value)
+      } else {
+        setBadges(null)
+      }
 
       // Best effort, no error shown: the card is a reminder. An API
       // without past leaderboards ignores the offset (no `end`).
@@ -258,6 +273,13 @@ export default function HomeScreen() {
             onOpenLeaderboard={() => router.push('/leaderboard')}
             onInviteFriends={() => router.push('/friends')}
           />
+
+          {badges && (
+            <LevelCard
+              report={badges}
+              onOpenBadges={() => router.push('/badges')}
+            />
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
