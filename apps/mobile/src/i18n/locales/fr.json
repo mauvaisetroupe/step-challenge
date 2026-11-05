@@ -492,6 +492,7 @@
   },
   "badges": {
     "level": "Niveau {{level}}",
+    "levelBound": "Niv. {{level}} · {{points}}",
     "points_one": "{{points}} point",
     "points_many": "{{points}} points",
     "points_other": "{{points}} points",
@@ -509,6 +510,13 @@
     "none": "Pas encore de badge : les premiers viendront avec tes pas.",
     "loadError": "Impossible de charger les badges.",
     "unavailable": "Les badges ne sont pas encore disponibles sur le serveur.",
-    "friendTitle": "Badges de {{name}}"
+    "friendTitle": "Badges de {{name}}",
+    "lastTime": "Dernière fois : {{when}}",
+    "detail": {
+      "earnedTimes_one": "Obtenu une fois",
+      "earnedTimes_many": "Obtenu {{count}} fois",
+      "earnedTimes_other": "Obtenu {{count}} fois",
+      "notYet": "Pas encore obtenu."
+    }
   }
 }

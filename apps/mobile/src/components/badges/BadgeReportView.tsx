@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 import {
   badgeIcon,
@@ -9,6 +10,9 @@ import {
 import { useFormatters } from '@/i18n'
 import { parseDateKey } from '@/services/leaderboardPeriods'
 import { useThemedStyles, type Colors } from '@/theme'
+
+import BadgeDetailSheet, { type SelectedBadge } from './BadgeDetailSheet'
+import LevelBar from './LevelBar'
 
 type Props = {
   report: BadgeReport
@@ -26,13 +30,21 @@ function ratio(value: number, target: number) {
 
 /**
  * Level, badges in progress, earned and still to unlock. Used for my
- * badges and for a friend's.
+ * badges and for a friend's. A tap on a badge opens its detail.
  */
 export default function BadgeReportView({ report, newSince = null }: Props) {
   const styles = useThemedStyles(createStyles)
   const { t } = useTranslation()
   const { formatNumber, formatDate } = useFormatters()
   const toNext = report.nextLevelPoints - report.points
+  const [selected, setSelected] = useState<SelectedBadge | null>(null)
+
+  const formatDay = (date: string) =>
+    formatDate(parseDateKey(date), {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
 
   const isNew = (badge: EarnedBadge) =>
     newSince !== null && badge.createdAt > newSince
@@ -49,19 +61,7 @@ export default function BadgeReportView({ report, newSince = null }: Props) {
             points: formatNumber(report.points),
           })}
         </Text>
-        <View style={styles.track}>
-          <View
-            style={[
-              styles.bar,
-              {
-                width: `${ratio(
-                  report.points - report.levelPoints,
-                  report.nextLevelPoints - report.levelPoints,
-                ) * 100}%`,
-              },
-            ]}
-          />
-        </View>
+        <LevelBar report={report} />
         <Text style={styles.hint}>
           {t('badges.toNextLevel', {
             count: toNext,
@@ -75,7 +75,11 @@ export default function BadgeReportView({ report, newSince = null }: Props) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('badges.inProgress')}</Text>
           {report.inProgress.map((badge) => (
-            <View key={`${badge.id} ${badge.occurrence}`} style={styles.row}>
+            <Pressable
+              key={`${badge.id} ${badge.occurrence}`}
+              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+              onPress={() => setSelected({ status: 'inProgress', badge })}
+            >
               <Text style={styles.icon}>{badgeIcon(badge.family)}</Text>
               <View style={styles.body}>
                 <Text style={styles.name}>{badge.name}</Text>
@@ -101,7 +105,7 @@ export default function BadgeReportView({ report, newSince = null }: Props) {
               <Text style={styles.reward}>
                 {t('badges.reward', { points: badge.points })}
               </Text>
-            </View>
+            </Pressable>
           ))}
         </View>
       )}
@@ -112,9 +116,14 @@ export default function BadgeReportView({ report, newSince = null }: Props) {
           <Text style={styles.detail}>{t('badges.none')}</Text>
         )}
         {report.earned.map((badge) => (
-          <View
-            key={`${badge.id} ${badge.occurrence}`}
-            style={[styles.row, isNew(badge) && styles.rowNew]}
+          <Pressable
+            key={badge.id}
+            style={({ pressed }) => [
+              styles.row,
+              isNew(badge) && styles.rowNew,
+              pressed && styles.pressed,
+            ]}
+            onPress={() => setSelected({ status: 'earned', badge })}
           >
             <Text style={styles.icon}>{badgeIcon(badge.family)}</Text>
             <View style={styles.body}>
@@ -129,20 +138,18 @@ export default function BadgeReportView({ report, newSince = null }: Props) {
                 )}
               </View>
               <Text style={styles.detail}>
-                {badge.period ??
-                  t('badges.earnedOn', {
-                    date: formatDate(parseDateKey(badge.earnedOn), {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    }),
-                  })}
+                {badge.count > 1
+                  ? t('badges.lastTime', {
+                      when: badge.period ?? formatDay(badge.earnedOn),
+                    })
+                  : (badge.period ??
+                    t('badges.earnedOn', { date: formatDay(badge.earnedOn) }))}
               </Text>
             </View>
             <Text style={styles.reward}>
               {t('badges.reward', { points: badge.points })}
             </Text>
-          </View>
+          </Pressable>
         ))}
       </View>
 
@@ -150,7 +157,15 @@ export default function BadgeReportView({ report, newSince = null }: Props) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('badges.locked')}</Text>
           {report.locked.map((badge) => (
-            <View key={badge.id} style={[styles.row, styles.rowLocked]}>
+            <Pressable
+              key={badge.id}
+              style={({ pressed }) => [
+                styles.row,
+                styles.rowLocked,
+                pressed && styles.pressed,
+              ]}
+              onPress={() => setSelected({ status: 'locked', badge })}
+            >
               <Text style={styles.icon}>{badgeIcon(badge.family)}</Text>
               <View style={styles.body}>
                 <Text style={styles.name}>{badge.name}</Text>
@@ -159,10 +174,12 @@ export default function BadgeReportView({ report, newSince = null }: Props) {
               <Text style={styles.reward}>
                 {t('badges.reward', { points: badge.points })}
               </Text>
-            </View>
+            </Pressable>
           ))}
         </View>
       )}
+
+      <BadgeDetailSheet selected={selected} onClose={() => setSelected(null)} />
     </View>
   )
 }
@@ -229,6 +246,10 @@ const createStyles = (c: Colors) =>
       padding: 12,
       borderRadius: 12,
       backgroundColor: c.surface,
+    },
+
+    pressed: {
+      opacity: 0.7,
     },
 
     rowNew: {

@@ -14,12 +14,23 @@ type BadgeTexts = {
   description: string
 }
 
+export type BadgeOccurrence = {
+  /** YYYY-Www, YYYY-MM, #1… or '' for a unique badge. */
+  occurrence: string
+  period: string | null
+  /** Changes from one month to the next for the challenge of the month. */
+  description: string
+  earnedOn: string
+  points: number
+}
+
+/** A badge earned once or more: one entry per badge. */
 export type EarnedBadge = BadgeTexts & {
   id: string
   family: string
   kind: string
   occurrence: string
-  /** Times earned: more than 1 for a repeatable badge only. */
+  /** Times earned (week, month and repeatable badges). */
   count: number
   /** Points of all its occurrences. */
   points: number
@@ -27,6 +38,8 @@ export type EarnedBadge = BadgeTexts & {
   earnedOn: string
   /** When the backend awarded it, ISO date (latest occurrence). */
   createdAt: string
+  /** Every time it was earned, most recent first. */
+  occurrences: BadgeOccurrence[]
 }
 
 export type BadgeInProgress = BadgeTexts & {

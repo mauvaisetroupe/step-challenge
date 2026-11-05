@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 
 import type { BadgeReport } from '@/api/badges'
+import LevelBar from '@/components/badges/LevelBar'
 import { useFormatters } from '@/i18n'
 import { useThemedStyles, type Colors } from '@/theme'
 
@@ -18,8 +19,6 @@ export default function LevelCard({ report, onOpenBadges }: Props) {
   const { t } = useTranslation()
   const { formatNumber } = useFormatters()
   const toNext = report.nextLevelPoints - report.points
-  const span = report.nextLevelPoints - report.levelPoints
-  const ratio = span > 0 ? (report.points - report.levelPoints) / span : 0
 
   return (
     <HomeCard
@@ -33,9 +32,7 @@ export default function LevelCard({ report, onOpenBadges }: Props) {
       })}
       onPress={onOpenBadges}
     >
-      <View style={styles.track}>
-        <View style={[styles.bar, { width: `${Math.min(1, ratio) * 100}%` }]} />
-      </View>
+      <LevelBar report={report} />
       <Text style={styles.text}>
         {t('badges.toNextLevel', {
           count: toNext,
@@ -49,20 +46,6 @@ export default function LevelCard({ report, onOpenBadges }: Props) {
 
 const createStyles = (c: Colors) =>
   StyleSheet.create({
-    track: {
-      height: 8,
-      marginBottom: 8,
-      borderRadius: 4,
-      overflow: 'hidden',
-      backgroundColor: c.track,
-    },
-
-    bar: {
-      height: '100%',
-      borderRadius: 4,
-      backgroundColor: c.primary,
-    },
-
     text: {
       fontSize: 15,
       lineHeight: 21,

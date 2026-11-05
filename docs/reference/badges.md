@@ -161,7 +161,8 @@ Pas de niveau maximum.
 ## Ce que voit l'utilisateur
 
 - **Niveau, total de points** et progression vers le niveau suivant (« 12 points avant le niveau 6 »).
-- **Badges obtenus**, du plus récent au plus ancien ; un répétable affiché une fois, avec son nombre (« × 7 »).
+- **Badges obtenus**, du plus récent au plus ancien ; un badge obtenu plusieurs fois (répétable, ou de semaine et de mois) s'affiche une fois, avec son nombre (« × 7 »).
+- **Détail d'un badge**, au toucher : sa description, ses points et, une fois obtenu, chaque obtention (période ou date, points), de la plus récente à la plus ancienne.
 - **Badges du mois en cours** et de la semaine, avec leur progression (« 214 000 / 300 000 pas »), pour donner un but.
 - **Badges uniques pas encore obtenus**, avec leur condition.
 - **Nouveau badge** : annoncé dans l'application à la première ouverture qui suit son obtention (pas de notification système dans cette première version).
