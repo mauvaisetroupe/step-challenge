@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   getLeaderboard,
   type LeaderboardEntry,
+  type LeaderboardPeriod,
 } from '../../api/steps'
 import { displayName } from '../../api/friends'
 import UserBadge from '../../components/UserBadge'
@@ -25,7 +26,7 @@ import { parseDateKey } from '@/services/leaderboardPeriods'
 import { useFormatters } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
-type Period = 'week' | 'month'
+const PERIODS: LeaderboardPeriod[] = ['day', 'week', 'month']
 
 function localDateKey(date: Date) {
   return [
@@ -43,7 +44,7 @@ export default function LeaderboardScreen() {
 
   // ?offset=1 from the home screen: last week's result.
   const params = useLocalSearchParams<{ offset?: string }>()
-  const [period, setPeriod] = useState<Period>('week')
+  const [period, setPeriod] = useState<LeaderboardPeriod>('week')
   // 0 for the current period, 1 for the previous one.
   const [offset, setOffset] = useState(0)
   const [results, setResults] = useState<LeaderboardEntry[]>([])
@@ -138,7 +139,7 @@ export default function LeaderboardScreen() {
     }
   }
 
-  const selectPeriod = (value: Period) => {
+  const selectPeriod = (value: LeaderboardPeriod) => {
     setPeriod(value)
     setOffset(0)
   }
@@ -177,43 +178,25 @@ export default function LeaderboardScreen() {
         }
       >
         <View style={styles.periodSelector}>
-          <Pressable
-            style={[
-              styles.periodButton,
-              period === 'week' &&
-                styles.periodButtonActive,
-            ]}
-            onPress={() => selectPeriod('week')}
-          >
-            <Text
+          {PERIODS.map((value) => (
+            <Pressable
+              key={value}
               style={[
-                styles.periodText,
-                period === 'week' &&
-                  styles.periodTextActive,
+                styles.periodButton,
+                period === value && styles.periodButtonActive,
               ]}
+              onPress={() => selectPeriod(value)}
             >
-              {t('leaderboard.week')}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.periodButton,
-              period === 'month' &&
-                styles.periodButtonActive,
-            ]}
-            onPress={() => selectPeriod('month')}
-          >
-            <Text
-              style={[
-                styles.periodText,
-                period === 'month' &&
-                  styles.periodTextActive,
-              ]}
-            >
-              {t('leaderboard.month')}
-            </Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.periodText,
+                  period === value && styles.periodTextActive,
+                ]}
+              >
+                {t(`leaderboard.${value}`)}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
         <View style={styles.refreshRow}>

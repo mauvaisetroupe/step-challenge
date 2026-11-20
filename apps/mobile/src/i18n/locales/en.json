@@ -324,6 +324,10 @@
   },
   "leaderboard": {
     "loadError": "Cannot load the leaderboard.",
+    "day": "Day",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "todayFreshness": "Steps as of each person's last sync.",
     "thisWeek": "This week",
     "thisMonth": "This month",
     "week": "Week",

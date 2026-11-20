@@ -338,6 +338,10 @@
   },
   "leaderboard": {
     "loadError": "Impossible de charger le classement.",
+    "day": "Jour",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "todayFreshness": "Pas reçus à la dernière synchronisation de chacun.",
     "thisWeek": "Cette semaine",
     "thisMonth": "Ce mois-ci",
     "week": "Semaine",

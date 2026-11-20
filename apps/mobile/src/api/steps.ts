@@ -74,8 +74,11 @@ export type LeaderboardEntry = {
   level?: number
 }
 
+/** Day needs an API from 1.4.0: an older one answers 400. */
+export type LeaderboardPeriod = 'day' | 'week' | 'month'
+
 export type Leaderboard = {
-  period: 'week' | 'month'
+  period: LeaderboardPeriod
   /**
    * 0 for the current period, 1 for the previous one. Missing from an
    * API older than past leaderboards, which ignores the offset and
@@ -88,7 +91,7 @@ export type Leaderboard = {
   results: LeaderboardEntry[]
 }
 
-export async function getLeaderboard(period: 'week' | 'month', offset = 0) {
+export async function getLeaderboard(period: LeaderboardPeriod, offset = 0) {
   return apiFetch<Leaderboard>(
     `/api/leaderboard?period=${period}&offset=${offset}`,
   )
