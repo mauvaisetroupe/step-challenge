@@ -2,7 +2,7 @@
 
 Point d'étape pour reprendre le travail, notamment dans une nouvelle session d'assistant (Claude Code en local ou dans le cloud). À mettre à jour à chaque étape importante.
 
-**Dernière mise à jour : 2026-11-05**
+**Dernière mise à jour : 2026-11-20**
 
 ## En bref
 
@@ -45,7 +45,7 @@ Toute la documentation (installation, lancement en local, tests, publication, r�
 | Base | PostgreSQL 18 sur le VPS, migrée par Flyway (ligne de base à 6 à la bascule, voir [`exploitation.md`](exploitation.md)). Sauvegardes par `vps-infra` (avant chaque déploiement, et régulières) |
 | Authentification ([ADR 0001](adr/0001-authentication.md)) | En production : connexion Google (OIDC), sessions de l'application |
 | Amis ([ADR 0002](adr/0002-friends.md)) | En production : invitations par lien ou code, classement entre amis, surnoms, limites de débit, App Links vérifiés |
-| Application | **1.10.0** (versionCode 48) publiée en test fermé le 2026-10-28 (classements de la semaine et du mois précédents, carte « La semaine dernière » sur l'Accueil, tirer pour actualiser dans Statistiques), fonctionne sur le Pixel. **1.9.1** sur AppGallery depuis le 2026-10-27 |
+| Application | **1.12.0** (versionCode 51) envoyée en test fermé le 2026-11-05, en examen (badges, points et niveaux ; onglet Paramètres devenu « Plus »). **1.10.0** (versionCode 48) publiée en test fermé le 2026-10-28, fonctionne sur le Pixel. **1.9.1** sur AppGallery depuis le 2026-10-27 |
 | Fiche Play Store | Descriptions et bannière refaites le 2026-10-04 |
 
 Publication de chaque partie : [l'API](how-to/release-the-api.md), [Google Play](how-to/publish-on-google-play.md), [AppGallery](how-to/publish-on-appgallery.md), [le site](how-to/update-the-public-site.md) ; l'ordre : [Versions et livraisons](explanation/versions-and-releases.md). Exploitation des images du backend (variables, migrations, mises à jour) : voir [`exploitation.md`](exploitation.md).
@@ -153,10 +153,13 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
 - [ ] **Grands écrans : orientation libre** (dans la 1.9.0, 2026-10-09) : avertissement Play Console, Android 16 ignorera le verrou portrait sur tablettes et pliants. `"orientation": "default"` dans `app.json` ; écran de connexion défilant et limité à 480 de large. À faire : vérifier tous les écrans en paysage (téléphone et émulateur de tablette).
 
 - [ ] **Badges, points et niveaux** ([spécification](reference/badges.md), 2026-11-05) : backend (migration `V007__badges.sql`, `src/badges/`, `GET /api/me/badges`, `GET /api/friends/:id/badges`, `level` dans le classement, attribution après chaque envoi de pas) et application (pas d'onglet : le classement reste le cœur de l'application ; l'onglet Paramètres devient « Plus », avec un groupe « Moi » : Mon compte et Mes badges ; point sur l'onglet Plus pour les nouveaux badges, carte du niveau sur l'Accueil, niveau dans le Classement, badges d'un ami par appui sur sa ligne). Textes traduits par le backend (exception à l'ADR 0007). Testé : tests du backend et de l'application, `tsc`, `check:i18n` ; **essayé le 2026-11-05 sur le Pixel** (variante de dev, backend local sur une copie de la base de production, supprimée ensuite) : onglet, détail d'un badge au toucher, badges obtenus plusieurs fois regroupés, carte de l'Accueil, pastille du niveau sur les avatars du Classement et des Amis, badges d'un ami, changement de langue. **API publiée** (`api-v1.3.0`, déployée le 2026-11-05, `BADGE_PERIODS_FROM = '2026-11'`) ; `awardAll` lancé en production le même jour (17 comptes, 68 badges). Reste :
-  - publier l'application (pas de module natif ajouté) ; d'ici là, les versions installées ignorent les badges, l'API les attribue déjà à chaque synchronisation ;
+  - application 1.12.0 (versionCode 51) envoyée le 2026-11-05, en examen Google ; AppGallery pas encore ; d'ici la mise à jour, les versions installées ignorent les badges, l'API les attribue déjà à chaque synchronisation ;
   - à vérifier sur téléphone, version publiée : le point des nouveaux badges sur l'onglet Plus (`NativeTabs.Trigger.Badge`, gagné par le worker application fermée) et sa disparition après la visite ; le calibrage des niveaux au fil des semaines ;
   - politique de confidentialité : le niveau et les badges sont visibles par les amis (déduits des pas, déjà visibles) ; à mentionner au passage sur `sport.architech.lu`, après l'accord de Huawei pour Health Kit ;
   - script `awardAll` : `node dist/badges/awardAll.js` dans le conteneur de l'API (`npm run badges:award-all` en local), sans risque à relancer.
+- [ ] **Classement du jour** (2026-11-20) : `GET /api/leaderboard?period=day` (aujourd'hui, ou hier avec `offset=1`), testé. Classement : sélecteur Jour | Semaine | Mois, titre « Aujourd'hui » ou « Hier » avec une seule date, mention « Pas reçus à la dernière synchronisation de chacun » pour aujourd'hui, « Résultat provisoire » pour hier (logique existante). Les badges de classement restent sur la semaine et le mois. Testé : tests du backend et de l'application, `tsc`, `check:i18n`. Reste :
+  - **publier l'API (1.4.0) avant l'application** : une API 1.3.0 répond 400 à `period=day`, et l'application afficherait « Impossible de charger le classement » ;
+  - essayer sur le web ou l'émulateur, puis sur téléphone (pas de module natif ajouté).
 - [ ] **Compatibilité de l'API** ([ADR 0012](adr/0012-api-backward-compatibility.md), accepté) : les routes des badges ont leur schéma de réponse. Reste : schémas des routes existantes, `openapi.json` et `oasdiff` dans la CI, en-tête `X-Client`, requêtes de référence.
 
 ## Pièges connus
