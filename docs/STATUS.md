@@ -41,7 +41,7 @@ Toute la documentation (installation, lancement en local, tests, publication, r�
 
 | Élément | État |
 |---|---|
-| API | https://step-api.architech.lu, derrière un tunnel Cloudflare (ADR 0005), sur le **VPS** depuis le 2026-10-27, en images (ADR 0011), exploitée depuis le dépôt `vps-infra` ; LXC du home lab supprimé le 2026-11-01. `step.architech.lu` est le site public chez OVH. Version en service : `ssh -t vps-ovh sudo -iu step grep VERSION app/.env` (dernière publiée : `api-v1.3.0`, badges, déployée le 2026-11-05) |
+| API | https://step-api.architech.lu, derrière un tunnel Cloudflare (ADR 0005), sur le **VPS** depuis le 2026-10-27, en images (ADR 0011), exploitée depuis le dépôt `vps-infra` ; LXC du home lab supprimé le 2026-11-01. `step.architech.lu` est le site public chez OVH. Version en service : `ssh -t vps-ovh sudo -iu step grep VERSION app/.env` (dernière publiée : `api-v1.4.0`, classement du jour, déployée le 2026-11-20) |
 | Base | PostgreSQL 18 sur le VPS, migrée par Flyway (ligne de base à 6 à la bascule, voir [`exploitation.md`](exploitation.md)). Sauvegardes par `vps-infra` (avant chaque déploiement, et régulières) |
 | Authentification ([ADR 0001](adr/0001-authentication.md)) | En production : connexion Google (OIDC), sessions de l'application |
 | Amis ([ADR 0002](adr/0002-friends.md)) | En production : invitations par lien ou code, classement entre amis, surnoms, limites de débit, App Links vérifiés |
@@ -158,7 +158,8 @@ Chaque point se fait sur sa branche, avec un ADR si la décision le demande.
   - politique de confidentialité : le niveau et les badges sont visibles par les amis (déduits des pas, déjà visibles) ; à mentionner au passage sur `sport.architech.lu`, après l'accord de Huawei pour Health Kit ;
   - script `awardAll` : `node dist/badges/awardAll.js` dans le conteneur de l'API (`npm run badges:award-all` en local), sans risque à relancer.
 - [ ] **Classement du jour** (2026-11-20) : `GET /api/leaderboard?period=day` (aujourd'hui, ou hier avec `offset=1`), testé. Classement : sélecteur Jour | Semaine | Mois, titre « Aujourd'hui » ou « Hier » avec une seule date, mention « Pas reçus à la dernière synchronisation de chacun » pour aujourd'hui, « Résultat provisoire » pour hier (logique existante). Les badges de classement restent sur la semaine et le mois. Testé : tests du backend et de l'application, `tsc`, `check:i18n` ; **vérifié le 2026-11-20 sur le web** (backend local, compte de démonstration) : Aujourd'hui avec la mention de fraîcheur, ‹ vers Hier (19 nov., résultat provisoire), › retour, Semaine et Mois inchangés, chiffres identiques à ceux de l'API. Reste :
-  - **publier l'API (1.4.0) avant l'application** : une API 1.3.0 répond 400 à `period=day`, et l'application afficherait « Impossible de charger le classement » ;
+  - ~~publier l'API avant l'application~~ : `api-v1.4.0` déployée le 2026-11-20 (une API 1.3.0 répond 400 à `period=day`) ;
+  - publier l'application 1.13.0 ;
   - essayer sur téléphone (pas de module natif ajouté).
 - [ ] **Compatibilité de l'API** ([ADR 0012](adr/0012-api-backward-compatibility.md), accepté) : les routes des badges ont leur schéma de réponse. Reste : schémas des routes existantes, `openapi.json` et `oasdiff` dans la CI, en-tête `X-Client`, requêtes de référence.
 
