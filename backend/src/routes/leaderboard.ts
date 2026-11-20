@@ -12,7 +12,8 @@ export type LeaderboardRoutesOptions = {
 
 /**
  * Periods back the leaderboard can show: the current one (0) and the one
- * before (1), so that the result of last week is still visible on Monday.
+ * before (1), so that the result of last week is still visible on Monday
+ * (and yesterday's, today).
  */
 const MAX_OFFSET = 1
 
@@ -23,19 +24,19 @@ const leaderboardRoutes: FastifyPluginAsync<
 
   /**
    * Leaderboard of the signed-in user and their friends (ADR 0002) for
-   * the current week or month, or the previous one (offset=1); isMe
+   * the current day, week or month, or the previous one (offset=1); isMe
    * flags my own entry, level is the badge level of each person (see
    * leaderboardEntries for the other fields).
    */
   app.get('/leaderboard', async (request, reply) => {
     const { period = 'week', offset: offsetParam = '0' } = request.query as {
-      period?: 'week' | 'month'
+      period?: 'day' | 'week' | 'month'
       offset?: string
     }
 
-    if (period !== 'week' && period !== 'month') {
+    if (period !== 'day' && period !== 'week' && period !== 'month') {
       return reply.code(400).send({
-        error: 'Invalid period. Use "week" or "month".',
+        error: 'Invalid period. Use "day", "week" or "month".',
       })
     }
 

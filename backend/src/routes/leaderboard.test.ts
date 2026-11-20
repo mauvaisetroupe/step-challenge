@@ -309,6 +309,47 @@ describe('GET /api/leaderboard', { skip: skipWithoutDatabase }, () => {
     )
   })
 
+  it('counts only today, or only yesterday with offset=1', async () => {
+    const app = await buildApp()
+    const { token, user } = await signInAs(app, 'alice')
+
+    await insertSteps(user.id, 'CURRENT_DATE', 1000)
+    await insertSteps(user.id, 'CURRENT_DATE - 1', 20)
+    await insertSteps(user.id, 'CURRENT_DATE - 2', 300)
+    await insertSteps(user.id, 'CURRENT_DATE + 1', 4000)
+
+    const today = (await getLeaderboard(app, token, '?period=day')).json()
+    const yesterday = (
+      await getLeaderboard(app, token, '?period=day&offset=1')
+    ).json()
+    const { rows } = await pool!.query(`
+      SELECT
+        to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today,
+        to_char(CURRENT_DATE - 1, 'YYYY-MM-DD') AS yesterday
+    `)
+
+    assert.equal(today.period, 'day')
+    assert.equal(today.results[0].steps, 1000)
+    assert.deepEqual(
+      { start: today.start, end: today.end },
+      { start: rows[0].today, end: rows[0].today },
+    )
+    assert.equal(yesterday.results[0].steps, 20)
+    assert.deepEqual(
+      { start: yesterday.start, end: yesterday.end },
+      { start: rows[0].yesterday, end: rows[0].yesterday },
+    )
+  })
+
+  it('rejects a day before yesterday', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+
+    const response = await getLeaderboard(app, token, '?period=day&offset=2')
+
+    assert.equal(response.statusCode, 400)
+  })
+
   it('counts only the previous week with offset=1', async () => {
     const app = await buildApp()
     const { token, user } = await signInAs(app, 'alice')
