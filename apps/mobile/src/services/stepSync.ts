@@ -14,9 +14,11 @@ import {
 
 import { postMySteps, type DayStat } from '../api/steps'
 import { computeDayActivity } from './activity'
+import { getHuaweiLast30Days } from './huaweiHealth'
 import { syncPhoneSteps } from './phoneSteps'
 import { loadSleepHours } from './sleepHours'
 import { getHealthConnectStepSlices } from './stepSlices'
+import { loadStepSource } from './stepSource'
 
 export type { DayStat }
 
@@ -357,14 +359,19 @@ export async function syncActivityMinutes(days: DayStat[]) {
 /**
  * Synchronizes the last 30 days of step data with the backend.
  *
- * This is the complete synchronization operation used by background
- * synchronization and manual refreshes:
+ * This is the complete synchronization operation used by "Sync now"
+ * and manual refreshes:
  *
- * Health Connect → read 30 days → PostgreSQL
+ * step source (ADR 0013) → read 30 days → PostgreSQL
  */
 export async function syncLast30Days(
   options: ReadOptions = {},
 ): Promise<string[]> {
+  // Huawei Health: daily totals only, no activity minutes.
+  if ((await loadStepSource()) === 'huawei') {
+    return syncStatsToServer(await getHuaweiLast30Days())
+  }
+
   // Without Health Connect: the phone step counter when the build has it
   // (today only), else nothing to send.
   if (!(await isHealthConnectAvailable())) {

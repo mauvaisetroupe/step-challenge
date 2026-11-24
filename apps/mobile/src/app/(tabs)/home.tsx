@@ -21,8 +21,10 @@ import {
   syncActivityMinutes,
   syncStatsToServer,
 } from '../../services/stepSync'
+import { getHuaweiLast30Days } from '@/services/huaweiHealth'
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
+import { loadStepSource } from '@/services/stepSource'
 import TabScreenHeader from '../../components/TabScreenHeader'
 import LastWeekCard from '@/components/home/LastWeekCard'
 import LevelCard from '@/components/home/LevelCard'
@@ -90,13 +92,43 @@ export default function HomeScreen() {
     let deviceToday: number | null = null
 
     try {
+      // Huawei Health chosen (ADR 0013): read through its cloud API.
+      const withHuawei =
+        Platform.OS === 'android' && (await loadStepSource()) === 'huawei'
       // No Health Connect (Huawei phone): today's steps come from the
       // phone step counter when the build has it, else from the server.
-      const withHealthConnect = await isHealthConnectAvailable()
+      const withHealthConnect =
+        !withHuawei && (await isHealthConnectAvailable())
 
-      setNoHealthConnect(Platform.OS !== 'web' && !withHealthConnect)
+      setNoHealthConnect(
+        Platform.OS !== 'web' && !withHealthConnect && !withHuawei,
+      )
 
-      if (Platform.OS !== 'web' && !withHealthConnect) {
+      if (withHuawei) {
+        try {
+          const stats = await getHuaweiLast30Days()
+
+          deviceToday =
+            stats.find((day) => day.date === todayKey)?.steps ?? 0
+          setTodaySteps(deviceToday)
+          setStepsError(null)
+
+          try {
+            await syncStatsToServer(stats)
+          } catch (err) {
+            console.error('Step synchronization error:', err)
+          }
+        } catch (err) {
+          console.error('Huawei Health step read error:', err)
+          setStepsError(
+            err instanceof Error
+              ? err.message
+              : t('home.healthConnectError'),
+          )
+        }
+      }
+
+      if (Platform.OS !== 'web' && !withHealthConnect && !withHuawei) {
         try {
           deviceToday = await syncPhoneSteps()
         } catch (err) {

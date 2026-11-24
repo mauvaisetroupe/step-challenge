@@ -61,17 +61,6 @@
       "syncedNow_other": "✓ Synchronisé : {{count}} jours mis à jour",
       "failedNow": "✕ Échec de la synchronisation : {{error}}"
     },
-    "huawei": {
-      "title": "Huawei Health",
-      "detail": "Montres Huawei",
-      "description": "Connecte Step Challenge à Huawei Health pour permettre la lecture de tes pas.",
-      "configure": "Configurer Huawei Health",
-      "configured": "Huawei Health est configuré.",
-      "error": "Erreur de configuration Huawei Health",
-      "comingSoon": "La prise en charge de Huawei Health arrive bientôt : Step Challenge pourra lire les pas des montres et bracelets Huawei. Elle attend l'accord de Huawei.",
-      "comingSoonDetail": "Bientôt disponible",
-      "comingSoonShort": "La prise en charge de Huawei Health arrive bientôt."
-    },
     "diagnostic": {
       "title": "Diagnostic",
       "detail": "Santé Connect, autorisations, serveur"
@@ -92,12 +81,28 @@
       "privacy": "Politique de confidentialité"
     },
     "sources": {
-      "title": "Sources de pas",
-      "detail": "Montre, téléphone, priorités",
-      "description": "Les applications qui enregistrent tes pas dans Santé Connect aujourd'hui, et le total que Step Challenge utilise.",
+      "title": "Source des pas",
+      "description": "D'où Step Challenge lit tes pas. Une seule source à la fois : les pas ne sont jamais additionnés.",
+      "options": {
+        "healthConnect": {
+          "label": "Santé Connect",
+          "hint": "Garmin, Samsung, Fitbit, Xiaomi, Pixel… et le téléphone"
+        },
+        "huawei": {
+          "label": "Huawei Health",
+          "hint": "Montres et bracelets Huawei (Santé Connect ne reçoit pas leurs pas)"
+        }
+      },
+      "confirmTitle": "Lire les pas dans {{source}} ?",
+      "confirmMessage": "Les pas des 30 derniers jours seront relus dans {{source}}. Un jour déjà envoyé avec plus de pas garde sa valeur.",
+      "confirm": "Changer",
+      "switchError": "Impossible de changer de source.",
+      "healthConnectDescription": "Les applications qui enregistrent tes pas dans Santé Connect aujourd'hui, et le total que Step Challenge utilise.",
+      "huaweiToday": "Aujourd'hui (lu à {{time}})",
+      "huaweiHint": "Step Challenge lit tes pas dans le cloud de Huawei : ils y arrivent quand l'application Huawei Health se synchronise, parfois avec quelques minutes de retard sur la montre. Si rien n'arrive, vérifie dans Huawei Health → Moi → Gestion de la confidentialité que les liens cloud sont activés.",
       "openHealthConnect": "Ouvrir Santé Connect",
       "refresh": "Actualiser",
-      "androidOnly": "Les sources de pas ne sont visibles que dans l'application Android.",
+      "androidOnly": "La source des pas ne se choisit que dans l'application Android.",
       "noHealthConnect": "Santé Connect n'est pas disponible sur ce téléphone."
     },
     "activity": {
@@ -476,7 +481,6 @@
     "notGranted": "Non accordée",
     "none": "Aucune",
     "huawei": {
-      "moduleLoaded": "Module chargé",
       "authorization": "Autorisation Huawei",
       "todaySteps": "Pas aujourd'hui",
       "history_one": "{{count}} jour (API REST)",
@@ -491,7 +495,6 @@
       "total": "Total retenu par Santé Connect : {{steps}}",
       "hint": "Santé Connect fusionne toutes les sources et retire les doublons selon l'ordre de priorité réglé dans ses paramètres (Santé Connect → Données et accès → Activité → Pas) : le total n'est pas la somme des sources. C'est ce total que Step Challenge utilise."
     },
-    "huaweiComingSoon": "Bientôt disponible",
     "phoneStepCounterUsed": "Utilisé à la place de Santé Connect"
   },
   "noHealthConnect": {

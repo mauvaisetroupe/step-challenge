@@ -59,17 +59,6 @@
       "syncedNow_other": "✓ Synced: {{count}} days updated",
       "failedNow": "✕ Sync failed: {{error}}"
     },
-    "huawei": {
-      "title": "Huawei Health",
-      "detail": "Huawei watches",
-      "description": "Connect Step Challenge to Huawei Health so that it can read your steps.",
-      "configure": "Set up Huawei Health",
-      "configured": "Huawei Health is set up.",
-      "error": "Huawei Health setup error",
-      "comingSoon": "Huawei Health support is coming soon: Step Challenge will be able to read the steps of Huawei watches and bands. It is waiting for Huawei's approval.",
-      "comingSoonDetail": "Coming soon",
-      "comingSoonShort": "Huawei Health support is coming soon."
-    },
     "diagnostic": {
       "title": "Diagnostics",
       "detail": "Health Connect, permissions, server"
@@ -90,12 +79,28 @@
       "privacy": "Privacy policy"
     },
     "sources": {
-      "title": "Step sources",
-      "detail": "Watch, phone, priorities",
-      "description": "The apps that record your steps in Health Connect today, and the total Step Challenge uses.",
+      "title": "Step source",
+      "description": "Where Step Challenge reads your steps. One source at a time: steps are never added up.",
+      "options": {
+        "healthConnect": {
+          "label": "Health Connect",
+          "hint": "Garmin, Samsung, Fitbit, Xiaomi, Pixel… and the phone"
+        },
+        "huawei": {
+          "label": "Huawei Health",
+          "hint": "Huawei watches and bands (Health Connect doesn't receive their steps)"
+        }
+      },
+      "confirmTitle": "Read steps from {{source}}?",
+      "confirmMessage": "The steps of the last 30 days will be read again from {{source}}. A day already sent with more steps keeps its value.",
+      "confirm": "Switch",
+      "switchError": "Couldn't change the source.",
+      "healthConnectDescription": "The apps that record your steps in Health Connect today, and the total Step Challenge uses.",
+      "huaweiToday": "Today (read at {{time}})",
+      "huaweiHint": "Step Challenge reads your steps from Huawei's cloud: they get there when the Huawei Health app syncs, sometimes a few minutes after the watch. If nothing arrives, check in Huawei Health → Me → Privacy management that the cloud links are on.",
       "openHealthConnect": "Open Health Connect",
       "refresh": "Refresh",
-      "androidOnly": "Step sources are only available in the Android app.",
+      "androidOnly": "The step source can only be chosen in the Android app.",
       "noHealthConnect": "Health Connect is not available on this phone."
     },
     "activity": {
@@ -461,7 +466,6 @@
     "notGranted": "Not granted",
     "none": "None",
     "huawei": {
-      "moduleLoaded": "Module loaded",
       "authorization": "Huawei authorization",
       "todaySteps": "Steps today",
       "history_one": "{{count}} day (REST API)",
@@ -475,7 +479,6 @@
       "total": "Total kept by Health Connect: {{steps}}",
       "hint": "Health Connect merges every source and removes duplicates according to the priority order set in its settings (Health Connect → Data and access → Activity → Steps): the total is not the sum of the sources. Step Challenge uses this total."
     },
-    "huaweiComingSoon": "Coming soon",
     "phoneStepCounterUsed": "Used instead of Health Connect"
   },
   "noHealthConnect": {

@@ -7,9 +7,9 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import TabScreenHeader from '@/components/TabScreenHeader'
 import { NavRow } from '@/components/settings/ui'
 import { LANGUAGE_NAMES, useFormatters, useLanguage } from '@/i18n'
-import { HUAWEI_HEALTH_READY } from '@/services/huaweiHealthReady'
 import { useBadgeSummary, useHasNewBadges } from '@/services/newBadges'
 import { useSleepHours } from '@/services/sleepHours'
+import { useStepSource } from '@/services/stepSource'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
 type Entry = {
@@ -30,6 +30,7 @@ export default function SettingsScreen() {
   const { t } = useTranslation()
   const { formatDate, formatNumber } = useFormatters()
   const sleepHours = useSleepHours()
+  const stepSource = useStepSource()
   const badges = useBadgeSummary()
   const hasNewBadges = useHasNewBadges()
 
@@ -88,7 +89,7 @@ export default function SettingsScreen() {
       entries: [
         {
           title: t('settings.sources.title'),
-          detail: t('settings.sources.detail'),
+          detail: t(`settings.sources.options.${stepSource}.label`),
           href: '/settings/sources',
         },
         {
@@ -103,13 +104,6 @@ export default function SettingsScreen() {
           title: t('settings.sync.title'),
           detail: t('settings.sync.detail'),
           href: '/settings/sync',
-        },
-        {
-          title: t('settings.huawei.title'),
-          detail: HUAWEI_HEALTH_READY
-            ? t('settings.huawei.detail')
-            : t('settings.huawei.comingSoonDetail'),
-          href: '/settings/huawei',
         },
         {
           title: t('settings.diagnostic.title'),

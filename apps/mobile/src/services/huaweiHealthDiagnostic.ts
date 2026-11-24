@@ -17,8 +17,8 @@ export async function getHuaweiHealthDiagnostic(): Promise<
   const items: DiagnosticItem[] = []
 
   items.push({
-    label: 'Huawei Health Kit',
-    value: i18n.t('diagnostic.huawei.moduleLoaded'),
+    label: i18n.t('settings.sources.title'),
+    value: i18n.t('settings.sources.options.huawei.label'),
     status: 'ok',
   })
 

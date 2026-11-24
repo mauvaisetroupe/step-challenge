@@ -1,42 +1,64 @@
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, Platform } from 'react-native'
+import { ActivityIndicator, Alert, Platform } from 'react-native'
 
 import StepSourcesList from '@/components/StepSourcesList'
+import RadioGroup from '@/components/settings/RadioGroup'
 import {
   Card,
   Description,
+  InfoRow,
   PrimaryButton,
   SecondaryButton,
   SettingsPage,
+  Subtitle,
 } from '@/components/settings/ui'
+import { useFormatters } from '@/i18n'
+import {
+  getHuaweiLast30Days,
+  signInHuaweiHealth,
+} from '@/services/huaweiHealth'
+import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
+import {
+  loadStepSource,
+  saveStepSource,
+  type StepSource,
+} from '@/services/stepSource'
 import {
   getTodayStepSources,
   type StepSourcesReport,
 } from '@/services/stepSources'
-import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import {
   isHealthConnectAvailable,
   openHealthConnectSettingsIfAvailable,
+  syncLast30Days,
 } from '@/services/stepSync'
 import { useTheme } from '@/theme'
 
+const SOURCES: StepSource[] = ['healthConnect', 'huawei']
+
+type HuaweiToday = { steps: number; readAt: Date } | { error: string }
+
 /**
- * Where today's steps come from: the apps writing to Health Connect
- * (watch, phone…) and the total it keeps. Answers "why doesn't Step
- * Challenge show the same number as my watch?", and leads to the Health
- * Connect settings, where the priority between sources is set.
+ * Where Step Challenge reads the steps (ADR 0013): Health Connect or
+ * Huawei Health, one at a time, then the detail of the chosen one.
  *
- * Also the natural place for choosing the step provider (Health Connect
- * or Huawei Health) once Huawei is available.
+ * For Health Connect, the apps writing to it today and the total it
+ * keeps: answers "why doesn't Step Challenge show the same number as my
+ * watch?", and leads to its settings, where the priority is set.
  */
-export default function StepSourcesSettingsScreen() {
+export default function StepSourceSettingsScreen() {
   const { t } = useTranslation()
   const { colors } = useTheme()
+  const { formatDate, formatNumber } = useFormatters()
+  const [source, setSource] = useState<StepSource | null>(null)
+  const [switching, setSwitching] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
   const [sources, setSources] = useState<
     StepSourcesReport | { error: string } | null
   >(null)
+  const [huaweiToday, setHuaweiToday] = useState<HuaweiToday | null>(null)
   const [loading, setLoading] = useState(false)
   // False on a phone without Health Connect (Huawei).
   const [healthConnect, setHealthConnect] = useState<boolean | null>(null)
@@ -48,22 +70,40 @@ export default function StepSourcesSettingsScreen() {
 
     setLoading(true)
 
+    const chosen = await loadStepSource()
+    setSource(chosen)
+
     try {
+      if (chosen === 'huawei') {
+        const days = await getHuaweiLast30Days()
+
+        setHuaweiToday({
+          steps: days[days.length - 1]?.steps ?? 0,
+          readAt: new Date(),
+        })
+        return
+      }
+
       const available = await isHealthConnectAvailable()
 
       setHealthConnect(available)
 
-      if (!available) {
-        return
+      if (available) {
+        setSources(await getTodayStepSources())
       }
-
-      setSources(await getTodayStepSources())
     } catch (error) {
-      console.error('Step sources error:', error)
-      setSources({
+      console.error('Step source error:', error)
+
+      const failure = {
         error:
           error instanceof Error ? error.message : t('diagnostic.unknownError'),
-      })
+      }
+
+      if (chosen === 'huawei') {
+        setHuaweiToday(failure)
+      } else {
+        setSources(failure)
+      }
     } finally {
       setLoading(false)
     }
@@ -76,6 +116,70 @@ export default function StepSourcesSettingsScreen() {
     }, [load]),
   )
 
+  const switchTo = useCallback(
+    async (next: StepSource) => {
+      setSwitching(true)
+      setMessage(null)
+
+      try {
+        // Huawei first asks the user: the source only changes once the
+        // HUAWEI account agreed.
+        if (next === 'huawei') {
+          await signInHuaweiHealth()
+        }
+
+        await saveStepSource(next)
+        setSource(next)
+        setSources(null)
+        setHuaweiToday(null)
+
+        // The 30 days, read again in the new source.
+        await syncLast30Days().catch((error) => {
+          console.error('Sync after the source change failed:', error)
+        })
+
+        await load()
+      } catch (error) {
+        console.error('Step source change failed:', error)
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : t('settings.sources.switchError'),
+        )
+      } finally {
+        setSwitching(false)
+      }
+    },
+    [load, t],
+  )
+
+  const confirmSwitch = useCallback(
+    (next: StepSource) => {
+      if (next === source || switching) {
+        return
+      }
+
+      Alert.alert(
+        t('settings.sources.confirmTitle', {
+          source: t(`settings.sources.options.${next}.label`),
+        }),
+        t('settings.sources.confirmMessage', {
+          source: t(`settings.sources.options.${next}.label`),
+        }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('settings.sources.confirm'),
+            onPress: () => {
+              switchTo(next)
+            },
+          },
+        ],
+      )
+    },
+    [source, switching, switchTo, t],
+  )
+
   if (Platform.OS !== 'android') {
     return (
       <SettingsPage>
@@ -84,12 +188,10 @@ export default function StepSourcesSettingsScreen() {
     )
   }
 
-  if (healthConnect === false) {
+  if (source === null) {
     return (
       <SettingsPage>
-        <Description>{t('settings.sources.noHealthConnect')}</Description>
-
-        <Description>{noHealthConnectNotice(t)}</Description>
+        <ActivityIndicator color={colors.primary} />
       </SettingsPage>
     )
   }
@@ -98,26 +200,81 @@ export default function StepSourcesSettingsScreen() {
     <SettingsPage>
       <Description>{t('settings.sources.description')}</Description>
 
-      <Card>
-        {sources ? (
-          <StepSourcesList sources={sources} />
-        ) : (
-          <ActivityIndicator color={colors.primary} />
-        )}
-      </Card>
-
-      <Description>{t('diagnostic.sources.hint')}</Description>
-
-      <PrimaryButton
-        title={t('settings.sources.openHealthConnect')}
-        onPress={openHealthConnectSettingsIfAvailable}
+      <RadioGroup
+        options={SOURCES.map((value) => ({
+          value,
+          label: t(`settings.sources.options.${value}.label`),
+          hint: t(`settings.sources.options.${value}.hint`),
+        }))}
+        selected={source}
+        onSelect={confirmSwitch}
       />
 
-      <SecondaryButton
-        title={t('settings.sources.refresh')}
-        onPress={load}
-        disabled={loading}
-      />
+      {switching && <ActivityIndicator color={colors.primary} />}
+      {message && <Description>{message}</Description>}
+
+      {source === 'huawei' ? (
+        <>
+          <Subtitle>{t('settings.sources.options.huawei.label')}</Subtitle>
+
+          <Card>
+            {huaweiToday === null ? (
+              <ActivityIndicator color={colors.primary} />
+            ) : 'error' in huaweiToday ? (
+              <Description>{huaweiToday.error}</Description>
+            ) : (
+              <InfoRow
+                label={t('settings.sources.huaweiToday', {
+                  time: formatDate(huaweiToday.readAt, { timeStyle: 'short' }),
+                })}
+                value={formatNumber(huaweiToday.steps)}
+                last
+              />
+            )}
+          </Card>
+
+          <Description>{t('settings.sources.huaweiHint')}</Description>
+
+          <SecondaryButton
+            title={t('settings.sources.refresh')}
+            onPress={load}
+            disabled={loading}
+          />
+        </>
+      ) : healthConnect === false ? (
+        <>
+          <Description>{t('settings.sources.noHealthConnect')}</Description>
+
+          <Description>{noHealthConnectNotice(t)}</Description>
+        </>
+      ) : (
+        <>
+          <Subtitle>{t('settings.sources.options.healthConnect.label')}</Subtitle>
+
+          <Description>{t('settings.sources.healthConnectDescription')}</Description>
+
+          <Card>
+            {sources ? (
+              <StepSourcesList sources={sources} />
+            ) : (
+              <ActivityIndicator color={colors.primary} />
+            )}
+          </Card>
+
+          <Description>{t('diagnostic.sources.hint')}</Description>
+
+          <PrimaryButton
+            title={t('settings.sources.openHealthConnect')}
+            onPress={openHealthConnectSettingsIfAvailable}
+          />
+
+          <SecondaryButton
+            title={t('settings.sources.refresh')}
+            onPress={load}
+            disabled={loading}
+          />
+        </>
+      )}
     </SettingsPage>
   )
 }

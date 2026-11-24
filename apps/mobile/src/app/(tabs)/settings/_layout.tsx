@@ -33,10 +33,6 @@ export default function SettingsLayout() {
       />
       <Stack.Screen name="sync" options={{ title: t('settings.sync.title') }} />
       <Stack.Screen
-        name="huawei"
-        options={{ title: t('settings.huawei.title') }}
-      />
-      <Stack.Screen
         name="diagnostic"
         options={{ title: t('settings.diagnostic.title') }}
       />

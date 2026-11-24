@@ -43,6 +43,11 @@ class StepSyncModule : Module() {
       SyncStore(context).saveSleepHours(ActivityCalculator.SleepHours(bedMinute, wakeMinute))
     }
 
+    /** Step source chosen by the user: "healthConnect" or "huawei" (ADR 0013). */
+    Function("setStepSource") { source: String ->
+      SyncStore(context).saveStepSource(source)
+    }
+
     /** Background runs, most recent first, as a JSON array. */
     Function("getHistory") {
       SyncStore(context).historyJson()

@@ -23,10 +23,12 @@ import {
   HEALTH_PERMISSIONS,
   isHealthConnectAvailable,
   openHealthConnectSettingsIfAvailable,
+  syncLast30Days,
   syncTodaySteps,
 } from '../../services/stepSync'
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
+import { loadStepSource } from '@/services/stepSource'
 import {
   getSourceSurplus,
   getStepSources,
@@ -367,13 +369,26 @@ export default function StatsScreen() {
       //   detail. The phone step counter, when the build has it, first
       //   sends today's steps.
 
-      const withHealthConnect = await isHealthConnectAvailable()
+      // Huawei Health chosen (ADR 0013): no detail by the minute, the
+      // views read the database, after sending the 30 days.
+      const withHuawei =
+        Platform.OS === 'android' && (await loadStepSource()) === 'huawei'
+      const withHealthConnect =
+        !withHuawei && (await isHealthConnectAvailable())
 
       if (isLatest()) {
         setHealthConnect(withHealthConnect)
       }
 
-      if (Platform.OS === 'android' && !withHealthConnect) {
+      if (withHuawei && !pastDay) {
+        try {
+          await syncLast30Days()
+        } catch (err) {
+          console.error('Huawei Health sync failed:', err)
+        }
+      }
+
+      if (Platform.OS === 'android' && !withHealthConnect && !withHuawei) {
         try {
           await syncPhoneSteps()
         } catch (err) {

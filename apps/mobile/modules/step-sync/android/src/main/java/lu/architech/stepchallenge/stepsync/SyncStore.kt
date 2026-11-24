@@ -12,6 +12,9 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
+/** The step source the worker reads (ADR 0013); the other one is "huawei". */
+internal const val STEP_SOURCE_HEALTH_CONNECT = "healthConnect"
+
 /**
  * What the background worker needs (API address, session token) and the
  * history of its runs, in the app's private preferences (ADR 0009).
@@ -74,6 +77,16 @@ internal class SyncStore(context: Context) {
     wake = prefs.getInt(KEY_SLEEP_WAKE, ActivityCalculator.DEFAULT_SLEEP_HOURS.wake),
   )
 
+  /**
+   * Step source chosen by the user (src/services/stepSource.ts). Health
+   * Connect until the app gives it: the only source before ADR 0013.
+   */
+  fun saveStepSource(source: String) {
+    prefs.edit().putString(KEY_STEP_SOURCE, source).apply()
+  }
+
+  fun stepSource(): String = prefs.getString(KEY_STEP_SOURCE, null) ?: STEP_SOURCE_HEALTH_CONNECT
+
   private fun key(): SecretKey {
     val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
 
@@ -123,6 +136,7 @@ internal class SyncStore(context: Context) {
     const val KEY_INTERVAL = "intervalMinutes"
     const val KEY_SLEEP_BED = "sleepBed"
     const val KEY_SLEEP_WAKE = "sleepWake"
+    const val KEY_STEP_SOURCE = "stepSource"
     const val MAX_HISTORY = 10
     const val KEYSTORE = "AndroidKeyStore"
     const val KEY_ALIAS = "step-challenge-background-sync"

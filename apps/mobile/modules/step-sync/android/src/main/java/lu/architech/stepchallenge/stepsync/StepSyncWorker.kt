@@ -46,6 +46,13 @@ class StepSyncWorker(context: Context, params: WorkerParameters) :
       return Result.success()
     }
 
+    // Huawei Health chosen (ADR 0013): the app reads it when opened;
+    // sending Health Connect's steps would mix two sources.
+    if (store.stepSource() != STEP_SOURCE_HEALTH_CONNECT) {
+      Log.i(TAG, "Skipped: step source is not Health Connect")
+      return Result.success()
+    }
+
     // No Health Connect (Huawei phone): nothing to read, and a failed
     // run every 6 hours in the history would only alarm the user.
     if (HealthConnectClient.getSdkStatus(applicationContext) != HealthConnectClient.SDK_AVAILABLE) {

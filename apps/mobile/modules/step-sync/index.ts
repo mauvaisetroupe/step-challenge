@@ -10,6 +10,7 @@ type StepSyncNativeModule = {
   clear(): void
   schedule(intervalMinutes: number): void
   setSleepHours(bedMinute: number, wakeMinute: number): void
+  setStepSource(source: string): void
   getHistory(): string
 }
 
@@ -42,6 +43,14 @@ export function scheduleNativeSync(intervalMinutes: number) {
 /** Sleep hours (minutes since midnight): no inactivity counted then. */
 export function setNativeSleepHours(bedMinute: number, wakeMinute: number) {
   native?.setSleepHours(bedMinute, wakeMinute)
+}
+
+/**
+ * Step source chosen by the user (src/services/stepSource.ts): the
+ * worker only reads Health Connect, and skips its runs otherwise.
+ */
+export function setNativeStepSource(source: 'healthConnect' | 'huawei') {
+  native?.setStepSource(source)
 }
 
 export function getNativeSyncHistory(): NativeSyncRun[] {
