@@ -589,7 +589,7 @@ Les sections 1 à 13 décrivent le POC tel qu'il a été mené. Depuis, le proje
 
 ## Statut Huawei
 
-* Demande Health Service Kit : **To be reviewed** (refusée le 2026-10-16, voir la section 15). Impossible de tester la lecture des pas tant qu'elle n'est pas validée (`signIn` sur le scope `step.read` échouera).
+* Demande Health Service Kit : refusée le 2026-10-16 (section 15), puis **permission de test accordée le 2026-11-24** (section 16).
 * Permission d'accès à l'**historique demandée : 1 mois**. Cohérent avec `HISTORY_DAYS = 30` dans `stepSync.ts`.
 
 ## Cas d'usage cible
@@ -691,3 +691,54 @@ Corrections de la 1.9.1 :
 Remarque pour les examinateurs (300 caractères au plus), saisie dans AppGallery Connect pour la 1.9.1 :
 
 > The app uses Google sign-in. For review, tap "Demo access" at the bottom of the sign-in screen and enter the access code given in the password field. Huawei phones have no Health Connect: steps come from the phone's step counter (allow "Physical activity"). Friends and history are fictitious.
+
+# 16. Permission de test accordée — 2026-11-24
+
+Huawei a accordé la permission de **test** de Health Service Kit (ID d'application 118922449) :
+
+* **100 premiers utilisateurs** : aucun compte à déclarer, le compteur de la console (Health Kit, permissions de test) compte les comptes HUAWEI qui se connectent ;
+* **valable un an** : sans demande de **vérification** acceptée d'ici fin novembre 2027, la permission est retirée. La vérification lève aussi la limite de 100 utilisateurs ; elle se demande une fois l'intégration testée et publiée sur AppGallery.
+
+La suite de l'intégration est décidée dans l'[ADR 0013](../adr/0013-step-source-choice.md) (une seule source de pas, choisie par l'utilisateur).
+
+## Tester sur un téléphone non Huawei
+
+Il faut HMS Core et l'application Huawei Health, connectée au compte HUAWEI de test.
+
+1. **Paquet de production, signé avec la clé de debug.** Le paquet `.dev` de la variante de développement n'est pas déclaré dans AppGallery Connect : `withAGConnect.js` ne l'active pas et HMS Core ne reconnaît pas l'application. L'empreinte de debug, elle, est déclarée dans AGC (voir [Signature Android](../reference/android-signing.md)).
+
+   ```bash
+   cd apps/mobile
+   npx expo prebuild --clean -p android   # sans APP_VARIANT : paquet lu.architech.stepchallenge
+   npm run android                         # build de debug, avec Metro
+   ```
+
+   La version Play Store doit d'abord être désinstallée (certificat différent). Pour revenir ensuite au build de développement : `APP_VARIANT=development npx expo prebuild --clean -p android`, puis `npm run android:dev`.
+
+2. **Connexion à Step Challenge.** La connexion Google échoue dans ce build : aucun client OAuth Android n'associe le paquet de production à la clé de debug. Utiliser l'accès de démonstration contre le backend local, en passant un code à son lancement (20 caractères au moins) :
+
+   ```bash
+   cd backend
+   DEMO_ACCESS_CODE=<code-de-20-caracteres-ou-plus> npm run dev:local
+   ```
+
+3. **Essai** : `HUAWEI_HEALTH_READY = true` (`services/huaweiHealthReady.ts`), puis Paramètres → Huawei Health → Configurer, et Paramètres → Diagnostic, qui affiche les réponses brutes de Health Kit.
+
+4. Si le téléphone est débranché, Metro n'est plus joignable (« Unable to load script ») : `adb reverse tcp:8081 tcp:8081`.
+
+## Résultats du premier essai (Pixel 7, Android 17)
+
+* **Connexion** : `HmsHealthAccount.signIn` accorde `openid`, `profile` et `https://www.huawei.com/healthkit/step.read`. Dans Huawei Health, Step Challenge apparaît avec la lecture des pas autorisée.
+* **Type de donnée** : `readTodaySummation` et `readDailySummation` attendent `DT_CONTINUOUS_STEPS_DELTA`. Avec `DT_CONTINUOUS_STEPS_TOTAL`, erreur **50012**. La réponse, elle, est du type total (`com.huawei.continuous.steps.total`).
+* **Format de la réponse** : `{ isSuccess, body: { samplePoints: [{ startTime: "2026-11-24 00:00:00", fieldValues: { "steps(i)": …, "duration(i)": 0 } }] } }`, un point par jour. `getHuaweiTodaySteps()` lit encore `result.data[0].value` et renverrait 0 : à corriger dans l'intégration.
+* **Dates** de `readDailySummation` : nombres `YYYYMMDD` (`20261124`), d'après le code Java du SDK.
+* **Historique : 30 jours, aujourd'hui compris.** J-29 à aujourd'hui renvoie 30 valeurs ; à partir de J-30, erreur **50059** (`SecurityException` dans HMS Core, juste après la vérification des droits). Cohérent avec `HISTORY_DAYS = 30` de `stepSync.ts`, qui lit de J-29 à aujourd'hui.
+* **Source** : sur ce téléphone sans montre Huawei, Huawei Health compte le podomètre du téléphone, comme Santé Connect (même total à un pas près). D'où une seule source à la fois (ADR 0013).
+
+## Gel de HMS Core (erreur 50011)
+
+Une dizaine de secondes après un appel, Android gèle le processus `com.huawei.hwid.container1`, qui héberge le service Health Kit (`ActivityManager: freezing … com.huawei.hwid.container1` dans `adb logcat`). L'appel suivant passe par HMS Core, qui ne réveille pas ce processus : `HiHealthKitClient: connectWithHms connect service time out`, puis `returnCode: 50011` au bout de 5 secondes, pour chaque appel. Seul un arrêt forcé de HMS Core a débloqué la situation (`adb shell am force-stop com.huawei.hwid`) ; la lecture suivante a réussi.
+
+Le code 50011 ne veut donc pas seulement dire « demande Health Kit non validée » (son sens au 2026-10-04) : c'est aussi l'échec de connexion au service de HMS Core. Parade à trouver avant la publication : voir les points ouverts de l'ADR 0013.
+
+Pour suivre un essai : `adb logcat -c`, puis `adb logcat -v time | grep -E "HmsHealth|HMSHealth|hihealth|container1"`.
