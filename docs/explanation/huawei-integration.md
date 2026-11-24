@@ -739,6 +739,31 @@ Il faut HMS Core et l'application Huawei Health, connectée au compte HUAWEI de 
 
 Une dizaine de secondes après un appel, Android gèle le processus `com.huawei.hwid.container1`, qui héberge le service Health Kit (`ActivityManager: freezing … com.huawei.hwid.container1` dans `adb logcat`). L'appel suivant passe par HMS Core, qui ne réveille pas ce processus : `HiHealthKitClient: connectWithHms connect service time out`, puis `returnCode: 50011` au bout de 5 secondes, pour chaque appel. Seul un arrêt forcé de HMS Core a débloqué la situation (`adb shell am force-stop com.huawei.hwid`) ; la lecture suivante a réussi.
 
-Le code 50011 ne veut donc pas seulement dire « demande Health Kit non validée » (son sens au 2026-10-04) : c'est aussi l'échec de connexion au service de HMS Core. Parade à trouver avant la publication : voir les points ouverts de l'ADR 0013.
+Le code 50011 ne veut donc pas seulement dire « demande Health Kit non validée » (son sens au 2026-10-04) : c'est aussi l'échec de connexion au service de HMS Core.
+
+**Preuve** : après 4 minutes sans activité, `container1` gelé, 50011 ; le **même** processus dégelé à la main (`adb shell am unfreeze --sticky com.huawei.hwid.container1`), tout fonctionne. Sans intervention, Android a tué le processus une dizaine de minutes plus tard : l'appel suivant l'aurait relancé neuf. L'échec dépend donc du délai entre deux ouvertures. État d'un processus : `adb shell dumpsys activity processes`, ligne `isFrozen=` sous `<pid>:com.huawei.hwid.container1`.
+
+**Parade testée depuis `adb`** : interroger un composant exporté par HMS Core dans `container1` (`adb shell content query --uri content://com.huawei.android.sns.sdk/probe`) le dégèle aussitôt. Gardée comme plan de secours : l'ADR 0013 choisit l'API REST, qui évite HMS Core pour la lecture.
+
+## API REST de Health Kit (essai du 2026-11-24)
+
+Avec le jeton d'accès renvoyé par `HmsHealthAccount.signIn` (champ `accessToken`, valable environ une heure) :
+
+```bash
+curl -X POST https://health-api.cloud.huawei.com/healthkit/v2/sampleSet:polymerize \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -H "x-client-id: 118922449" -H "x-version: 1.0" -H "x-caller-trace-id: test" \
+  -d '{"polymerizeWith":[{"dataTypeName":"com.huawei.continuous.steps.delta"}],
+       "startTime":<ms>,"endTime":<ms>,
+       "groupByTime":{"groupPeriod":{"timeZone":"+0100","unit":"day","value":1}}}'
+```
+
+* HTTP 200 avec la permission de test : mêmes totaux par jour que le SDK, aujourd'hui compris ;
+* réponse : `group[]` (un par jour, `startTime` en ms), chacun avec `sampleSet[].samplePoints[].value[]`, champ `fieldName: "steps"`, valeur dans `integerValue` ;
+* au plus 31 jours par requête (sinon 400 « polymerize duration too large ») ;
+* historique jusqu'à environ J-60 (sinon 403 « The query time is out of range »), pour 1 mois demandé : cause inconnue ;
+* HMS Core n'intervient pas dans la lecture (pas de gel) ; il reste nécessaire pour la connexion.
+
+Health Sync (Appyhapps) lit Huawei Health de la même façon, dans le cloud, sur le téléphone : voir l'ADR 0013.
 
 Pour suivre un essai : `adb logcat -c`, puis `adb logcat -v time | grep -E "HmsHealth|HMSHealth|hihealth|container1"`.
