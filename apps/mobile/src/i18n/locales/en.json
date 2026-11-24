@@ -463,7 +463,9 @@
     "huawei": {
       "moduleLoaded": "Module loaded",
       "authorization": "Huawei authorization",
-      "todaySteps": "Steps today"
+      "todaySteps": "Steps today",
+      "history_one": "{{count}} day (REST API)",
+      "history_other": "{{count}} days (REST API)"
     },
     "sources": {
       "title": "Step sources (today)",

@@ -1,80 +1,113 @@
+import { HmsHealthAccount } from '@hmscore/react-native-hms-health'
+
+import type { DayStat } from '../api/steps'
 import {
-    HmsDataController,
-    HmsHealthAccount,
-    HmsSettingController,
-} from '@hmscore/react-native-hms-health'
+  buildPolymerizeRequest,
+  parsePolymerizeResponse,
+  POLYMERIZE_URL,
+} from './huaweiRest'
+
+/**
+ * Huawei Health, read through the Health Kit REST API (ADR 0013).
+ *
+ * The SDK is only used to sign in: its data calls go through an HMS
+ * Core process that Android freezes, and they then fail with 50011
+ * (docs/explanation/huawei-integration.md, section 16). The REST API
+ * reads Huawei's cloud, filled by the Huawei Health app.
+ */
 
 type HuaweiResult = {
   isSuccess?: boolean
+  body?: { accessToken?: string; authorizedScopes?: string[] }
   [key: string]: unknown
 }
 
 const STEP_READ_SCOPE =
   'https://www.huawei.com/healthkit/step.read'
 
-const STEP_TOTAL_DATA_TYPE =
-  'DT_CONTINUOUS_STEPS_DELTA'
+/** App ID in AppGallery Connect, required by the REST API. */
+const HUAWEI_APP_ID = '118922449'
 
-export async function configureHuaweiHealth() {
-  const signInResult =
+const HISTORY_DAYS = 30
+
+/**
+ * Signs in to HUAWEI with the step read scope and returns the access
+ * token (valid about an hour). Shows the consent screen the first time
+ * only; afterwards it returns a fresh token without any screen.
+ */
+export async function signInHuaweiHealth() {
+  const result =
     (await HmsHealthAccount.signIn([
       STEP_READ_SCOPE,
     ])) as HuaweiResult
 
-  if (!signInResult.isSuccess) {
+  const token = result.body?.accessToken
+
+  if (!result.isSuccess || !token) {
     throw new Error(
-      `Huawei Health authorization failed: ${JSON.stringify(signInResult)}`,
+      `Huawei Health authorization failed: ${JSON.stringify({
+        isSuccess: result.isSuccess,
+        errorMessage: result.errorMessage,
+        returnCode: result.returnCode,
+      })}`,
     )
   }
 
-  const authorization =
-    (await HmsSettingController.getHealthAppAuthorization()) as HuaweiResult
-
-  if (!authorization.isSuccess) {
-    const result =
-      (await HmsSettingController.checkHealthAppAuthorization()) as HuaweiResult
-
-    if (!result.isSuccess) {
-      throw new Error(
-        `Huawei Health Service Kit authorization failed: ${JSON.stringify(result)}`,
-      )
-    }
+  return {
+    token,
+    scopes: result.body?.authorizedScopes ?? [],
   }
+}
 
-  const initialization =
-    (await HmsDataController.initDataController()) as HuaweiResult
-
-  if (!initialization.isSuccess) {
-    throw new Error(
-      `Huawei Health Data Controller initialization failed: ${JSON.stringify(initialization)}`,
-    )
-  }
-
+/** Kept for the Huawei Health settings screen. */
+export async function configureHuaweiHealth() {
+  await signInHuaweiHealth()
   return true
 }
 
-export async function getHuaweiTodaySteps() {
-  const initialization =
-    (await HmsDataController.initDataController()) as HuaweiResult
+/**
+ * Daily steps of the last 30 days, today included, oldest first.
+ *
+ * Huawei serves what the Huawei Health app has uploaded: the last
+ * minutes of today may be missing.
+ */
+export async function getHuaweiLast30Days(): Promise<DayStat[]> {
+  const end = new Date()
+  const start = new Date(end)
+  start.setDate(start.getDate() - (HISTORY_DAYS - 1))
 
-  if (!initialization.isSuccess) {
+  const request = buildPolymerizeRequest(start, end)
+  let token = (await signInHuaweiHealth()).token
+  let response = await postPolymerize(request, token)
+
+  // An expired or revoked token: sign in again, once.
+  if (response.status === 401) {
+    token = (await signInHuaweiHealth()).token
+    response = await postPolymerize(request, token)
+  }
+
+  if (!response.ok) {
     throw new Error(
-      `Huawei Health Data Controller initialization failed: ${JSON.stringify(initialization)}`,
+      `Huawei Health read failed: HTTP ${response.status} ${await response.text()}`,
     )
   }
 
-  const result =
-    (await HmsDataController.readTodaySummation({
-      dataType: STEP_TOTAL_DATA_TYPE,
-    })) as HuaweiResult
+  return parsePolymerizeResponse(await response.json(), request)
+}
 
-  if (!result.isSuccess) {
-    throw new Error(
-      `Huawei Health steps read failed: ${JSON.stringify(result)}`,
-    )
-  }
-
-  return Number(
-    (result.data as Array<{ value?: number }> | undefined)?.[0]?.value ?? 0,
-  )
+function postPolymerize(
+  request: ReturnType<typeof buildPolymerizeRequest>,
+  token: string,
+) {
+  return fetch(POLYMERIZE_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'x-client-id': HUAWEI_APP_ID,
+      'x-version': '1.0',
+      'x-caller-trace-id': `step-challenge-${Date.now()}`,
+    },
+    body: JSON.stringify(request),
+  })
 }

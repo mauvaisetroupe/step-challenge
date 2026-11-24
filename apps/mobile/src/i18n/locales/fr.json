@@ -478,7 +478,10 @@
     "huawei": {
       "moduleLoaded": "Module chargé",
       "authorization": "Autorisation Huawei",
-      "todaySteps": "Pas aujourd'hui"
+      "todaySteps": "Pas aujourd'hui",
+      "history_one": "{{count}} jour (API REST)",
+      "history_many": "{{count}} jours (API REST)",
+      "history_other": "{{count}} jours (API REST)"
     },
     "sources": {
       "title": "Sources des pas (aujourd'hui)",
