@@ -1,6 +1,6 @@
 # ADR 0013 — Une seule source de pas, choisie par l'utilisateur ; Huawei Health lu par son API cloud
 
-- **Statut** : Proposé
+- **Statut** : Accepté
 - **Date** : 2026-11-24
 - **Décideur** : mauvaisetroupe
 
