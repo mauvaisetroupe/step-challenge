@@ -13,7 +13,7 @@ const STEP_READ_SCOPE =
   'https://www.huawei.com/healthkit/step.read'
 
 const STEP_TOTAL_DATA_TYPE =
-  'DT_CONTINUOUS_STEPS_TOTAL'
+  'DT_CONTINUOUS_STEPS_DELTA'
 
 export async function configureHuaweiHealth() {
   const signInResult =

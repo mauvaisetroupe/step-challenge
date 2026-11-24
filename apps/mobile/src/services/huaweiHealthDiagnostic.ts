@@ -11,7 +11,7 @@ const STEP_READ_SCOPE =
   'https://www.huawei.com/healthkit/step.read'
 
 const STEP_TOTAL_DATA_TYPE =
-  'DT_CONTINUOUS_STEPS_TOTAL'
+  'DT_CONTINUOUS_STEPS_DELTA'
 
 export async function getHuaweiHealthDiagnostic(): Promise<
   DiagnosticItem[]
@@ -59,6 +59,25 @@ export async function getHuaweiHealthDiagnostic(): Promise<
       value: JSON.stringify(todayResult),
       status: 'ok',
     })
+
+    // Raw daily totals over several windows, to find how far back the
+    // history permission (1 month) reaches. Dates are YYYYMMDD numbers.
+    for (const days of [0, 1, 7, 29, 30]) {
+      const start = new Date()
+      start.setDate(start.getDate() - days)
+      const historyResult =
+        await HmsDataController.readDailySummation(
+          dataType,
+          toHuaweiDate(start),
+          toHuaweiDate(new Date()),
+        )
+
+      items.push({
+        label: `readDailySummation (${days} j)`,
+        value: JSON.stringify(summarizeDaily(historyResult)),
+        status: 'ok',
+      })
+    }
   } catch (error) {
     items.push({
       label: 'Huawei Health Kit',
@@ -71,4 +90,35 @@ export async function getHuaweiHealthDiagnostic(): Promise<
   }
 
   return items
+}
+
+function toHuaweiDate(date: Date): number {
+  return (
+    date.getFullYear() * 10000 +
+    (date.getMonth() + 1) * 100 +
+    date.getDate()
+  )
+}
+
+/** Keeps the date and step count of each day; anything else stays raw. */
+function summarizeDaily(result: unknown): unknown {
+  const points = (
+    result as {
+      body?: {
+        samplePoints?: {
+          startTime?: string
+          fieldValues?: Record<string, unknown>
+        }[]
+      }
+    }
+  )?.body?.samplePoints
+
+  if (!Array.isArray(points)) {
+    return result
+  }
+
+  return points.map(
+    (point) =>
+      `${point.startTime?.slice(0, 10)}: ${point.fieldValues?.['steps(i)']}`,
+  )
 }
