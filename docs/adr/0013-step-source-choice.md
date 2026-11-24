@@ -175,8 +175,7 @@ Si l'API REST devenait inaccessible (refus de Huawei à la vérification, par ex
 1. **Délai du cloud** : mesurer l'écart entre la montre, l'application Huawei Health et l'API REST sur une journée normale, et sur le téléphone Samsung de la testeuse.
 2. **Connexion silencieuse** : vérifier qu'elle renvoie un jeton frais après plusieurs heures et plusieurs jours, sans écran.
 3. **Limite d'historique de l'API REST** (environ 60 jours constatés, pour 1 mois demandé) : à comprendre avant de s'y fier ; l'application s'en tient à 30 jours.
-4. **Signaler le gel à Huawei** (ticket HMS Core → Health Kit), avec les journaux et la preuve par `am unfreeze` : utile pour la connexion, et pour le plan de secours.
-5. **Mémoriser la source de chaque jour** sur le serveur (support, diagnostic). Non retenu pour l'instant : demanderait une migration et un champ d'API.
+4. **Mémoriser la source de chaque jour** sur le serveur (support, diagnostic). Non retenu pour l'instant : demanderait une migration et un champ d'API.
 
 ## Hors de cette décision
 
