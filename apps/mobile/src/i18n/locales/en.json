@@ -469,7 +469,9 @@
       "authorization": "Huawei authorization",
       "todaySteps": "Steps today",
       "history_one": "{{count}} day (REST API)",
-      "history_other": "{{count}} days (REST API)"
+      "history_other": "{{count}} days (REST API)",
+      "hourly": "Detail within the day",
+      "hourlyValue": "{{withSteps}} hours with steps out of {{hours}}"
     },
     "sources": {
       "title": "Step sources (today)",
@@ -487,6 +489,13 @@
     "activityScore": "The activity score is computed from your steps minute by minute, which needs Health Connect, not available on this phone.",
     "sync": "Background sync needs Health Connect, which is not available on this phone.",
     "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which need Health Connect, not available on this phone."
+  },
+  "huaweiSource": {
+    "hourly": "The hour-by-hour detail isn't available with Huawei Health: Step Challenge only reads each day's total from it.",
+    "activityScore": "The activity score is computed from your steps minute by minute, which Step Challenge doesn't read from Huawei Health.",
+    "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which aren't available with Huawei Health.",
+    "sync": "With Huawei Health, your steps are sent when the app opens and when you refresh a screen, not in the background.",
+    "statsNote": "Steps read from Huawei Health"
   },
   "badges": {
     "title": "Badges",

@@ -28,7 +28,7 @@ import {
 } from '../../services/stepSync'
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
-import { loadStepSource } from '@/services/stepSource'
+import { loadStepSource, useStepSource } from '@/services/stepSource'
 import {
   getSourceSurplus,
   getStepSources,
@@ -320,6 +320,8 @@ export default function StatsScreen() {
   // False on a phone without Health Connect (Huawei): the views then
   // read the database, as on the web.
   const [healthConnect, setHealthConnect] = useState(Platform.OS === 'android')
+  // Huawei Health chosen: daily totals only (ADR 0013).
+  const stepSource = useStepSource()
   // Only the latest load updates the screen: going through the days
   // quickly starts several.
   const loadRef = useRef(0)
@@ -678,8 +680,10 @@ export default function StatsScreen() {
                 emptyMessage={
                   Platform.OS === 'web'
                     ? t('stats.hourlyAndroidOnly')
-                    : !healthConnect
-                      ? `${t('stats.hourlyHealthConnectOnly')} ${noHealthConnectNotice(t)}`
+                    : stepSource === 'huawei'
+                      ? t('huaweiSource.hourly')
+                      : !healthConnect
+                        ? `${t('stats.hourlyHealthConnectOnly')} ${noHealthConnectNotice(t)}`
                       : isToday
                         ? t('stats.noStepsToday')
                         : t('stats.noStepsDay')
@@ -771,7 +775,9 @@ export default function StatsScreen() {
                   emptyMessage={
                     healthConnect
                       ? undefined
-                      : `${t('noHealthConnect.activityScore')} ${noHealthConnectNotice(t)}`
+                      : stepSource === 'huawei'
+                        ? t('huaweiSource.activityScore')
+                        : `${t('noHealthConnect.activityScore')} ${noHealthConnectNotice(t)}`
                   }
                 />
               ) : (
@@ -826,6 +832,10 @@ export default function StatsScreen() {
                 </>
               )}
             </>
+          )}
+
+          {stepSource === 'huawei' && (
+            <Text style={styles.sourceNote}>{t('huaweiSource.statsNote')}</Text>
           )}
         </DaySwipeArea>
       </ScrollView>
@@ -989,6 +999,13 @@ function MonthlyStatsList({
 
 const createStyles = (c: Colors) =>
   StyleSheet.create({
+    sourceNote: {
+      marginTop: 20,
+      textAlign: 'center',
+      fontSize: 12,
+      color: c.textMuted,
+    },
+
     sourcesToggle: {
       marginTop: 20,
       alignItems: 'center',

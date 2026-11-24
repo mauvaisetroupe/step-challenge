@@ -7,6 +7,7 @@ import {
   noHealthConnectNotice,
   useHealthConnectAvailable,
 } from '@/services/noHealthConnectNotice'
+import { useStepSource } from '@/services/stepSource'
 import {
   saveSleepHours,
   SLEEP_HOURS_STEP,
@@ -28,6 +29,7 @@ export default function ActivitySettingsScreen() {
   const { formatDate } = useFormatters()
   const sleepHours = useSleepHours()
   const healthConnect = useHealthConnectAvailable()
+  const stepSource = useStepSource()
 
   const formatTime = (minute: number) =>
     formatDate(new Date(2000, 0, 1, Math.floor(minute / 60), minute % 60), {
@@ -54,10 +56,14 @@ export default function ActivitySettingsScreen() {
     <SettingsPage>
       <Description>{t('settings.activity.description')}</Description>
 
-      {healthConnect === false && (
-        <Description>
-          {`${t('noHealthConnect.sleepHours')} ${noHealthConnectNotice(t)}`}
-        </Description>
+      {stepSource === 'huawei' ? (
+        <Description>{t('huaweiSource.sleepHours')}</Description>
+      ) : (
+        healthConnect === false && (
+          <Description>
+            {`${t('noHealthConnect.sleepHours')} ${noHealthConnectNotice(t)}`}
+          </Description>
+        )
       )}
 
       <Card>

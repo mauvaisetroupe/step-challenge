@@ -485,7 +485,9 @@
       "todaySteps": "Pas aujourd'hui",
       "history_one": "{{count}} jour (API REST)",
       "history_many": "{{count}} jours (API REST)",
-      "history_other": "{{count}} jours (API REST)"
+      "history_other": "{{count}} jours (API REST)",
+      "hourly": "Détail dans la journée",
+      "hourlyValue": "{{withSteps}} heures avec des pas sur {{hours}}"
     },
     "sources": {
       "title": "Sources des pas (aujourd'hui)",
@@ -503,6 +505,13 @@
     "activityScore": "Le score d'activité se calcule à partir de tes pas minute par minute, ce qui nécessite Santé Connect, non disponible sur ce téléphone.",
     "sync": "La synchronisation en arrière-plan nécessite Santé Connect, qui n'est pas disponible sur ce téléphone.",
     "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui nécessitent Santé Connect, non disponible sur ce téléphone."
+  },
+  "huaweiSource": {
+    "hourly": "Le détail heure par heure n'est pas disponible avec Huawei Health : Step Challenge n'y lit que le total de chaque jour.",
+    "activityScore": "Le score d'activité se calcule à partir de tes pas minute par minute, que Step Challenge ne lit pas dans Huawei Health.",
+    "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui ne sont pas disponibles avec Huawei Health.",
+    "sync": "Avec Huawei Health, tes pas sont envoyés à l'ouverture de l'application et quand tu actualises un écran, pas en arrière-plan.",
+    "statsNote": "Pas lus dans Huawei Health"
   },
   "badges": {
     "title": "Badges",

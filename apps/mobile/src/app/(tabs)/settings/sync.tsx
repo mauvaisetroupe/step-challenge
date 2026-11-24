@@ -19,6 +19,7 @@ import {
   noHealthConnectNotice,
   useHealthConnectAvailable,
 } from '@/services/noHealthConnectNotice'
+import { useStepSource } from '@/services/stepSource'
 import { useThemedStyles, type Colors } from '@/theme'
 
 /** History of the background step sync, and a "Sync now" button. */
@@ -30,6 +31,7 @@ export default function SyncSettingsScreen() {
   const [syncing, setSyncing] = useState(false)
   const [result, setResult] = useState<BackgroundSyncRun | null>(null)
   const healthConnect = useHealthConnectAvailable()
+  const stepSource = useStepSource()
 
   const load = useCallback(async () => {
     const status = await getBackgroundSyncStatus()
@@ -59,9 +61,11 @@ export default function SyncSettingsScreen() {
   return (
     <SettingsPage>
       <Description>
-        {healthConnect === false
-          ? `${t('noHealthConnect.sync')} ${noHealthConnectNotice(t)}`
-          : t('settings.sync.description')}
+        {stepSource === 'huawei'
+          ? t('huaweiSource.sync')
+          : healthConnect === false
+            ? `${t('noHealthConnect.sync')} ${noHealthConnectNotice(t)}`
+            : t('settings.sync.description')}
       </Description>
 
       <PrimaryButton
