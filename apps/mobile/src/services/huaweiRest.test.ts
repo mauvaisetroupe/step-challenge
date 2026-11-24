@@ -4,7 +4,9 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
 import {
+  buildHourlyRequest,
   buildPolymerizeRequest,
+  countHoursWithSteps,
   formatUtcOffset,
   parsePolymerizeResponse,
   type PolymerizeRequest,
@@ -130,5 +132,34 @@ describe('parsePolymerizeResponse', () => {
   it('returns nothing for an empty or unexpected response', () => {
     assert.deepEqual(parsePolymerizeResponse({}, request('+0100')), [])
     assert.deepEqual(parsePolymerizeResponse(null, request('+0100')), [])
+  })
+})
+
+describe('hourly detail', () => {
+  it('asks for one-hour groups from local midnight', () => {
+    const end = new Date(2026, 10, 24, 10, 30)
+    const request = buildHourlyRequest(end)
+
+    assert.equal(request.startTime, new Date(2026, 10, 24).getTime())
+    assert.equal(request.endTime, end.getTime())
+    assert.deepEqual(request.groupByTime, { duration: 3_600_000 })
+  })
+
+  it('counts the hours with steps', () => {
+    const hour = (steps: number) => ({
+      sampleSet: [
+        {
+          samplePoints: steps
+            ? [{ value: [{ fieldName: 'steps', integerValue: steps }] }]
+            : [],
+        },
+      ],
+    })
+
+    assert.deepEqual(
+      countHoursWithSteps({ group: [hour(0), hour(120), hour(0), hour(35)] }),
+      { hours: 4, withSteps: 2 },
+    )
+    assert.deepEqual(countHoursWithSteps(null), { hours: 0, withSteps: 0 })
   })
 })

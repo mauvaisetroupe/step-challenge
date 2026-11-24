@@ -3,13 +3,15 @@ import { i18n } from '@/i18n'
 import type { DiagnosticItem } from './healthConnectDiagnostic'
 import {
   getHuaweiLast30Days,
+  getHuaweiTodayHourlyDetail,
   signInHuaweiHealth,
 } from './huaweiHealth'
 
 /**
  * Huawei Health lines of the diagnostic: sign-in (scopes only, never
- * the tokens: the text is copied for support) and the 30 days read
- * through the REST API, one `date: steps` per day.
+ * the tokens: the text is copied for support), the 30 days read
+ * through the REST API, one `date: steps` per day, and how many hours
+ * of today have steps.
  */
 export async function getHuaweiHealthDiagnostic(): Promise<
   DiagnosticItem[]
@@ -44,6 +46,15 @@ export async function getHuaweiHealthDiagnostic(): Promise<
       label: i18n.t('diagnostic.huawei.history', { count: days.length }),
       value: days.map((day) => `${day.date}: ${day.steps}`).join(', '),
       status: days.length > 0 ? 'ok' : 'error',
+    })
+
+    // Daily totals only so far (Pixel): does this device upload hours?
+    const hourly = await getHuaweiTodayHourlyDetail()
+
+    items.push({
+      label: i18n.t('diagnostic.huawei.hourly'),
+      value: i18n.t('diagnostic.huawei.hourlyValue', hourly),
+      status: hourly.withSteps > 0 ? 'ok' : 'unknown',
     })
   } catch (error) {
     items.push({

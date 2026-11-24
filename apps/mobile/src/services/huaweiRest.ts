@@ -78,12 +78,46 @@ export function parsePolymerizeResponse(
     .filter((group) => typeof group.startTime === 'number')
     .map((group) => ({
       date: toDateKey(group.startTime as number, offsetMinutes),
-      steps: (group.sampleSet ?? [])
-        .flatMap((set) => set.samplePoints ?? [])
-        .flatMap((point) => point.value ?? [])
-        .filter((field) => field.fieldName === 'steps')
-        .reduce((total, field) => total + (field.integerValue ?? 0), 0),
+      steps: groupSteps(group),
     }))
+}
+
+/**
+ * Today's steps grouped by hour, from local midnight to `end`. Only for
+ * the diagnostic: on a Pixel counting with Huawei Health, Huawei's cloud
+ * only has daily totals and every hour comes back empty; tells whether
+ * a Huawei watch uploads finer data.
+ */
+export function buildHourlyRequest(end: Date) {
+  const midnight = new Date(end)
+  midnight.setHours(0, 0, 0, 0)
+
+  return {
+    polymerizeWith: [{ dataTypeName: 'com.huawei.continuous.steps.delta' }],
+    startTime: midnight.getTime(),
+    endTime: end.getTime(),
+    groupByTime: { duration: 3_600_000 },
+  }
+}
+
+/** Number of hours in the response, and of hours with steps. */
+export function countHoursWithSteps(response: unknown) {
+  const groups = (response as PolymerizeResponse)?.group ?? []
+
+  return {
+    hours: groups.length,
+    withSteps: groups.filter((group) => groupSteps(group) > 0).length,
+  }
+}
+
+type Group = NonNullable<PolymerizeResponse['group']>[number]
+
+function groupSteps(group: Group) {
+  return (group.sampleSet ?? [])
+    .flatMap((set) => set.samplePoints ?? [])
+    .flatMap((point) => point.value ?? [])
+    .filter((field) => field.fieldName === 'steps')
+    .reduce((total, field) => total + (field.integerValue ?? 0), 0)
 }
 
 /** Minutes east of UTC (+60 in Paris in winter). */

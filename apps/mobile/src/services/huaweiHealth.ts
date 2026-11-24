@@ -2,7 +2,9 @@ import { HmsHealthAccount } from '@hmscore/react-native-hms-health'
 
 import type { DayStat } from '../api/steps'
 import {
+  buildHourlyRequest,
   buildPolymerizeRequest,
+  countHoursWithSteps,
   parsePolymerizeResponse,
   POLYMERIZE_URL,
 } from './huaweiRest'
@@ -95,10 +97,24 @@ export async function getHuaweiLast30Days(): Promise<DayStat[]> {
   return parsePolymerizeResponse(await response.json(), request)
 }
 
-function postPolymerize(
-  request: ReturnType<typeof buildPolymerizeRequest>,
-  token: string,
-) {
+/**
+ * Today's hours, and those with steps in Huawei's cloud (diagnostic:
+ * does this user's device upload more than daily totals?).
+ */
+export async function getHuaweiTodayHourlyDetail() {
+  const { token } = await signInHuaweiHealth()
+  const response = await postPolymerize(buildHourlyRequest(new Date()), token)
+
+  if (!response.ok) {
+    throw new Error(
+      `Huawei Health read failed: HTTP ${response.status} ${await response.text()}`,
+    )
+  }
+
+  return countHoursWithSteps(await response.json())
+}
+
+function postPolymerize(request: object, token: string) {
   return fetch(POLYMERIZE_URL, {
     method: 'POST',
     headers: {
