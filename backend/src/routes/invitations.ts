@@ -22,7 +22,7 @@ import { RATE_LIMITS } from '../rateLimit.js'
 export type InvitationRoutesOptions = {
   db: Pool
   requireAuth: RequireAuth
-  /** Base of the invitation links, e.g. https://step.architech.lu */
+  /** Base of the invitation links, e.g. https://sport.architech.lu/step-challenge */
   publicBaseUrl: string
 }
 

@@ -20,7 +20,7 @@ L'application est en test fermé, avec peu d'utilisateurs : une nouvelle version
 | Référence | Où | Changer demande |
 |---|---|---|
 | App Links `https://step.architech.lu/i/…` | manifeste de l'application (`app.json`, `intentFilters`) | une nouvelle version, et une nouvelle vérification d'Android |
-| Liens d'invitation | construits par le backend avec `PUBLIC_BASE_URL` (`backend/src/config.ts`, `step.architech.lu` par défaut) | une variable d'environnement, chez l'exploitant |
+| Liens d'invitation | construits par le backend avec `PUBLIC_BASE_URL` (`backend/src/config.ts`, `step.architech.lu` par défaut) | une nouvelle version de l'API |
 | `assetlinks.json` | servi par `step.architech.lu` | — |
 | Pages légales ouvertes depuis l'application | `constants/links.ts` (`PUBLIC_SITE_URL`), Paramètres → Mentions légales | une nouvelle version ; les versions installées gardent l'ancienne adresse |
 | URL de la politique, de la suppression de compte | Play Console (fait), écran de consentement OAuth de Google, AppGallery Connect (fiche, Health Kit) | une modification dans chaque console, faite par le mainteneur |
@@ -57,7 +57,7 @@ Les invitations deviennent `https://sport.architech.lu/step-challenge/i/<code>` 
 ### Invitations sur `sport.architech.lu`
 
 - **Adresse** : `https://sport.architech.lu/step-challenge/i/<code>`, dans la section de l'application, comme ses autres pages.
-- **Backend** : `PUBLIC_BASE_URL=https://sport.architech.lu/step-challenge`. Les liens sont construits en ajoutant `/i/<code>` : aucun changement de code.
+- **Backend** : la valeur par défaut de `PUBLIC_BASE_URL` devient `https://sport.architech.lu/step-challenge` ; les liens sont construits en ajoutant `/i/<code>`. Cette adresse dépend de l'application (ses App Links), pas de l'hébergement : elle est fixée par ce dépôt, et l'exploitant ne définit pas la variable, qui ne sert qu'à la surcharger en développement.
 - **Application** :
   - App Link déclaré pour l'hôte `sport.architech.lu`, `pathPrefix` `/step-challenge/i/` (`app.json`), à la place de `step.architech.lu`.
   - Expo Router suit le chemin de l'URL : `/step-challenge/i/<code>` ne mène pas à l'écran `/i/[code]`. Un fichier `src/app/+native-intent.tsx` (`redirectSystemPath`) retire le préfixe `/step-challenge` avant la navigation ; à vérifier dans la doc d'Expo SDK 57 avant de l'écrire.
@@ -84,7 +84,7 @@ Le dossier OVH `step` peut ensuite être supprimé. `assetlinks.json` n'est plus
 
 1. **`architech-sport`** : politique de confidentialité mise à jour (la Play Console pointe déjà dessus), `assetlinks.json`, page et règle des invitations ; publié. Vérifier `assetlinks.json` (type, absence de redirection) et une adresse `/step-challenge/i/…`.
 2. **Application** (prochaine version) : App Link sur `sport.architech.lu`, `+native-intent.tsx`, pages légales sur `sport`. Testée sur le Pixel (`adb shell pm get-app-links lu.architech.stepchallenge`, lien d'invitation ouvert depuis un message), puis envoyée.
-3. **Exploitant** : `PUBLIC_BASE_URL` dans `vps-infra`, une fois la version publiée. Avant, les nouveaux liens ne s'ouvriraient dans aucune application installée.
+3. **API** : publier et déployer la version qui change la valeur par défaut, une fois la version de l'application publiée. Avant, les nouveaux liens ne s'ouvriraient dans aucune application installée.
 4. **Consoles** (le mainteneur) : écran de consentement OAuth de Google et AppGallery Connect (la Play Console est faite). Chez Huawei, une modification des informations de l'application passe peut-être par un nouvel examen.
 5. **`step.architech.lu`** : redirection Cloudflare, puis suppression du dossier OVH `step`.
 6. **Ce dépôt** : suppression de `site/` et de `.github/workflows/deploy-site.yml` ; doc mise à jour (`update-the-public-site.md` renvoie à `architech-sport`, `exposure.md`, `ci.md`, `STATUS.md`, `README.md`) ; ADR 0005 marqué « remplacé en partie par l'ADR 0014 ».

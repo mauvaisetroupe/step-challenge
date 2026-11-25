@@ -20,7 +20,10 @@ describe('configuration', () => {
     assert.equal(config.host, '0.0.0.0')
     assert.equal(config.timeZone, 'Europe/Paris')
     assert.equal(config.clientIpHeader, 'cf-connecting-ip')
-    assert.equal(config.publicBaseUrl, 'https://step.architech.lu')
+    assert.equal(
+      config.publicBaseUrl,
+      'https://sport.architech.lu/step-challenge',
+    )
     assert.equal(config.demoAccessCode, undefined)
   })
 

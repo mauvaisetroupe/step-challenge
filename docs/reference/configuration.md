@@ -18,7 +18,7 @@ Variables lues et vérifiées au démarrage par `backend/src/config.ts` (toutes 
 | `DATABASE_*` | Connexion PostgreSQL |
 | `GOOGLE_CLIENT_ID` | Client ID OAuth **Web** du projet Google Cloud `step-challenge` ; vérifié dans le champ `aud` des ID tokens Google. Pas un secret |
 | `PORT`, `HOST` | Port (3000 par défaut, 3001 en dev) et interface d'écoute (`0.0.0.0`, à garder dans le conteneur) |
-| `PUBLIC_BASE_URL` | Base des liens d'invitation (`<base>/i/<code>`) et des App Links, `https://step.architech.lu` par défaut |
+| `PUBLIC_BASE_URL` | Base des liens d'invitation (`<base>/i/<code>`), `https://sport.architech.lu/step-challenge` par défaut ([ADR 0014](../adr/0014-public-site-on-sport-architech.md)). Fixée par le dépôt, à ne pas définir en production ; surcharge pour le développement |
 | `DEMO_ACCESS_CODE` | Code d'accès de démonstration des examinateurs des boutiques ([ADR 0006](../adr/0006-review-demo-access.md)). **Secret**, au moins 20 caractères aléatoires (sinon le serveur refuse de démarrer), par exemple `openssl rand -base64 30`. Absent : l'accès de démonstration est désactivé (`POST /api/auth/demo` répond 404) |
 | `APP_TIMEZONE` | Fuseau du jour, de la semaine et du mois du classement (`Europe/Paris`) |
 | `CLIENT_IP_HEADER` | En-tête de l'adresse du client pour la limite de débit (`cf-connecting-ip`) |

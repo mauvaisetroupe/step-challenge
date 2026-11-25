@@ -88,9 +88,12 @@ export function loadConfig(env: Env): Config {
     googleClientId: env.GOOGLE_CLIENT_ID?.trim() ?? '',
     host: env.HOST?.trim() || '0.0.0.0',
     port: integer('PORT', 3000),
-    // Base of the invitation links shared by users (ADR 0002). The links
-    // and their landing page are served by the public site (ADR 0005).
-    publicBaseUrl: env.PUBLIC_BASE_URL?.trim() || 'https://step.architech.lu',
+    // Base of the invitation links shared by users (ADR 0002): the
+    // address the app opens (App Links) and the public site serves
+    // (ADR 0014). Set by this repository, not by the operator: the
+    // variable only overrides it in development.
+    publicBaseUrl:
+      env.PUBLIC_BASE_URL?.trim() || 'https://sport.architech.lu/step-challenge',
     // Demo access for store reviewers (ADR 0006): disabled when absent.
     demoAccessCode,
     timeZone,
