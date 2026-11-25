@@ -38,8 +38,8 @@
           "data": [
             {
               "scheme": "https",
-              "host": "step.architech.lu",
-              "pathPrefix": "/i/"
+              "host": "sport.architech.lu",
+              "pathPrefix": "/step-challenge/i/"
             }
           ],
           "category": [

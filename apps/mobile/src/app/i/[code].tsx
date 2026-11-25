@@ -52,8 +52,9 @@ function errorMessage(error: unknown, t: TFunction) {
 
 /**
  * Invitation screen (ADR 0002), opened by an invitation link
- * (https://step.architech.lu/i/K7F3-M9QX, or stepchallenge-dev://i/…
- * in development) or by a code typed in the friends screen. The inviter
+ * (https://sport.architech.lu/step-challenge/i/K7F3-M9QX, mapped to
+ * this route by +native-intent.tsx, or stepchallenge-dev://i/… in
+ * development) or by a code typed in the friends screen. The inviter
  * may be a stranger (a link that circulated): they can be reported and
  * blocked without accepting (ADR 0004).
  */
