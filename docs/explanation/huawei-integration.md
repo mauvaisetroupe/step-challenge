@@ -722,7 +722,7 @@ Il faut HMS Core et l'application Huawei Health, connectée au compte HUAWEI de 
    DEMO_ACCESS_CODE=<code-de-20-caracteres-ou-plus> npm run dev:local
    ```
 
-3. **Essai** : `HUAWEI_HEALTH_READY = true` (`services/huaweiHealthReady.ts`), puis Paramètres → Huawei Health → Configurer, et Paramètres → Diagnostic, qui affiche les réponses brutes de Health Kit.
+3. **Essai** : Plus → Paramètres → Source des pas → Huawei Health (connexion HUAWEI au premier choix), puis Paramètres → Diagnostic, qui affiche l'autorisation, les pas par jour lus par l'API REST et le détail dans la journée.
 
 4. Si le téléphone est débranché, Metro n'est plus joignable (« Unable to load script ») : `adb reverse tcp:8081 tcp:8081`.
 
@@ -765,5 +765,33 @@ curl -X POST https://health-api.cloud.huawei.com/healthkit/v2/sampleSet:polymeri
 * HMS Core n'intervient pas dans la lecture (pas de gel) ; il reste nécessaire pour la connexion.
 
 Health Sync (Appyhapps) lit Huawei Health de la même façon, dans le cloud, sur le téléphone : voir l'ADR 0013.
+
+## Détail dans la journée (essais des 2026-11-24 et 25)
+
+`groupPeriod` n'accepte que des unités de calendrier : `"unit": "minute"` ou `"hour"` renvoient 400 « minute is not a valid value ». Le regroupement par durée est accepté : `"groupByTime": {"duration": 3600000}` (une heure, en ms) ou `60000` (une minute) renvoie un groupe par tranche, de minuit à l'heure de la requête. Sans `groupByTime`, la réponse est un seul groupe avec un jeu de données dérivé (`dataCollectorId` qui commence par `derived:steps.delta:com.huawei.hwid` une fois décodé en base64).
+
+Ce que contiennent ces tranches dépend de l'appareil qui compte :
+
+* **Pixel, podomètre du téléphone compté par Huawei Health** : toutes les tranches sont vides, à la minute comme à l'heure, et la requête sans regroupement ne renvoie aucun point. Seul le total du jour existe dans le cloud ;
+* **montre Huawei, téléphone Samsung (testeuse)** : des pas dans la plupart des heures écoulées. La finesse à la minute n'est pas encore vérifiée.
+
+Le diagnostic affiche cette mesure (« Détail dans la journée : N heures avec des pas sur M », `getHuaweiTodayHourlyDetail()`), sans les pas eux-mêmes. Sur cette base, la courbe de Statistiques → 1j est possible avec une montre Huawei ; l'inactivité et le score (ADR 0010) demandent la minute.
+
+## Premier essai chez la testeuse (2026-11-25)
+
+Version 1.14.0 installée depuis Google Play, téléphone Samsung (Android 15), montre Huawei, HMS Core installé le jour même.
+
+* Connexion HUAWEI et lecture REST : réussies, mêmes scopes que sur le Pixel.
+* Huawei Health compte plus de pas que Santé Connect (Google Fit, téléphone seul) : le changement de source se justifie.
+* **Historique : un seul jour** (aujourd'hui), contre 30 sur le Pixel. Huawei omet les jours sans donnée : le cloud n'a rien d'autre pour cette application. Deux explications, non vérifiées : Huawei ne donne que les données postérieures à l'autorisation de l'utilisateur (accordée ce jour-là, faute de HMS Core avant), ou la synchronisation cloud de Huawei Health venait d'être activée. Si le diagnostic du lendemain affiche deux jours, c'est la première. Sans conséquence sur les jours déjà envoyés (règle du maximum) ; le message de confirmation du changement de source, qui promet de relire 30 jours, serait à revoir.
+
+## Installer HMS Core sur un téléphone non Huawei
+
+HMS Core ne s'installe que depuis AppGallery. Marche à suivre, reprise de la [FAQ de Health Sync](https://healthsync.app/f-a-q/) (« I need to install or update HMS Core ») :
+
+1. installer AppGallery s'il manque (lien de Huawei : https://consumer.huawei.com/my/mobileservices/appgallery/android-installation/), sinon le mettre à jour : AppGallery → Moi → Rechercher des mises à jour ;
+2. AppGallery → Applications → chercher « HMS Core » → installer ou mettre à jour.
+
+Health Sync l'exige aussi sur un téléphone non Huawei (même FAQ, section Russie : « on a non-Huawei phone, you need to install HMS Core package, otherwise Health Sync cannot work properly with Huawei services »). Step Challenge n'en a besoin que pour la connexion HUAWEI ; Health Sync ne dit pas à quoi il lui sert.
 
 Pour suivre un essai : `adb logcat -c`, puis `adb logcat -v time | grep -E "HmsHealth|HMSHealth|hihealth|container1"`.
