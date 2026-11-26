@@ -2,6 +2,7 @@ package lu.architech.stepchallenge.stepsync
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -62,6 +63,24 @@ class StepSyncModule : Module() {
       }
     }
 
+    /**
+     * Thaws HMS Core's Health Kit process (com.huawei.hwid.container1),
+     * which Android freezes on non-Huawei phones: a query to a provider
+     * it hosts wakes it up (docs/explanation/huawei-integration.md,
+     * section 16). Called before a HUAWEI sign-in or revocation.
+     * Returns whether the provider answered.
+     */
+    AsyncFunction("wakeHuaweiHms") {
+      try {
+        context.contentResolver
+          .query(Uri.parse(HMS_PROBE_URI), null, null, null, null)
+          ?.close()
+        true
+      } catch (e: Exception) {
+        false
+      }
+    }
+
     /** Background runs, most recent first, as a JSON array. */
     Function("getHistory") {
       SyncStore(context).historyJson()
@@ -70,5 +89,6 @@ class StepSyncModule : Module() {
 
   private companion object {
     const val HUAWEI_HEALTH_PACKAGE = "com.huawei.health"
+    const val HMS_PROBE_URI = "content://com.huawei.android.sns.sdk/probe"
   }
 }

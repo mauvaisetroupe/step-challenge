@@ -12,6 +12,7 @@ type StepSyncNativeModule = {
   setSleepHours(bedMinute: number, wakeMinute: number): void
   setStepSource(source: string): void
   isHuaweiHealthInstalled(): boolean
+  wakeHuaweiHms(): Promise<boolean>
   getHistory(): string
 }
 
@@ -57,6 +58,14 @@ export function setNativeStepSource(source: 'healthConnect' | 'huawei') {
 /** Whether the Huawei Health app is installed (Android only). */
 export function isHuaweiHealthInstalled() {
   return native?.isHuaweiHealthInstalled() ?? false
+}
+
+/**
+ * Thaws HMS Core's Health Kit process before a HUAWEI call (Android
+ * only): false when HMS Core didn't answer.
+ */
+export async function wakeHuaweiHms() {
+  return (await native?.wakeHuaweiHms()) ?? false
 }
 
 export function getNativeSyncHistory(): NativeSyncRun[] {

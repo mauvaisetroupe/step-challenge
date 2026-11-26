@@ -56,7 +56,7 @@ Chaque point s'auto-évalue dans la check-list, avec une explication en cas d'é
 
 ## Ce qu'il reste à faire, par lot
 
-1. **Application** : fait pour la 1.16.0 (2.1, 3.2 à 3.5) ; reste à publier l'aide du site avec la version. Sur un téléphone non Huawei, le gel de HMS Core rend la connexion et le retrait aléatoires : filmer les vidéos sur un téléphone Huawei, ou après la connexion par OAuth Web (ADR à écrire).
+1. **Application** : fait pour la 1.16.0 (2.1, 3.2 à 3.5) ; reste à publier l'aide du site avec la version. Sur un téléphone non Huawei, le gel de HMS Core rendait la connexion et le retrait aléatoires ; la 1.16.0 réveille HMS Core avant chaque appel (testé sur le Pixel). Filmer de préférence sur un téléphone Huawei. Le profil et la photo du compte HUAWEI, cochés d'office sur l'écran d'autorisation, sont la connexion HUAWEI ID et non des permissions Health Kit : le dire dans la check-list (3.1).
 2. **Politique de confidentialité** (`architech-sport`) : pas un dispositif médical ; pays du serveur, chiffrement, absence de transfert hors de l'Union européenne.
 3. **Accord et droits des utilisateurs** (ADR à écrire, backend et application) : écran d'accord explicite au premier usage et à chaque changement de la politique ou des conditions ; trace côté serveur des autorisations HUAWEI ; export des données personnelles ; choix de garder ou supprimer l'historique au retrait. Utile au-delà de Huawei (RGPD).
 4. **Consoles** (le mainteneur) : scopes cochés, nom et icône de l'application dans AGC ; nom du développeur identique à celui de la politique.

@@ -4,7 +4,12 @@
     the Huawei Health app, to suggest it as step source (ADR 0013). Only
     this package: no QUERY_ALL_PACKAGES.
   -->
+  <!--
+    And the provider hosted by HMS Core's Health Kit process, queried to
+    thaw it (wakeHuaweiHms).
+  -->
   <queries>
     <package android:name="com.huawei.health" />
+    <provider android:authorities="com.huawei.android.sns.sdk" />
   </queries>
 </manifest>
