@@ -25,7 +25,7 @@ const KNOWN_SOURCES: Record<string, string> = {
   'com.google.android.apps.healthdata': 'Health Connect',
   'com.sec.android.app.shealth': 'Samsung Health',
   'com.fitbit.FitbitMobile': 'Fitbit',
-  'com.huawei.health': 'Huawei Health',
+  'com.huawei.health': 'HUAWEI Health',
   'com.xiaomi.wearable': 'Mi Fitness',
   'com.xiaomi.hm.health': 'Zepp Life',
   'com.huami.watch.hmwatchmanager': 'Zepp',

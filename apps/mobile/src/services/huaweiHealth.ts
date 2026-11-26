@@ -8,6 +8,7 @@ import {
   buildHourlyRequest,
   buildPolymerizeRequest,
   countHoursWithSteps,
+  huaweiAccessReasonOf,
   parsePolymerizeResponse,
   POLYMERIZE_URL,
 } from './huaweiRest'
@@ -36,21 +37,55 @@ const HUAWEI_APP_ID = '118922449'
 const HISTORY_DAYS = 30
 
 /**
+ * Why Step Challenge cannot read HUAWEI Health until the user acts
+ * (docs/reference/huawei-verification.md, scenarios 3.3 to 3.5):
+ *
+ * - notAuthorized: consent refused, withdrawn in the HUAWEI Health app,
+ *   or given without the step read permission;
+ * - switchOff: the HUAWEI Health Kit switch is off in the HUAWEI Health
+ *   app (Me → Privacy management).
+ */
+export type HuaweiAccessReason = 'notAuthorized' | 'switchOff'
+
+export class HuaweiAccessError extends Error {
+  constructor(
+    readonly reason: HuaweiAccessReason,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'HuaweiAccessError'
+  }
+}
+
+/**
  * Signs in to HUAWEI with the step read scope and returns the access
- * token (valid about an hour). Shows the consent screen the first time
- * only; afterwards it returns a fresh token without any screen.
+ * token (valid about an hour). Shows the consent screen when consent is
+ * missing (first time, or withdrawn in the HUAWEI Health app); otherwise
+ * it returns a fresh token without any screen.
  */
 export async function signInHuaweiHealth() {
-  const result =
-    (await HmsHealthAccount.signIn([
+  let result: HuaweiResult
+
+  try {
+    result = (await HmsHealthAccount.signIn([
       STEP_READ_SCOPE,
     ])) as HuaweiResult
+  } catch (error) {
+    throw new HuaweiAccessError(
+      'notAuthorized',
+      `HUAWEI Health sign-in failed: ${
+        error instanceof Error ? error.message : JSON.stringify(error)
+      }`,
+    )
+  }
 
   const token = result.body?.accessToken
+  const scopes = result.body?.authorizedScopes ?? []
 
   if (!result.isSuccess || !token) {
-    throw new Error(
-      `Huawei Health authorization failed: ${JSON.stringify({
+    throw new HuaweiAccessError(
+      'notAuthorized',
+      `HUAWEI Health authorization failed: ${JSON.stringify({
         isSuccess: result.isSuccess,
         errorMessage: result.errorMessage,
         returnCode: result.returnCode,
@@ -58,10 +93,15 @@ export async function signInHuaweiHealth() {
     )
   }
 
-  return {
-    token,
-    scopes: result.body?.authorizedScopes ?? [],
+  // Consent given with the step permission unticked.
+  if (!scopes.includes(STEP_READ_SCOPE)) {
+    throw new HuaweiAccessError(
+      'notAuthorized',
+      `HUAWEI Health step permission not granted: ${scopes.join(', ')}`,
+    )
   }
+
+  return { token, scopes }
 }
 
 /**
@@ -129,9 +169,7 @@ export async function getHuaweiLast30Days(): Promise<DayStat[]> {
   }
 
   if (!response.ok) {
-    throw new Error(
-      `Huawei Health read failed: HTTP ${response.status} ${await response.text()}`,
-    )
+    throw await readFailure(response)
   }
 
   return parsePolymerizeResponse(await response.json(), request)
@@ -146,12 +184,19 @@ export async function getHuaweiTodayHourlyDetail() {
   const response = await postPolymerize(buildHourlyRequest(new Date()), token)
 
   if (!response.ok) {
-    throw new Error(
-      `Huawei Health read failed: HTTP ${response.status} ${await response.text()}`,
-    )
+    throw await readFailure(response)
   }
 
   return countHoursWithSteps(await response.json())
+}
+
+/** Error of a failed REST read, typed when the user can fix it. */
+async function readFailure(response: Response) {
+  const body = await response.text()
+  const message = `HUAWEI Health read failed: HTTP ${response.status} ${body}`
+  const reason = huaweiAccessReasonOf(response.status, body)
+
+  return reason ? new HuaweiAccessError(reason, message) : new Error(message)
 }
 
 function postPolymerize(request: object, token: string) {

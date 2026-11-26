@@ -58,7 +58,7 @@ export async function getHuaweiHealthDiagnostic(): Promise<
     })
   } catch (error) {
     items.push({
-      label: 'Huawei Health Kit',
+      label: 'HUAWEI Health Kit',
       value:
         error instanceof Error
           ? error.message

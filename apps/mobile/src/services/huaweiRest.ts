@@ -110,6 +110,27 @@ export function countHoursWithSteps(response: unknown) {
   }
 }
 
+/**
+ * What the user must do after a failed read, or null when it is not up
+ * to them (network, server error): a rejected token means the consent
+ * was withdrawn; a refusal that mentions the privacy switch means the
+ * HUAWEI Health Kit switch is off in the HUAWEI Health app.
+ */
+export function huaweiAccessReasonOf(
+  status: number,
+  body: string,
+): 'notAuthorized' | 'switchOff' | null {
+  if (status === 401) {
+    return 'notAuthorized'
+  }
+
+  if (status === 403) {
+    return /switch|privacy/i.test(body) ? 'switchOff' : 'notAuthorized'
+  }
+
+  return null
+}
+
 type Group = NonNullable<PolymerizeResponse['group']>[number]
 
 function groupSteps(group: Group) {

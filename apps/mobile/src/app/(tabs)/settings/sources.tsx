@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Alert, Platform } from 'react-native'
 
+import HuaweiAccessNotice from '@/components/HuaweiAccessNotice'
 import StepSourcesList from '@/components/StepSourcesList'
 import RadioGroup from '@/components/settings/RadioGroup'
 import {
@@ -19,8 +20,10 @@ import { openPublicPage } from '@/constants/links'
 import { useFormatters } from '@/i18n'
 import {
   getHuaweiLast30Days,
+  HuaweiAccessError,
   revokeHuaweiHealth,
   signInHuaweiHealth,
+  type HuaweiAccessReason,
 } from '@/services/huaweiHealth'
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import {
@@ -41,7 +44,9 @@ import { useTheme } from '@/theme'
 
 const SOURCES: StepSource[] = ['healthConnect', 'huawei']
 
-type HuaweiToday = { steps: number; readAt: Date } | { error: string }
+type HuaweiToday =
+  | { steps: number; readAt: Date }
+  | { error: string; reason?: HuaweiAccessReason }
 
 /**
  * Where Step Challenge reads the steps (ADR 0013): Health Connect or
@@ -103,7 +108,10 @@ export default function StepSourceSettingsScreen() {
       }
 
       if (chosen === 'huawei') {
-        setHuaweiToday(failure)
+        setHuaweiToday({
+          ...failure,
+          reason: error instanceof HuaweiAccessError ? error.reason : undefined,
+        })
       } else {
         setSources(failure)
       }
@@ -148,10 +156,12 @@ export default function StepSourceSettingsScreen() {
         // Back to Health Connect: Step Challenge gives up its access to
         // Huawei Health. A failure must not keep the user on Huawei.
         if (previous === 'huawei') {
-          await revokeHuaweiHealth().catch((error) => {
-            console.error('Huawei Health revocation failed:', error)
-            setMessage(t('settings.sources.revokeFailed'))
-          })
+          await revokeHuaweiHealth()
+            .then(() => setMessage(t('settings.sources.revoked')))
+            .catch((error) => {
+              console.error('Huawei Health revocation failed:', error)
+              setMessage(t('settings.sources.revokeFailed'))
+            })
         }
       } catch (error) {
         console.error('Step source change failed:', error)
@@ -194,6 +204,25 @@ export default function StepSourceSettingsScreen() {
     [source, switching, switchTo, t],
   )
 
+  // Huawei's verification (scenario 3.2): an explicit way to withdraw
+  // the access, besides choosing Health Connect.
+  const confirmRevoke = () => {
+    Alert.alert(
+      t('settings.sources.revokeTitle'),
+      t('settings.sources.revokeMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.sources.revoke'),
+          style: 'destructive',
+          onPress: () => {
+            switchTo('healthConnect')
+          },
+        },
+      ],
+    )
+  }
+
   if (Platform.OS !== 'android') {
     return (
       <SettingsPage>
@@ -231,21 +260,27 @@ export default function StepSourceSettingsScreen() {
         <>
           <Subtitle>{t('settings.sources.options.huawei.label')}</Subtitle>
 
-          <Card>
-            {huaweiToday === null ? (
-              <ActivityIndicator color={colors.primary} />
-            ) : 'error' in huaweiToday ? (
-              <Description>{huaweiToday.error}</Description>
-            ) : (
-              <InfoRow
-                label={t('settings.sources.huaweiToday', {
-                  time: formatDate(huaweiToday.readAt, { timeStyle: 'short' }),
-                })}
-                value={formatNumber(huaweiToday.steps)}
-                last
-              />
-            )}
-          </Card>
+          {huaweiToday !== null &&
+          'error' in huaweiToday &&
+          huaweiToday.reason ? (
+            <HuaweiAccessNotice reason={huaweiToday.reason} onRetry={load} />
+          ) : (
+            <Card>
+              {huaweiToday === null ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : 'error' in huaweiToday ? (
+                <Description>{huaweiToday.error}</Description>
+              ) : (
+                <InfoRow
+                  label={t('settings.sources.huaweiToday', {
+                    time: formatDate(huaweiToday.readAt, { timeStyle: 'short' }),
+                  })}
+                  value={formatNumber(huaweiToday.steps)}
+                  last
+                />
+              )}
+            </Card>
+          )}
 
           <Description>{t('settings.sources.huaweiHint')}</Description>
 
@@ -253,6 +288,12 @@ export default function StepSourceSettingsScreen() {
             title={t('settings.sources.refresh')}
             onPress={load}
             disabled={loading}
+          />
+
+          <SecondaryButton
+            title={t('settings.sources.revoke')}
+            onPress={confirmRevoke}
+            disabled={switching}
           />
         </>
       ) : healthConnect === false ? (

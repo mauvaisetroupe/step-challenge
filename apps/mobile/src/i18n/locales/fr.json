@@ -82,7 +82,7 @@
     },
     "help": {
       "title": "Aide",
-      "detail": "Santé Connect, montre Huawei, invitations"
+      "detail": "Santé Connect, HUAWEI Health, invitations"
     },
     "sources": {
       "title": "Source des pas",
@@ -93,8 +93,8 @@
           "hint": "Garmin, Samsung, Fitbit, Xiaomi, Pixel… et le téléphone"
         },
         "huawei": {
-          "label": "Huawei Health",
-          "hint": "Montres et bracelets Huawei (Santé Connect ne reçoit pas leurs pas)"
+          "label": "HUAWEI Health",
+          "hint": "Montres et bracelets synchronisés avec HUAWEI Health (Santé Connect ne reçoit pas leurs pas)"
         }
       },
       "confirmTitle": "Lire les pas dans {{source}} ?",
@@ -103,13 +103,17 @@
       "switchError": "Impossible de changer de source.",
       "healthConnectDescription": "Les applications qui enregistrent tes pas dans Santé Connect aujourd'hui, et le total que Step Challenge utilise.",
       "huaweiToday": "Aujourd'hui (lu à {{time}})",
-      "huaweiHint": "Step Challenge lit tes pas dans le cloud de Huawei : ils y arrivent quand l'application Huawei Health se synchronise, parfois avec quelques minutes de retard sur la montre. Si rien n'arrive, vérifie dans Huawei Health → Moi → Gestion de la confidentialité que les liens cloud sont activés.",
+      "huaweiHint": "Step Challenge lit tes pas dans le cloud de HUAWEI Health : ils y arrivent quand l'application HUAWEI Health se synchronise, parfois avec quelques minutes de retard sur la montre. Si rien n'arrive, vérifie dans HUAWEI Health → Moi → Gestion de la confidentialité que les liens cloud sont activés.",
       "openHealthConnect": "Ouvrir Santé Connect",
       "refresh": "Actualiser",
       "androidOnly": "La source des pas ne se choisit que dans l'application Android.",
       "noHealthConnect": "Santé Connect n'est pas disponible sur ce téléphone.",
       "help": "Besoin d'aide ?",
-      "revokeFailed": "Step Challenge n'a pas pu retirer son accès à Huawei Health. Tu peux le faire toi-même dans Huawei Health → Moi → Gestion de la confidentialité : retire Step Challenge des applications autorisées."
+      "revoke": "Retirer l'accès à HUAWEI Health",
+      "revokeTitle": "Retirer l'accès à HUAWEI Health ?",
+      "revokeMessage": "Step Challenge ne lira plus tes pas dans HUAWEI Health et les relira dans Santé Connect. Les pas déjà envoyés restent ; pour les effacer, supprime ton compte (Plus → Compte).",
+      "revoked": "Accès à HUAWEI Health retiré. Pour l'autoriser de nouveau, choisis HUAWEI Health ci-dessus.",
+      "revokeFailed": "Step Challenge n'a pas pu retirer son accès à HUAWEI Health. Tu peux le faire toi-même dans HUAWEI Health → Moi → Gestion de la confidentialité : retire Step Challenge des applications autorisées."
     },
     "activity": {
       "title": "Activité",
@@ -287,9 +291,9 @@
       "percentOfGoal": "{{percent}} % de l'objectif"
     },
     "huaweiSuggestion": {
-      "title": "Une montre Huawei ?",
-      "text": "Les montres et bracelets Huawei n'envoient pas leurs pas à Santé Connect : Step Challenge peut les lire dans Huawei Health, installé sur ce téléphone.",
-      "use": "Utiliser Huawei Health",
+      "title": "Tes pas sont dans HUAWEI Health ?",
+      "text": "HUAWEI Health est installé sur ce téléphone. Si ta montre ou ton bracelet s'y synchronise, Step Challenge peut y lire tes pas : ils ne passent pas par Santé Connect.",
+      "use": "Utiliser HUAWEI Health",
       "dismiss": "Non merci"
     },
     "weekRank": {
@@ -494,7 +498,7 @@
     "notGranted": "Non accordée",
     "none": "Aucune",
     "huawei": {
-      "authorization": "Autorisation Huawei",
+      "authorization": "Autorisation HUAWEI Health",
       "todaySteps": "Pas aujourd'hui",
       "history_one": "{{count}} jour (API REST)",
       "history_many": "{{count}} jours (API REST)",
@@ -519,12 +523,24 @@
     "sync": "La synchronisation en arrière-plan nécessite Santé Connect, qui n'est pas disponible sur ce téléphone.",
     "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui nécessitent Santé Connect, non disponible sur ce téléphone."
   },
+  "huaweiAccess": {
+    "notAuthorized": {
+      "title": "Step Challenge n'a pas accès à tes pas dans HUAWEI Health",
+      "text": "L'autorisation de lire tes pas a été retirée, refusée, ou donnée sans la case des pas. Autorise à nouveau Step Challenge, ou reviens à Santé Connect dans Plus → Source des pas.",
+      "action": "Autoriser HUAWEI Health"
+    },
+    "switchOff": {
+      "title": "HUAWEI Health Kit est désactivé",
+      "text": "Step Challenge ne peut plus lire tes pas. Dans l'application HUAWEI Health, va dans Moi → Gestion de la confidentialité et active HUAWEI Health Kit, puis réessaie.",
+      "action": "Réessayer"
+    }
+  },
   "huaweiSource": {
-    "hourly": "Le détail heure par heure n'est pas disponible avec Huawei Health : Step Challenge n'y lit que le total de chaque jour.",
-    "activityScore": "Le score d'activité se calcule à partir de tes pas minute par minute, que Step Challenge ne lit pas dans Huawei Health.",
-    "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui ne sont pas disponibles avec Huawei Health.",
-    "sync": "Avec Huawei Health, tes pas sont envoyés à l'ouverture de l'application et quand tu actualises un écran, pas en arrière-plan.",
-    "statsNote": "Pas lus dans Huawei Health"
+    "hourly": "Le détail heure par heure n'est pas disponible avec HUAWEI Health : Step Challenge n'y lit que le total de chaque jour.",
+    "activityScore": "Le score d'activité se calcule à partir de tes pas minute par minute, que Step Challenge ne lit pas dans HUAWEI Health.",
+    "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui ne sont pas disponibles avec HUAWEI Health.",
+    "sync": "Avec HUAWEI Health, tes pas sont envoyés à l'ouverture de l'application et quand tu actualises un écran, pas en arrière-plan.",
+    "statsNote": "Pas lus dans HUAWEI Health"
   },
   "badges": {
     "title": "Badges",

@@ -80,7 +80,7 @@
     },
     "help": {
       "title": "Help",
-      "detail": "Health Connect, Huawei watch, invitations"
+      "detail": "Health Connect, HUAWEI Health, invitations"
     },
     "sources": {
       "title": "Step source",
@@ -91,8 +91,8 @@
           "hint": "Garmin, Samsung, Fitbit, Xiaomi, Pixel… and the phone"
         },
         "huawei": {
-          "label": "Huawei Health",
-          "hint": "Huawei watches and bands (Health Connect doesn't receive their steps)"
+          "label": "HUAWEI Health",
+          "hint": "Watches and bands synced with HUAWEI Health (Health Connect doesn't receive their steps)"
         }
       },
       "confirmTitle": "Read steps from {{source}}?",
@@ -101,13 +101,17 @@
       "switchError": "Couldn't change the source.",
       "healthConnectDescription": "The apps that record your steps in Health Connect today, and the total Step Challenge uses.",
       "huaweiToday": "Today (read at {{time}})",
-      "huaweiHint": "Step Challenge reads your steps from Huawei's cloud: they get there when the Huawei Health app syncs, sometimes a few minutes after the watch. If nothing arrives, check in Huawei Health → Me → Privacy management that the cloud links are on.",
+      "huaweiHint": "Step Challenge reads your steps from the HUAWEI Health cloud: they get there when the HUAWEI Health app syncs, sometimes a few minutes after the watch. If nothing arrives, check in HUAWEI Health → Me → Privacy management that the cloud links are on.",
       "openHealthConnect": "Open Health Connect",
       "refresh": "Refresh",
       "androidOnly": "The step source can only be chosen in the Android app.",
       "noHealthConnect": "Health Connect is not available on this phone.",
       "help": "Need help?",
-      "revokeFailed": "Step Challenge could not remove its access to Huawei Health. You can do it yourself in Huawei Health → Me → Privacy management: remove Step Challenge from the authorized apps."
+      "revoke": "Remove access to HUAWEI Health",
+      "revokeTitle": "Remove access to HUAWEI Health?",
+      "revokeMessage": "Step Challenge will no longer read your steps in HUAWEI Health and will read them from Health Connect again. Steps already sent stay; to erase them, delete your account (More → Account).",
+      "revoked": "Access to HUAWEI Health removed. To allow it again, choose HUAWEI Health above.",
+      "revokeFailed": "Step Challenge could not remove its access to HUAWEI Health. You can do it yourself in HUAWEI Health → Me → Privacy management: remove Step Challenge from the authorized apps."
     },
     "activity": {
       "title": "Activity",
@@ -279,9 +283,9 @@
       "percentOfGoal": "{{percent}}% of the goal"
     },
     "huaweiSuggestion": {
-      "title": "A Huawei watch?",
-      "text": "Huawei watches and bands don't send their steps to Health Connect: Step Challenge can read them in Huawei Health, installed on this phone.",
-      "use": "Use Huawei Health",
+      "title": "Are your steps in HUAWEI Health?",
+      "text": "HUAWEI Health is installed on this phone. If your watch or band syncs with it, Step Challenge can read your steps there: they don't go through Health Connect.",
+      "use": "Use HUAWEI Health",
       "dismiss": "No thanks"
     },
     "weekRank": {
@@ -479,7 +483,7 @@
     "notGranted": "Not granted",
     "none": "None",
     "huawei": {
-      "authorization": "Huawei authorization",
+      "authorization": "HUAWEI Health authorization",
       "todaySteps": "Steps today",
       "history_one": "{{count}} day (REST API)",
       "history_other": "{{count}} days (REST API)",
@@ -503,12 +507,24 @@
     "sync": "Background sync needs Health Connect, which is not available on this phone.",
     "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which need Health Connect, not available on this phone."
   },
+  "huaweiAccess": {
+    "notAuthorized": {
+      "title": "Step Challenge can't access your steps in HUAWEI Health",
+      "text": "The permission to read your steps was withdrawn, refused, or given without the steps box. Authorize Step Challenge again, or go back to Health Connect in More → Step source.",
+      "action": "Authorize HUAWEI Health"
+    },
+    "switchOff": {
+      "title": "HUAWEI Health Kit is turned off",
+      "text": "Step Challenge can no longer read your steps. In the HUAWEI Health app, go to Me → Privacy management and turn on HUAWEI Health Kit, then try again.",
+      "action": "Try again"
+    }
+  },
   "huaweiSource": {
-    "hourly": "The hour-by-hour detail isn't available with Huawei Health: Step Challenge only reads each day's total from it.",
-    "activityScore": "The activity score is computed from your steps minute by minute, which Step Challenge doesn't read from Huawei Health.",
-    "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which aren't available with Huawei Health.",
-    "sync": "With Huawei Health, your steps are sent when the app opens and when you refresh a screen, not in the background.",
-    "statsNote": "Steps read from Huawei Health"
+    "hourly": "The hour-by-hour detail isn't available with HUAWEI Health: Step Challenge only reads each day's total from it.",
+    "activityScore": "The activity score is computed from your steps minute by minute, which Step Challenge doesn't read from HUAWEI Health.",
+    "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which aren't available with HUAWEI Health.",
+    "sync": "With HUAWEI Health, your steps are sent when the app opens and when you refresh a screen, not in the background.",
+    "statsNote": "Steps read from HUAWEI Health"
   },
   "badges": {
     "title": "Badges",

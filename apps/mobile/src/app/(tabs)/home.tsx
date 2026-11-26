@@ -21,12 +21,17 @@ import {
   syncActivityMinutes,
   syncStatsToServer,
 } from '../../services/stepSync'
-import { getHuaweiLast30Days } from '@/services/huaweiHealth'
+import {
+  getHuaweiLast30Days,
+  HuaweiAccessError,
+  type HuaweiAccessReason,
+} from '@/services/huaweiHealth'
 import { useHuaweiSuggestion } from '@/services/huaweiSuggestion'
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
 import { loadStepSource } from '@/services/stepSource'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import HuaweiAccessNotice from '@/components/HuaweiAccessNotice'
 import HuaweiSuggestionCard from '@/components/home/HuaweiSuggestionCard'
 import LastWeekCard from '@/components/home/LastWeekCard'
 import LevelCard from '@/components/home/LevelCard'
@@ -65,6 +70,9 @@ export default function HomeScreen() {
 
   const [todaySteps, setTodaySteps] = useState<number | null>(null)
   const [stepsError, setStepsError] = useState<string | null>(null)
+  // HUAWEI Health unreadable until the user acts (consent, switch).
+  const [huaweiAccess, setHuaweiAccess] =
+    useState<HuaweiAccessReason | null>(null)
   // Phone without Health Connect (Huawei): says where the steps come from.
   const [noHealthConnect, setNoHealthConnect] = useState(false)
   const [rank, setRank] = useState<WeekRank | null>(null)
@@ -116,6 +124,7 @@ export default function HomeScreen() {
             stats.find((day) => day.date === todayKey)?.steps ?? 0
           setTodaySteps(deviceToday)
           setStepsError(null)
+          setHuaweiAccess(null)
 
           try {
             await syncStatsToServer(stats)
@@ -124,12 +133,21 @@ export default function HomeScreen() {
           }
         } catch (err) {
           console.error('Huawei Health step read error:', err)
+
+          if (err instanceof HuaweiAccessError) {
+            setHuaweiAccess(err.reason)
+          }
+
           setStepsError(
             err instanceof Error
               ? err.message
               : t('home.healthConnectError'),
           )
         }
+      }
+
+      if (!withHuawei) {
+        setHuaweiAccess(null)
       }
 
       if (Platform.OS !== 'web' && !withHealthConnect && !withHuawei) {
@@ -273,7 +291,9 @@ export default function HomeScreen() {
         >
           <Text style={styles.subtitle}>{t('home.today')}</Text>
 
-          {stepsError && todaySteps === null ? (
+          {huaweiAccess ? (
+            <HuaweiAccessNotice reason={huaweiAccess} onRetry={load} />
+          ) : stepsError && todaySteps === null ? (
             <Text style={styles.error}>{stepsError}</Text>
           ) : (
             <View style={styles.ring}>
