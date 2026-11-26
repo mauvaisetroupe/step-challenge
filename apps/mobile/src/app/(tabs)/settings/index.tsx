@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import TabScreenHeader from '@/components/TabScreenHeader'
 import { NavRow } from '@/components/settings/ui'
+import { openPublicPage } from '@/constants/links'
 import { LANGUAGE_NAMES, useFormatters, useLanguage } from '@/i18n'
 import { useBadgeSummary, useHasNewBadges } from '@/services/newBadges'
 import { useSleepHours } from '@/services/sleepHours'
@@ -16,8 +17,7 @@ type Entry = {
   title: string
   detail?: string
   tag?: string
-  href: Href
-}
+} & ({ href: Href } | { onPress: () => void })
 
 /**
  * More menu: my account and my badges, then the settings, one entry per
@@ -127,6 +127,11 @@ export default function SettingsScreen() {
           detail: t('settings.legal.detail'),
           href: '/settings/legal',
         },
+        {
+          title: t('settings.help.title'),
+          detail: t('settings.help.detail'),
+          onPress: () => openPublicPage('help/'),
+        },
       ],
     },
   ]
@@ -153,7 +158,11 @@ export default function SettingsScreen() {
                   title={entry.title}
                   detail={entry.detail}
                   tag={entry.tag}
-                  onPress={() => router.push(entry.href)}
+                  onPress={
+                    'href' in entry
+                      ? () => router.push(entry.href)
+                      : entry.onPress
+                  }
                   last={index === group.entries.length - 1}
                 />
               ))}

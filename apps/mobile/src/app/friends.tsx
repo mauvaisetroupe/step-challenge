@@ -38,6 +38,7 @@ import ReportUserModal, {
   type ReportTarget,
 } from '../components/ReportUserModal'
 import UserBadge from '../components/UserBadge'
+import { openPublicPage } from '@/constants/links'
 import { useFormatters, type Formatters } from '@/i18n'
 import { useTheme, useThemedStyles, type Colors } from '@/theme'
 
@@ -362,6 +363,14 @@ export default function FriendsScreen() {
         </Pressable>
       )}
 
+      <Pressable
+        style={styles.helpLink}
+        onPress={() => openPublicPage('help/invite-friends')}
+        accessibilityRole="link"
+      >
+        <Text style={styles.helpLinkText}>{t('friends.invite.help')}</Text>
+      </Pressable>
+
       {error && <Text style={styles.error}>{error}</Text>}
 
       <Text style={styles.sectionTitle}>
@@ -561,6 +570,19 @@ const createStyles = (c: Colors) =>
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: c.surfaceAlt,
+    },
+
+    helpLink: {
+      marginTop: 4,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    helpLinkText: {
+      color: c.primary,
+      fontSize: 15,
+      fontWeight: '600',
     },
 
     secondaryButtonText: {

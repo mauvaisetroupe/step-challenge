@@ -78,6 +78,10 @@
       "terms": "Terms of use",
       "privacy": "Privacy policy"
     },
+    "help": {
+      "title": "Help",
+      "detail": "Health Connect, Huawei watch, invitations"
+    },
     "sources": {
       "title": "Step source",
       "description": "Where Step Challenge reads your steps. One source at a time: steps are never added up.",
@@ -101,7 +105,9 @@
       "openHealthConnect": "Open Health Connect",
       "refresh": "Refresh",
       "androidOnly": "The step source can only be chosen in the Android app.",
-      "noHealthConnect": "Health Connect is not available on this phone."
+      "noHealthConnect": "Health Connect is not available on this phone.",
+      "help": "Need help?",
+      "revokeFailed": "Step Challenge could not remove its access to Huawei Health. You can do it yourself in Huawei Health → Me → Privacy management: remove Step Challenge from the authorized apps."
     },
     "activity": {
       "title": "Activity",
@@ -126,9 +132,10 @@
     "invite": {
       "button": "Invite friends",
       "creating": "Creating the link...",
-      "message": "Join me on Step Challenge to compare our steps! Open this link (valid for 7 days): {{url}}",
+      "message": "Join me on Step Challenge to compare our steps! Open this link: it installs the app if needed, then makes us friends (valid for 7 days). {{url}}",
       "tooMany": "You already have too many active invitation links. Deactivate one below, or wait for it to expire.",
-      "error": "Cannot create an invitation link."
+      "error": "Cannot create an invitation link.",
+      "help": "How does an invitation work?"
     },
     "invitations": {
       "title_one": "Active invitation link ({{count}})",
@@ -270,6 +277,12 @@
     "healthConnectError": "Cannot read steps from Health Connect",
     "ring": {
       "percentOfGoal": "{{percent}}% of the goal"
+    },
+    "huaweiSuggestion": {
+      "title": "A Huawei watch?",
+      "text": "Huawei watches and bands don't send their steps to Health Connect: Step Challenge can read them in Huawei Health, installed on this phone.",
+      "use": "Use Huawei Health",
+      "dismiss": "No thanks"
     },
     "weekRank": {
       "title": "This week",

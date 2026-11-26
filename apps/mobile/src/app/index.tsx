@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 
 import { getSessionToken } from '../auth/session'
+import { takeInstallInvitation } from '@/services/installInvitation'
 
 /**
  * User id stored by app versions prior to Google sign-in (ADR 0001).
@@ -14,6 +15,8 @@ const LEGACY_USER_ID_KEY = '@step-challenge/user-id-v2'
 
 export default function IndexScreen() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null)
+  // Installed from an invitation page (ADR 0015): open it right away.
+  const [invitation, setInvitation] = useState<string | null>(null)
 
   useEffect(() => {
     AsyncStorage.removeItem(LEGACY_USER_ID_KEY).catch((error) => {
@@ -22,12 +25,16 @@ export default function IndexScreen() {
   }, [])
 
   useEffect(() => {
-    getSessionToken()
-      .then((token) => setSignedIn(token !== null))
-      .catch((error) => {
+    Promise.all([
+      getSessionToken().catch((error) => {
         console.error('Session read error:', error)
-        setSignedIn(false)
-      })
+        return null
+      }),
+      takeInstallInvitation(),
+    ]).then(([token, code]) => {
+      setInvitation(code)
+      setSignedIn(token !== null)
+    })
   }, [])
 
   if (signedIn === null) {
@@ -42,6 +49,11 @@ export default function IndexScreen() {
         <ActivityIndicator size="large" />
       </View>
     )
+  }
+
+  // The invitation screen asks to sign in first when needed.
+  if (invitation) {
+    return <Redirect href={`/i/${invitation}`} />
   }
 
   return <Redirect href={signedIn ? '/home' : '/sign-in'} />

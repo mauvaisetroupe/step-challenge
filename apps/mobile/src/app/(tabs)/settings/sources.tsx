@@ -9,14 +9,17 @@ import {
   Card,
   Description,
   InfoRow,
+  NavRow,
   PrimaryButton,
   SecondaryButton,
   SettingsPage,
   Subtitle,
 } from '@/components/settings/ui'
+import { openPublicPage } from '@/constants/links'
 import { useFormatters } from '@/i18n'
 import {
   getHuaweiLast30Days,
+  revokeHuaweiHealth,
   signInHuaweiHealth,
 } from '@/services/huaweiHealth'
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
@@ -118,6 +121,8 @@ export default function StepSourceSettingsScreen() {
 
   const switchTo = useCallback(
     async (next: StepSource) => {
+      const previous = source
+
       setSwitching(true)
       setMessage(null)
 
@@ -139,6 +144,15 @@ export default function StepSourceSettingsScreen() {
         })
 
         await load()
+
+        // Back to Health Connect: Step Challenge gives up its access to
+        // Huawei Health. A failure must not keep the user on Huawei.
+        if (previous === 'huawei') {
+          await revokeHuaweiHealth().catch((error) => {
+            console.error('Huawei Health revocation failed:', error)
+            setMessage(t('settings.sources.revokeFailed'))
+          })
+        }
       } catch (error) {
         console.error('Step source change failed:', error)
         setMessage(
@@ -150,7 +164,7 @@ export default function StepSourceSettingsScreen() {
         setSwitching(false)
       }
     },
-    [load, t],
+    [load, source, t],
   )
 
   const confirmSwitch = useCallback(
@@ -275,6 +289,18 @@ export default function StepSourceSettingsScreen() {
           />
         </>
       )}
+
+      <Card>
+        <NavRow
+          title={t('settings.sources.help')}
+          onPress={() =>
+            openPublicPage(
+              source === 'huawei' ? 'help/huawei' : 'help/health-connect',
+            )
+          }
+          last
+        />
+      </Card>
     </SettingsPage>
   )
 }

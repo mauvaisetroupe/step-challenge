@@ -11,8 +11,17 @@ const PUBLIC_SITE_URL = 'https://sport.architech.lu'
 
 const SECTION = 'step-challenge'
 
-/** Pages of the public site opened from the app. */
-export type PublicPage = 'agreement' | 'privacy'
+/**
+ * Pages of the public site opened from the app. A trailing slash is a
+ * section index (help/), the others are .html pages.
+ */
+export type PublicPage =
+  | 'agreement'
+  | 'privacy'
+  | 'help/'
+  | 'help/health-connect'
+  | 'help/huawei'
+  | 'help/invite-friends'
 
 // Languages of the public site: English at the root (the addresses
 // declared to Google Play and Huawei), the others under /<language>/,
@@ -25,10 +34,11 @@ const SITE_LANGUAGES = ['en', 'fr']
  */
 export function publicPageUrl(page: PublicPage) {
   const language = i18n.resolvedLanguage ?? 'en'
+  const path = page.endsWith('/') ? page : `${page}.html`
 
   return language !== 'en' && SITE_LANGUAGES.includes(language)
-    ? `${PUBLIC_SITE_URL}/${language}/${SECTION}/${page}.html`
-    : `${PUBLIC_SITE_URL}/${SECTION}/${page}.html`
+    ? `${PUBLIC_SITE_URL}/${language}/${SECTION}/${path}`
+    : `${PUBLIC_SITE_URL}/${SECTION}/${path}`
 }
 
 /** Opens a page of the public site in the in-app browser. */

@@ -1,4 +1,7 @@
-import { HmsHealthAccount } from '@hmscore/react-native-hms-health'
+import {
+  HmsConsentsController,
+  HmsHealthAccount,
+} from '@hmscore/react-native-hms-health'
 
 import type { DayStat } from '../api/steps'
 import {
@@ -61,10 +64,47 @@ export async function signInHuaweiHealth() {
   }
 }
 
-/** Kept for the Huawei Health settings screen. */
-export async function configureHuaweiHealth() {
-  await signInHuaweiHealth()
-  return true
+/**
+ * The library's typings miss the native method (HmsConsentsController
+ * in android/, kits/consents).
+ */
+const consents = HmsConsentsController as unknown as {
+  cancelAuthorizationAll(deleteData: boolean): Promise<HuaweiResult>
+}
+
+/** Beyond this, HMS Core is probably frozen (ADR 0013): give up. */
+const REVOKE_TIMEOUT_MS = 15_000
+
+/**
+ * Cancels every Health Kit scope granted to Step Challenge, without
+ * deleting data (the app writes none): the next sign-in asks for
+ * consent again. Goes through HMS Core's Health Kit process, the one
+ * Android may freeze, hence the time limit.
+ */
+export async function revokeHuaweiHealth() {
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error('Huawei Health revocation timed out')),
+      REVOKE_TIMEOUT_MS,
+    )
+  })
+
+  try {
+    const result = (await Promise.race([
+      consents.cancelAuthorizationAll(false),
+      timeout,
+    ])) as HuaweiResult
+
+    if (!result?.isSuccess) {
+      throw new Error(
+        `Huawei Health revocation failed: ${JSON.stringify(result)}`,
+      )
+    }
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 /**

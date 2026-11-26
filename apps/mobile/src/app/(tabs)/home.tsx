@@ -22,10 +22,12 @@ import {
   syncStatsToServer,
 } from '../../services/stepSync'
 import { getHuaweiLast30Days } from '@/services/huaweiHealth'
+import { useHuaweiSuggestion } from '@/services/huaweiSuggestion'
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
 import { loadStepSource } from '@/services/stepSource'
 import TabScreenHeader from '../../components/TabScreenHeader'
+import HuaweiSuggestionCard from '@/components/home/HuaweiSuggestionCard'
 import LastWeekCard from '@/components/home/LastWeekCard'
 import LevelCard from '@/components/home/LevelCard'
 import StreakCard from '@/components/home/StreakCard'
@@ -76,6 +78,8 @@ export default function HomeScreen() {
   const [historyError, setHistoryError] = useState(false)
   // Badge level; null without badges on the server (older API) or on error.
   const [badges, setBadges] = useState<BadgeReport | null>(null)
+  // Huawei Health installed while reading Health Connect (ADR 0013).
+  const huaweiSuggestion = useHuaweiSuggestion()
   const [loaded, setLoaded] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const loading = useRef(false)
@@ -279,6 +283,13 @@ export default function HomeScreen() {
 
           {noHealthConnect && (
             <Text style={styles.notice}>{noHealthConnectNotice(t)}</Text>
+          )}
+
+          {huaweiSuggestion.visible && (
+            <HuaweiSuggestionCard
+              onUseHuawei={() => router.push('/settings/sources')}
+              onDismiss={huaweiSuggestion.dismiss}
+            />
           )}
 
           {/* From today to the week: the streak right under the ring

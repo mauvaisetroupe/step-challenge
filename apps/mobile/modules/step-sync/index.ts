@@ -11,6 +11,7 @@ type StepSyncNativeModule = {
   schedule(intervalMinutes: number): void
   setSleepHours(bedMinute: number, wakeMinute: number): void
   setStepSource(source: string): void
+  isHuaweiHealthInstalled(): boolean
   getHistory(): string
 }
 
@@ -51,6 +52,11 @@ export function setNativeSleepHours(bedMinute: number, wakeMinute: number) {
  */
 export function setNativeStepSource(source: 'healthConnect' | 'huawei') {
   native?.setStepSource(source)
+}
+
+/** Whether the Huawei Health app is installed (Android only). */
+export function isHuaweiHealthInstalled() {
+  return native?.isHuaweiHealthInstalled() ?? false
 }
 
 export function getNativeSyncHistory(): NativeSyncRun[] {

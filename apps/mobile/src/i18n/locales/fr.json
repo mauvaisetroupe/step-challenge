@@ -80,6 +80,10 @@
       "terms": "Conditions d'utilisation",
       "privacy": "Politique de confidentialité"
     },
+    "help": {
+      "title": "Aide",
+      "detail": "Santé Connect, montre Huawei, invitations"
+    },
     "sources": {
       "title": "Source des pas",
       "description": "D'où Step Challenge lit tes pas. Une seule source à la fois : les pas ne sont jamais additionnés.",
@@ -103,7 +107,9 @@
       "openHealthConnect": "Ouvrir Santé Connect",
       "refresh": "Actualiser",
       "androidOnly": "La source des pas ne se choisit que dans l'application Android.",
-      "noHealthConnect": "Santé Connect n'est pas disponible sur ce téléphone."
+      "noHealthConnect": "Santé Connect n'est pas disponible sur ce téléphone.",
+      "help": "Besoin d'aide ?",
+      "revokeFailed": "Step Challenge n'a pas pu retirer son accès à Huawei Health. Tu peux le faire toi-même dans Huawei Health → Moi → Gestion de la confidentialité : retire Step Challenge des applications autorisées."
     },
     "activity": {
       "title": "Activité",
@@ -129,9 +135,10 @@
     "invite": {
       "button": "Inviter des amis",
       "creating": "Création du lien...",
-      "message": "Rejoins-moi sur Step Challenge pour comparer nos pas ! Ouvre ce lien (valable 7 jours) : {{url}}",
+      "message": "Rejoins-moi sur Step Challenge pour comparer nos pas ! Ouvre ce lien : il installe l'appli si besoin, puis nous rend amis (valable 7 jours). {{url}}",
       "tooMany": "Tu as déjà trop de liens d'invitation actifs. Désactives-en un ci-dessous, ou attends qu'il expire.",
-      "error": "Impossible de créer un lien d'invitation."
+      "error": "Impossible de créer un lien d'invitation.",
+      "help": "Comment se passe une invitation ?"
     },
     "invitations": {
       "title_one": "Lien d'invitation actif ({{count}})",
@@ -278,6 +285,12 @@
     "healthConnectError": "Impossible de lire les pas de Santé Connect",
     "ring": {
       "percentOfGoal": "{{percent}} % de l'objectif"
+    },
+    "huaweiSuggestion": {
+      "title": "Une montre Huawei ?",
+      "text": "Les montres et bracelets Huawei n'envoient pas leurs pas à Santé Connect : Step Challenge peut les lire dans Huawei Health, installé sur ce téléphone.",
+      "use": "Utiliser Huawei Health",
+      "dismiss": "Non merci"
     },
     "weekRank": {
       "title": "Cette semaine",

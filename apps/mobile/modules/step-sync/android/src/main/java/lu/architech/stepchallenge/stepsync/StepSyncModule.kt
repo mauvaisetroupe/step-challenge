@@ -1,6 +1,7 @@
 package lu.architech.stepchallenge.stepsync
 
 import android.content.Context
+import android.content.pm.PackageManager
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -48,9 +49,26 @@ class StepSyncModule : Module() {
       SyncStore(context).saveStepSource(source)
     }
 
+    /**
+     * Whether the Huawei Health app is installed, to suggest it as step
+     * source (ADR 0013). Visible thanks to <queries> in the manifest.
+     */
+    Function("isHuaweiHealthInstalled") {
+      try {
+        context.packageManager.getPackageInfo(HUAWEI_HEALTH_PACKAGE, 0)
+        true
+      } catch (e: PackageManager.NameNotFoundException) {
+        false
+      }
+    }
+
     /** Background runs, most recent first, as a JSON array. */
     Function("getHistory") {
       SyncStore(context).historyJson()
     }
+  }
+
+  private companion object {
+    const val HUAWEI_HEALTH_PACKAGE = "com.huawei.health"
   }
 }
