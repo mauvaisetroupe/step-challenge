@@ -1,7 +1,7 @@
 # ADR 0013 — Une seule source de pas, choisie par l'utilisateur ; Huawei Health lu par son API cloud
 
 - **Statut** : Accepté
-- **Date** : 2026-11-24
+- **Date** : 2026-11-24, amendé le 2026-11-26 (suggestion de Huawei Health sur l'Accueil, annulation de l'autorisation HUAWEI)
 - **Décideur** : mauvaisetroupe
 
 ## Contexte
@@ -104,8 +104,28 @@ Le podomètre du téléphone du build AppGallery n'est pas une source au choix :
 
 - **Gardé sur le téléphone** (`AsyncStorage`, comme les heures de sommeil), jamais envoyé au serveur ; une valeur absente vaut la source par défaut.
 - **Par défaut** : Santé Connect s'il est disponible (aucun changement pour les utilisateurs actuels) ; sinon Huawei Health si HMS Core est présent ; sinon le podomètre du build AppGallery, ou rien.
-- **Choisir Huawei Health** lance la connexion HUAWEI (scope `step.read`). Si elle échoue ou si l'utilisateur refuse, la source reste celle d'avant. Revenir à Santé Connect déconnecte le compte HUAWEI (`HmsHealthAccount.signOut`).
-- **Suggestion** : quand Santé Connect n'a aucun pas sur 30 jours et que l'application Huawei Health est installée, l'écran des sources propose Huawei Health. Il faut déclarer `com.huawei.health` dans les `<queries>` du manifeste pour pouvoir le détecter.
+- **Choisir Huawei Health** lance la connexion HUAWEI (scope `step.read`). Si elle échoue ou si l'utilisateur refuse, la source reste celle d'avant.
+- **Revenir à Santé Connect** annule l'autorisation donnée à Step Challenge (voir « Annuler l'autorisation HUAWEI »).
+- **Suggestion** : voir « Suggérer Huawei Health » (amendement du 2026-11-26).
+
+### Suggérer Huawei Health (amendement du 2026-11-26)
+
+La première version de cet ADR proposait Huawei Health dans l'écran Source des pas, quand Santé Connect n'avait aucun pas sur 30 jours. Personne n'ouvre cet écran sans raison : la testeuse Huawei n'aurait jamais vu la suggestion. Elle passe donc sur l'**Accueil**, comme l'invitation à ajouter des amis.
+
+- **Quand** : l'application Huawei Health (`com.huawei.health`) est installée sur le téléphone, la source est encore Santé Connect, et l'utilisateur n'a pas refusé la suggestion. Quel que soit le nombre de pas dans Santé Connect : avec une montre Huawei, Santé Connect a souvent les pas du téléphone, qui ne sont pas les bons.
+- **Qui la voit** : un nouvel utilisateur dès son premier passage sur l'Accueil, et un utilisateur existant à sa prochaine ouverture. Sans Huawei Health sur le téléphone, rien n'est affiché : la question n'aurait pas de sens.
+- **La carte** : « Tu as une montre ou un bracelet Huawei ? Leurs pas ne passent pas par Santé Connect : Step Challenge peut les lire dans Huawei Health. » Deux boutons :
+  - « Utiliser Huawei Health » ouvre Source des pas, où le changement se confirme comme d'habitude ; la carte reste tant que la source n'a pas changé ;
+  - « Non merci » la masque pour de bon (`AsyncStorage`, sur le téléphone).
+- **Détection** : `com.huawei.health` est déclaré dans les `<queries>` du manifeste (visibilité d'un paquet précis : aucune déclaration à faire chez Google, contrairement à `QUERY_ALL_PACKAGES`), et le module natif `step-sync` dit si le paquet est installé. Le résultat reste sur le téléphone, il n'est jamais envoyé.
+
+### Annuler l'autorisation HUAWEI (amendement du 2026-11-26)
+
+La bibliothèque n'a pas de `HmsHealthAccount.signOut`. Ce qui retire l'accès de Step Challenge est l'**annulation de l'autorisation** de Health Kit (`HmsConsentsController.cancelAuthorizationAll(false)` : tous les scopes accordés à l'application, sans supprimer de données, l'application n'en écrit aucune). Le [guide de vérification de Huawei](https://developer.huawei.com/consumer/en/doc/HMSCore-Guides/verification-0000001211587947) l'exige d'ailleurs ([annulation de l'autorisation](https://developer.huawei.com/consumer/en/doc/HMSCore-Guides/canceling-authorization-0000001192637063)).
+
+- **Quand** : au retour à Santé Connect, après la confirmation. Le prochain choix de Huawei Health redemande le consentement.
+- **Si elle échoue** (HMS Core absent, gelé, réseau) : la source change quand même ; un message dit que l'accès n'a pas pu être retiré et comment le faire dans Huawei Health. Une source qui ne change pas parce que Huawei ne répond pas serait pire.
+- **Gel** : cet appel passe par le processus de Health Kit de HMS Core (`container1`), celui qui gèle (contexte), et non par celui de la connexion. Avec la lecture REST, ce processus n'a en principe pas servi depuis longtemps : il démarre pour l'appel. Délai maximal de 15 secondes. À vérifier sur le Pixel.
 
 ### L'écran
 
@@ -119,9 +139,9 @@ Dans l'écran, deux choix exclusifs, chacun avec une phrase qui dit à qui il s'
 Sous le choix, le détail de la source retenue :
 
 - Santé Connect : le contenu actuel de « Sources de pas » (total retenu, pas par application, bouton vers les réglages de Santé Connect) ;
-- Huawei Health : compte HUAWEI connecté, pas du jour, heure de la dernière lecture, bouton « Se déconnecter », et une aide : les pas passent par le cloud de Huawei, Huawei Health doit avoir synchronisé (et ses liens cloud être activés dans Moi → Gestion de la confidentialité) ; un écart de quelques minutes avec la montre est normal.
+- Huawei Health : pas du jour, heure de la dernière lecture, et une aide : les pas passent par le cloud de Huawei, Huawei Health doit avoir synchronisé (et ses liens cloud être activés dans Moi → Gestion de la confidentialité) ; un écart de quelques minutes avec la montre est normal.
 
-Changer de source demande une confirmation : « Les pas des 30 derniers jours seront relus dans Huawei Health. Un jour déjà envoyé avec plus de pas garde sa valeur. »
+Changer de source demande une confirmation : « Les pas des 30 derniers jours seront relus dans Huawei Health. Un jour déjà envoyé avec plus de pas garde sa valeur. » Il n'y a pas de bouton « Se déconnecter » : revenir à Santé Connect annule l'autorisation HUAWEI.
 
 ### Ce qui ne fonctionne qu'avec Santé Connect
 
