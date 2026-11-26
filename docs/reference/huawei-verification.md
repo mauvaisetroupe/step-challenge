@@ -36,16 +36,16 @@ Chaque point s'auto-évalue dans la check-list, avec une explication en cas d'é
 
 | Point | Exigence (résumé) | État de Step Challenge |
 |---|---|---|
-| Accord du développeur | Dire que HUAWEI Health Service Kit n'est pas un dispositif médical : données indicatives, jamais base d'un diagnostic. | ❌ La politique dit seulement que les pas ne servent pas « à des fins médicales ». |
+| Accord du développeur | Dire que HUAWEI Health Service Kit n'est pas un dispositif médical : données indicatives, jamais base d'un diagnostic. | ✅ Politique, section 2 : ni Step Challenge ni HUAWEI Health Kit ne sont des dispositifs médicaux (2026-11-26). |
 | Données collectées | Types de données définis, minimisation. | ✅ Pas quotidiens seulement. |
 | Usage des données | Un usage expliqué par type de donnée, pas un but générique. | ✅ Section 2 de la politique. |
-| Stockage et conservation | Lieu (application ou cloud), durée, chiffrement ou anonymisation. | ⚠️ Durée : section 6. Manquent le pays du serveur et le chiffrement (transit, repos). |
-| Transfert international | Dire s'il y en a. | ❌ Non dit. |
+| Stockage et conservation | Lieu (application ou cloud), durée, chiffrement ou anonymisation. | ✅ Politique, sections 4, 6 et 7 : serveur OVHcloud au Canada, sauvegardes chiffrées copiées en France, gardées 7 jours, HTTPS (2026-11-26). Suppose le chiffrement et la durée de 7 jours en place dans `vps-infra`. |
+| Transfert international | Dire s'il y en a. | ⚠️ Dit (section 4) : transfert vers le Canada, fondé sur la décision d'adéquation de la Commission européenne. À expliquer dans la colonne Remarques ; disparaît quand le serveur passera en Europe. |
 | Partage avec des tiers | Dire s'il y en a, et seulement avec accord explicite. | ✅ Section 5 (les amis, choisis par l'utilisateur). |
 | Conditions d'utilisation | Pas de clause abusive. | ✅ À relire. |
 | Traçabilité | Le serveur garde une trace de chaque autorisation accordée ou retirée. | ❌ Le serveur ne sait rien de l'autorisation HUAWEI. |
 | Fuites | Contrôle d'accès ; aucune donnée personnelle dans les journaux. | ✅ Session par jeton, journaux sans données de pas (à vérifier). |
-| Stockage sécurisé | Données sensibles chiffrées, et dit dans la politique. | ⚠️ Jeton de session dans le Keystore (dit) ; base et sauvegardes à décrire. |
+| Stockage sécurisé | Données sensibles chiffrées, et dit dans la politique. | ⚠️ Dit (section 7) : HTTPS, jeton dans le Keystore et empreinte côté serveur, accès restreint, sauvegardes chiffrées ; la base elle-même n'est pas chiffrée au repos (disque du VPS à vérifier : `lsblk -f`). |
 | Information au premier usage | Afficher la politique de confidentialité et les conditions au premier usage ; un changement redemande l'accord. | ❌ Une phrase « tu acceptes les conditions » à la création du nom, sans la politique de confidentialité, et pas de nouvel accord après un changement. |
 | Accès à Health Kit | Autorisation explicite de l'utilisateur pour lire. | ✅ Écran d'autorisation HUAWEI. |
 | Refus | Sans accord sur la politique et les conditions, pas d'accès au service. | ❌ Pas d'accord explicite. |
@@ -57,7 +57,7 @@ Chaque point s'auto-évalue dans la check-list, avec une explication en cas d'é
 ## Ce qu'il reste à faire, par lot
 
 1. **Application** : fait pour la 1.16.0 (2.1, 3.2 à 3.5) ; reste à publier l'aide du site avec la version. Sur un téléphone non Huawei, le gel de HMS Core rendait la connexion et le retrait aléatoires ; la 1.16.0 réveille HMS Core avant chaque appel (testé sur le Pixel). Filmer de préférence sur un téléphone Huawei. Le profil et la photo du compte HUAWEI, cochés d'office sur l'écran d'autorisation, sont la connexion HUAWEI ID et non des permissions Health Kit : le dire dans la check-list (3.1).
-2. **Politique de confidentialité** (`architech-sport`) : pas un dispositif médical ; pays du serveur, chiffrement, absence de transfert hors de l'Union européenne.
+2. **Politique de confidentialité** (`architech-sport`) : écrite le 2026-11-26 (pas un dispositif médical, hébergement au Canada, sauvegardes chiffrées en France gardées 7 jours, mesures de sécurité). À publier **après** le chiffrement des sauvegardes et le passage à 7 jours dans `vps-infra`. À mettre à jour quand le serveur passera en Europe.
 3. **Accord et droits des utilisateurs** (ADR à écrire, backend et application) : écran d'accord explicite au premier usage et à chaque changement de la politique ou des conditions ; trace côté serveur des autorisations HUAWEI ; export des données personnelles ; choix de garder ou supprimer l'historique au retrait. Utile au-delà de Huawei (RGPD).
 4. **Consoles** (le mainteneur) : scopes cochés, nom et icône de l'application dans AGC ; nom du développeur identique à celui de la politique.
 5. **Publication** sur AppGallery d'une version avec l'intégration, puis vidéos, check-list et demande de vérification.
