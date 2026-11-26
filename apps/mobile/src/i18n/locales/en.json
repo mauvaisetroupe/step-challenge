@@ -514,8 +514,13 @@
       "action": "Authorize HUAWEI Health"
     },
     "switchOff": {
-      "title": "HUAWEI Health Kit is turned off",
-      "text": "Step Challenge can no longer read your steps. In the HUAWEI Health app, go to Me → Privacy management and turn on HUAWEI Health Kit, then try again.",
+      "title": "HUAWEI Health Kit denies access to your steps",
+      "text": "HUAWEI Health Kit is turned off, or Step Challenge was removed from its apps. Tap the button below and authorize Step Challenge again. If that's not enough, turn on HUAWEI Health Kit in the HUAWEI Health app (Me → Privacy management), then try again.",
+      "action": "Authorize again"
+    },
+    "notResponding": {
+      "title": "HMS Core isn't responding",
+      "text": "The Huawei service that connects Step Challenge to HUAWEI Health is blocked by Android. Try again; if that's not enough, close Step Challenge completely (swipe it out of recent apps) and open it again.",
       "action": "Try again"
     }
   },

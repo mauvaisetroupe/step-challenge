@@ -530,8 +530,13 @@
       "action": "Autoriser HUAWEI Health"
     },
     "switchOff": {
-      "title": "HUAWEI Health Kit est désactivé",
-      "text": "Step Challenge ne peut plus lire tes pas. Dans l'application HUAWEI Health, va dans Moi → Gestion de la confidentialité et active HUAWEI Health Kit, puis réessaie.",
+      "title": "HUAWEI Health Kit refuse l'accès à tes pas",
+      "text": "HUAWEI Health Kit est désactivé, ou Step Challenge a été retiré de ses applications. Touche le bouton ci-dessous et autorise de nouveau Step Challenge. Si ça ne suffit pas, active HUAWEI Health Kit dans l'application HUAWEI Health (Moi → Gestion de la confidentialité), puis réessaie.",
+      "action": "Autoriser de nouveau"
+    },
+    "notResponding": {
+      "title": "HMS Core ne répond pas",
+      "text": "Le service de Huawei qui connecte Step Challenge à HUAWEI Health est bloqué par Android. Réessaie ; si ça ne suffit pas, ferme complètement Step Challenge (balaie-la hors des applications récentes) et rouvre-la.",
       "action": "Réessayer"
     }
   },

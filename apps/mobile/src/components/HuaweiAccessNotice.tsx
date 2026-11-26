@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import {
+  revokeHuaweiHealth,
   signInHuaweiHealth,
   type HuaweiAccessReason,
 } from '@/services/huaweiHealth'
@@ -28,10 +29,15 @@ export default function HuaweiAccessNotice({ reason, onRetry }: Props) {
     setBusy(true)
 
     try {
-      // Shows HUAWEI's consent screen again.
-      if (reason === 'notAuthorized') {
-        await signInHuaweiHealth()
+      // Step Challenge unticked in HUAWEI Health's list keeps the
+      // HUAWEI ID consent: sign-in gives tokens the REST API rejects.
+      // Withdrawing it first brings the consent screen back.
+      if (reason === 'switchOff') {
+        await revokeHuaweiHealth()
       }
+
+      // Shows HUAWEI's consent screen when consent is missing.
+      await signInHuaweiHealth()
 
       onRetry()
     } catch (error) {

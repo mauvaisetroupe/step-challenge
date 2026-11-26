@@ -795,3 +795,13 @@ HMS Core ne s'installe que depuis AppGallery. Marche à suivre, reprise de la [F
 Health Sync l'exige aussi sur un téléphone non Huawei (même FAQ, section Russie : « on a non-Huawei phone, you need to install HMS Core package, otherwise Health Sync cannot work properly with Huawei services »). Step Challenge n'en a besoin que pour la connexion HUAWEI ; Health Sync ne dit pas à quoi il lui sert.
 
 Pour suivre un essai : `adb logcat -c`, puis `adb logcat -v time | grep -E "HmsHealth|HMSHealth|hihealth|container1"`.
+
+## Le gel touche aussi la connexion et le retrait (essais du 2026-11-26)
+
+La lecture passe par l'API REST, mais la connexion HUAWEI (`HmsHealthAccount.signIn`) et le retrait (`cancelAuthorizationAll`) passent encore par `container1`. Sur le Pixel, avec ce processus gelé (`isFrozen=true`) :
+
+- **Retrait** : `returnCode: 50011` au bout de 6 secondes, à chaque essai. Le même retrait avait réussi le matin, processus tout juste lancé.
+- **Connexion** : pas de réponse du tout, l'Accueil chargeait sans fin. Fermer puis rouvrir Step Challenge a suffi, sans que le processus change (même PID) : la nouvelle instance se reconnecte à HMS Core, qui le dégèle.
+- **Step Challenge décochée dans HUAWEI Health** (Moi → Gestion de la confidentialité → HUAWEI Health Kit) : la connexion rend encore un jeton, sans écran, mais l'API REST le refuse (`401 Invalid Credentials`), même après une nouvelle connexion. HMS Core semble garder l'ancienne autorisation en cache. Après un redémarrage de `container1`, la connexion a de nouveau affiché l'écran de consentement. Step Challenge disparaît de la liste de HUAWEI Health et ne peut pas y être réactivée : seule une nouvelle autorisation depuis Step Challenge l'y remet.
+
+Parades de la 1.16.0 : délai maximum de 90 secondes sur la connexion (message « HMS Core ne répond pas » : fermer et rouvrir Step Challenge), et un 401 persistant traité comme un accès refusé par HUAWEI Health Kit (retrait, puis nouvelle autorisation). La parade du `content query` ci-dessus, appelée depuis l'application avant la connexion, reste à essayer. Piste de fond : se passer du SDK avec une connexion HUAWEI par OAuth Web, comme Health Sync (navigateur, retour dans l'application), et un retrait par l'API REST ; à étudier dans un ADR.

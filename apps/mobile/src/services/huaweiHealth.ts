@@ -42,10 +42,17 @@ const HISTORY_DAYS = 30
  *
  * - notAuthorized: consent refused, withdrawn in the HUAWEI Health app,
  *   or given without the step read permission;
- * - switchOff: the HUAWEI Health Kit switch is off in the HUAWEI Health
- *   app (Me → Privacy management).
+ * - switchOff: the REST API rejects valid tokens: the HUAWEI Health Kit
+ *   switch is off, or Step Challenge was unticked in its list of apps
+ *   (HUAWEI Health app, Me → Privacy management);
+ * - notResponding: HMS Core never answered the sign-in, its process
+ *   frozen by Android (seen on a Pixel, 2026-11-26); restarting Step
+ *   Challenge binds to it again.
  */
-export type HuaweiAccessReason = 'notAuthorized' | 'switchOff'
+export type HuaweiAccessReason =
+  | 'notAuthorized'
+  | 'switchOff'
+  | 'notResponding'
 
 export class HuaweiAccessError extends Error {
   constructor(
@@ -58,6 +65,12 @@ export class HuaweiAccessError extends Error {
 }
 
 /**
+ * Beyond this, HMS Core is probably frozen. Long enough to read and
+ * answer the consent screen, which the same call shows.
+ */
+const SIGN_IN_TIMEOUT_MS = 90_000
+
+/**
  * Signs in to HUAWEI with the step read scope and returns the access
  * token (valid about an hour). Shows the consent screen when consent is
  * missing (first time, or withdrawn in the HUAWEI Health app); otherwise
@@ -67,10 +80,20 @@ export async function signInHuaweiHealth() {
   let result: HuaweiResult
 
   try {
-    result = (await HmsHealthAccount.signIn([
-      STEP_READ_SCOPE,
-    ])) as HuaweiResult
+    result = (await withTimeout(
+      HmsHealthAccount.signIn([STEP_READ_SCOPE]),
+      SIGN_IN_TIMEOUT_MS,
+      () =>
+        new HuaweiAccessError(
+          'notResponding',
+          'HUAWEI Health sign-in timed out',
+        ),
+    )) as HuaweiResult
   } catch (error) {
+    if (error instanceof HuaweiAccessError) {
+      throw error
+    }
+
     throw new HuaweiAccessError(
       'notAuthorized',
       `HUAWEI Health sign-in failed: ${
@@ -122,26 +145,33 @@ const REVOKE_TIMEOUT_MS = 15_000
  * Android may freeze, hence the time limit.
  */
 export async function revokeHuaweiHealth() {
+  const result = (await withTimeout(
+    consents.cancelAuthorizationAll(false),
+    REVOKE_TIMEOUT_MS,
+    () => new Error('Huawei Health revocation timed out'),
+  )) as HuaweiResult
+
+  if (!result?.isSuccess) {
+    throw new Error(
+      `Huawei Health revocation failed: ${JSON.stringify(result)}`,
+    )
+  }
+}
+
+/** Rejects with timeoutError() when promise takes longer than ms. */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  timeoutError: () => Error,
+) {
   let timer: ReturnType<typeof setTimeout> | undefined
 
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(
-      () => reject(new Error('Huawei Health revocation timed out')),
-      REVOKE_TIMEOUT_MS,
-    )
+    timer = setTimeout(() => reject(timeoutError()), ms)
   })
 
   try {
-    const result = (await Promise.race([
-      consents.cancelAuthorizationAll(false),
-      timeout,
-    ])) as HuaweiResult
-
-    if (!result?.isSuccess) {
-      throw new Error(
-        `Huawei Health revocation failed: ${JSON.stringify(result)}`,
-      )
-    }
+    return await Promise.race([promise, timeout])
   } finally {
     clearTimeout(timer)
   }
@@ -166,6 +196,17 @@ export async function getHuaweiLast30Days(): Promise<DayStat[]> {
   if (response.status === 401) {
     token = (await signInHuaweiHealth()).token
     response = await postPolymerize(request, token)
+
+    // Fresh token with the step permission, still rejected: Step
+    // Challenge unticked in HUAWEI Health Kit (seen on a Pixel,
+    // 2026-11-26), or the switch off. A consent withdrawn in HUAWEI
+    // Health shows the consent screen at sign-in instead.
+    if (response.status === 401) {
+      throw new HuaweiAccessError(
+        'switchOff',
+        `HUAWEI Health read failed: HTTP 401 ${await response.text()}`,
+      )
+    }
   }
 
   if (!response.ok) {
