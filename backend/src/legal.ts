@@ -11,8 +11,8 @@ import type { Pool, PoolClient } from 'pg'
  * and releasing the API: every user then accepts it again.
  */
 export const LEGAL_VERSIONS = {
-  terms: '2026-10-05',
-  privacy: '2026-11-26',
+  terms: '2026-11-27',
+  privacy: '2026-11-27',
 } as const
 
 export type LegalDocument = keyof typeof LEGAL_VERSIONS
