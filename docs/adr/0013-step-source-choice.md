@@ -1,7 +1,7 @@
 # ADR 0013 — Une seule source de pas, choisie par l'utilisateur ; Huawei Health lu par son API cloud
 
 - **Statut** : Accepté
-- **Date** : 2026-11-24, amendé le 2026-11-26 (suggestion de Huawei Health sur l'Accueil, annulation de l'autorisation HUAWEI, courbe 1j heure par heure)
+- **Date** : 2026-11-24, amendé le 2026-11-26 (suggestion de Huawei Health sur l'Accueil, annulation de l'autorisation HUAWEI, courbe 1j heure par heure, historique d'un mois)
 - **Décideur** : mauvaisetroupe
 
 ## Contexte
@@ -196,9 +196,9 @@ Si l'API REST devenait inaccessible (refus de Huawei à la vérification, par ex
 2. **Connexion silencieuse** : vérifier qu'elle renvoie un jeton frais après plusieurs heures et plusieurs jours, sans écran.
 3. **Limite d'historique de l'API REST** (environ 60 jours constatés, pour 1 mois demandé) : à comprendre avant de s'y fier ; l'application s'en tient à 30 jours.
 4. **Mémoriser la source de chaque jour** sur le serveur (support, diagnostic). Non retenu pour l'instant : demanderait une migration et un champ d'API.
-5. **Historique à la première connexion** (2026-11-25) : chez la testeuse, l'API n'a renvoyé que le jour même, alors que le Pixel en reçoit 30. Huawei ne donne peut-être que les données postérieures à l'autorisation de l'utilisateur, ou la synchronisation cloud venait d'être activée ; à trancher avec le diagnostic des jours suivants. Si c'est la règle de Huawei, revoir la phrase de confirmation (« les 30 derniers jours seront relus ») et la conséquence « 30 jours d'historique dès la connexion ».
+5. **Historique à la première connexion** (2026-11-25) — **réglé le 2026-11-26** (1.17.0) : sans le scope `https://www.huawei.com/healthkit/historydata.open.month`, Huawei ne sert que les données postérieures à l'autorisation ([Reading Historical Data](https://developer.huawei.com/consumer/en/doc/development/HMSCore-Guides/historydata-open-0000001209921350)). Il était demandé sur HUAWEI Developers (« Reading historical data / 1 month ») mais pas à la connexion : la connexion le demande désormais, case facultative pour l'utilisateur. Constat d'origine : chez la testeuse, l'API n'a renvoyé que le jour même, alors que le Pixel en reçoit 30. Huawei ne donne peut-être que les données postérieures à l'autorisation de l'utilisateur, ou la synchronisation cloud venait d'être activée ; à trancher avec le diagnostic des jours suivants. Si c'est la règle de Huawei, revoir la phrase de confirmation (« les 30 derniers jours seront relus ») et la conséquence « 30 jours d'historique dès la connexion ».
 6. **Détail dans la journée** (2026-11-25) : le regroupement par durée (`groupByTime.duration`) donne des pas heure par heure avec une montre Huawei, rien avec le podomètre d'un téléphone non Huawei (section 16 de l'intégration Huawei). **Décidé le 2026-11-26** (1.16.0) : Statistiques → 1j lit les pas heure par heure du jour affiché par l'API REST, et trace la courbe quand au moins une heure a des pas ; sinon, un message dit que l'appareil n'envoie que le total du jour. Ce détail reste sur le téléphone (seul le total du jour va au serveur). L'inactivité et le score demandent la minute, toujours non vérifiée : décision à part.
-7. **HMS Core** : gardé pour la connexion, comme Health Sync l'exige. Une connexion OAuth web sans HMS Core est possible, mais l'échange du code demande un secret client, donc notre serveur (sauf si Huawei accepte PKCE, non vérifié) : à reconsidérer seulement si l'installation de HMS Core rebute des utilisateurs.
+7. **HMS Core** : gardé pour la connexion, comme Health Sync l'exige. Une connexion OAuth web sans HMS Core est possible, mais l'échange du code demande un secret client, donc notre serveur (sauf si Huawei accepte PKCE, non vérifié) : à reconsidérer seulement si l'installation de HMS Core rebute des utilisateurs. **Repris le 2026-11-26** : le gel de HMS Core touche aussi la connexion et le retrait (contourné dans la 1.16.0), et Huawei documente une variante PKCE ; ce qu'on sait est dans l'intégration Huawei, section 16 (« Connexion par OAuth Web »). ADR à écrire.
 
 ## Hors de cette décision
 

@@ -33,6 +33,14 @@ type HuaweiResult = {
 const STEP_READ_SCOPE =
   'https://www.huawei.com/healthkit/step.read'
 
+/**
+ * Data of the month before the user's consent: without it, Huawei only
+ * serves data from the consent onwards (ADR 0013, open point 5).
+ * Optional for the user: unticked, the history only starts later.
+ */
+const HISTORY_MONTH_SCOPE =
+  'https://www.huawei.com/healthkit/historydata.open.month'
+
 /** App ID in AppGallery Connect, required by the REST API. */
 const HUAWEI_APP_ID = '118922449'
 
@@ -73,10 +81,11 @@ export class HuaweiAccessError extends Error {
 const SIGN_IN_TIMEOUT_MS = 90_000
 
 /**
- * Signs in to HUAWEI with the step read scope and returns the access
- * token (valid about an hour). Shows the consent screen when consent is
- * missing (first time, or withdrawn in the HUAWEI Health app); otherwise
- * it returns a fresh token without any screen.
+ * Signs in to HUAWEI with the step read and history scopes and returns
+ * the access token (valid about an hour). Shows the consent screen when
+ * consent is missing (first time, withdrawn in the HUAWEI Health app, or
+ * a scope added since); otherwise it returns a fresh token without any
+ * screen.
  */
 export async function signInHuaweiHealth() {
   let result: HuaweiResult
@@ -85,7 +94,7 @@ export async function signInHuaweiHealth() {
 
   try {
     result = (await withTimeout(
-      HmsHealthAccount.signIn([STEP_READ_SCOPE]),
+      HmsHealthAccount.signIn([STEP_READ_SCOPE, HISTORY_MONTH_SCOPE]),
       SIGN_IN_TIMEOUT_MS,
       () =>
         new HuaweiAccessError(
