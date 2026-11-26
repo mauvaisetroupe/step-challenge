@@ -13,26 +13,33 @@ type SignInResponse = {
   isNewUser: boolean
 }
 
+/**
+ * Versions in force of the legal documents (ADR 0017), keyed by
+ * document ('terms', 'privacy'), accepted when creating the account.
+ */
+export type LegalVersions = Record<string, string>
+
 export type SignInResult =
   | { status: 'signed-in'; user: User }
-  | { status: 'display-name-required' }
+  | { status: 'display-name-required'; legal: LegalVersions }
 
 /**
  * Exchanges a Google ID token for a Step Challenge session.
  *
  * Without display name, an unknown Google account is not created: the
- * backend answers display_name_required and the app asks for a name,
- * then calls again with the same ID token.
+ * backend answers display_name_required with the versions of the legal
+ * documents, and the app asks for a name and the acceptance of these
+ * documents (ADR 0017), then calls again with the same ID token.
  */
 export async function signInWithGoogleIdToken(
   idToken: string,
-  displayName?: string,
+  account?: { displayName: string; acceptedLegal: LegalVersions },
 ): Promise<SignInResult> {
   try {
     const response = await apiFetch<SignInResponse>('/api/auth/google', {
       method: 'POST',
       authenticated: false,
-      body: displayName ? { idToken, displayName } : { idToken },
+      body: account ? { idToken, ...account } : { idToken },
     })
 
     await setSessionToken(response.sessionToken)
@@ -43,7 +50,16 @@ export async function signInWithGoogleIdToken(
       error instanceof ApiError &&
       error.code === 'display_name_required'
     ) {
-      return { status: 'display-name-required' }
+      // An older API sends no versions: the consent screen asks after
+      // the account creation.
+      const legal = error.body?.legal
+
+      return {
+        status: 'display-name-required',
+        legal: typeof legal === 'object' && legal !== null
+          ? (legal as LegalVersions)
+          : {},
+      }
     }
 
     throw error

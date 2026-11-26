@@ -89,6 +89,19 @@ export function parsePolymerizeResponse(
  * every hour then comes back empty.
  */
 export function buildHourlyRequest(end: Date) {
+  return buildDetailRequest(end, 3_600_000)
+}
+
+/**
+ * Steps grouped by minute, from the local midnight of `end` to `end`:
+ * does the device upload the detail that the activity minutes need
+ * (ADR 0010)? Diagnostic only for now.
+ */
+export function buildMinuteRequest(end: Date) {
+  return buildDetailRequest(end, 60_000)
+}
+
+function buildDetailRequest(end: Date, duration: number) {
   const midnight = new Date(end)
   midnight.setHours(0, 0, 0, 0)
 
@@ -96,7 +109,23 @@ export function buildHourlyRequest(end: Date) {
     polymerizeWith: [{ dataTypeName: 'com.huawei.continuous.steps.delta' }],
     startTime: midnight.getTime(),
     endTime: end.getTime(),
-    groupByTime: { duration: 3_600_000 },
+    groupByTime: { duration },
+  }
+}
+
+/**
+ * Minutes with steps in the response, and the most steps in one of
+ * them. A walk gives at most about 200 steps a minute: far more means
+ * the device uploads coarser samples, credited to a single minute.
+ */
+export function countMinutesWithSteps(response: unknown) {
+  const steps = ((response as PolymerizeResponse)?.group ?? [])
+    .map(groupSteps)
+    .filter((value) => value > 0)
+
+  return {
+    withSteps: steps.length,
+    maxSteps: steps.length > 0 ? Math.max(...steps) : 0,
   }
 }
 

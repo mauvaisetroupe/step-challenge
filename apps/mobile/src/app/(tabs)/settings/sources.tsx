@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Alert, Platform } from 'react-native'
 
+import { deleteMySteps } from '@/api/me'
 import HuaweiAccessNotice from '@/components/HuaweiAccessNotice'
 import StepSourcesList from '@/components/StepSourcesList'
 import RadioGroup from '@/components/settings/RadioGroup'
@@ -128,7 +129,7 @@ export default function StepSourceSettingsScreen() {
   )
 
   const switchTo = useCallback(
-    async (next: StepSource) => {
+    async (next: StepSource, { deleteSteps = false } = {}) => {
       const previous = source
 
       setSwitching(true)
@@ -139,6 +140,13 @@ export default function StepSourceSettingsScreen() {
         // HUAWEI account agreed.
         if (next === 'huawei') {
           await signInHuaweiHealth()
+        }
+
+        // Withdrawing HUAWEI Health, the user chose to delete the steps
+        // kept by Step Challenge (ADR 0017): before the new source sends
+        // its own 30 days.
+        if (deleteSteps) {
+          await deleteMySteps()
         }
 
         await saveStepSource(next)
@@ -157,7 +165,15 @@ export default function StepSourceSettingsScreen() {
         // Huawei Health. A failure must not keep the user on Huawei.
         if (previous === 'huawei') {
           await revokeHuaweiHealth()
-            .then(() => setMessage(t('settings.sources.revoked')))
+            .then(() =>
+              setMessage(
+                t(
+                  deleteSteps
+                    ? 'settings.sources.revokedAndDeleted'
+                    : 'settings.sources.revoked',
+                ),
+              ),
+            )
             .catch((error) => {
               console.error('Huawei Health revocation failed:', error)
               setMessage(t('settings.sources.revokeFailed'))
@@ -205,7 +221,8 @@ export default function StepSourceSettingsScreen() {
   )
 
   // Huawei's verification (scenario 3.2): an explicit way to withdraw
-  // the access, besides choosing Health Connect.
+  // the access, besides choosing Health Connect, keeping or deleting the
+  // steps already kept (ADR 0017).
   const confirmRevoke = () => {
     Alert.alert(
       t('settings.sources.revokeTitle'),
@@ -213,10 +230,16 @@ export default function StepSourceSettingsScreen() {
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: t('settings.sources.revoke'),
-          style: 'destructive',
+          text: t('settings.sources.revokeKeep'),
           onPress: () => {
             switchTo('healthConnect')
+          },
+        },
+        {
+          text: t('settings.sources.revokeDelete'),
+          style: 'destructive',
+          onPress: () => {
+            switchTo('healthConnect', { deleteSteps: true })
           },
         },
       ],

@@ -14,7 +14,7 @@
     },
     "account": {
       "title": "Account",
-      "detail": "Display name, sign-out, deletion"
+      "detail": "Display name, data export, sign-out, deletion"
     },
     "badges": {
       "title": "My badges",
@@ -109,9 +109,12 @@
       "help": "Need help?",
       "revoke": "Remove access to HUAWEI Health",
       "revokeTitle": "Remove access to HUAWEI Health?",
-      "revokeMessage": "Step Challenge will no longer read your steps in HUAWEI Health and will read them from Health Connect again. Steps already sent stay; to erase them, delete your account (More → Account).",
+      "revokeMessage": "Step Challenge will no longer read your steps in HUAWEI Health and will read them from Health Connect again. Do you want to keep the steps already saved in Step Challenge, or delete them? Deleting removes all your saved steps, whatever their source; Health Connect will then send its last 30 days again.",
       "revoked": "Access to HUAWEI Health removed. To allow it again, choose HUAWEI Health above.",
-      "revokeFailed": "Step Challenge could not remove its access to HUAWEI Health. You can do it yourself in HUAWEI Health → Me → Privacy management: remove Step Challenge from the authorized apps."
+      "revokeFailed": "Step Challenge could not remove its access to HUAWEI Health. You can do it yourself in HUAWEI Health → Me → Privacy management: remove Step Challenge from the authorized apps.",
+      "revokeKeep": "Keep my steps",
+      "revokeDelete": "Delete my steps",
+      "revokedAndDeleted": "Access to HUAWEI Health removed and steps deleted. To allow it again, choose HUAWEI Health above."
     },
     "activity": {
       "title": "Activity",
@@ -404,6 +407,13 @@
       "message": "Your account, your name and all your step history will be permanently deleted from the Step Challenge server. The Health Connect data on your phone is not affected.\n\nThis cannot be undone.",
       "confirm": "Delete",
       "error": "Deletion failed. Try again later."
+    },
+    "export": {
+      "button": "Export my data",
+      "exporting": "Exporting...",
+      "hint": "A file with everything Step Challenge keeps about you: account, steps, friends, badges, consents.",
+      "dialogTitle": "My Step Challenge data",
+      "error": "Could not export your data. Try again in a moment."
     }
   },
   "signIn": {
@@ -438,9 +448,11 @@
       "creating": "Creating..."
     },
     "terms": {
-      "before": "By creating your account, you accept the ",
+      "before": "I accept the ",
       "link": "terms of use",
-      "after": "."
+      "between": " and the ",
+      "privacyLink": "privacy policy",
+      "after": " of Step Challenge."
     }
   },
   "errors": {
@@ -488,7 +500,9 @@
       "history_one": "{{count}} day (REST API)",
       "history_other": "{{count}} days (REST API)",
       "hourly": "Detail within the day",
-      "hourlyValue": "{{withSteps}} hours with steps out of {{hours}}"
+      "hourlyValue": "{{withSteps}} hours with steps out of {{hours}}",
+      "minutes": "Detail by the minute",
+      "minutesValue": "{{withSteps}} minutes with steps, at most {{maxSteps}} steps in one minute"
     },
     "sources": {
       "title": "Step sources (today)",
@@ -529,7 +543,7 @@
     "activityScore": "The activity score is computed from your steps minute by minute, which Step Challenge doesn't read from HUAWEI Health.",
     "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which aren't available with HUAWEI Health.",
     "sync": "With HUAWEI Health, your steps are sent when the app opens and when you refresh a screen, not in the background.",
-    "statsNote": "Steps read from HUAWEI Health"
+    "statsNote": "Step source: HUAWEI Health"
   },
   "badges": {
     "title": "Badges",
@@ -557,5 +571,24 @@
       "earnedTimes_other": "Earned {{count}} times",
       "notYet": "Not earned yet."
     }
+  },
+  "consent": {
+    "title": "Before you continue",
+    "text": "To use Step Challenge, read and accept its terms of use and its privacy policy.",
+    "updated": {
+      "terms": "The terms of use of Step Challenge have changed. Read and accept them to continue.",
+      "privacy": "The privacy policy of Step Challenge has changed. Read and accept it to continue."
+    },
+    "read": {
+      "terms": "Read the terms of use",
+      "privacy": "Read the privacy policy"
+    },
+    "accept": "I accept",
+    "refuse": "Decline",
+    "refusedTitle": "Step Challenge cannot work without your consent",
+    "refusedText": "Without your consent to these documents, Step Challenge can neither keep your steps nor share them with your friends. You can sign out, or delete your account and all your data.",
+    "back": "Go back and accept",
+    "outdated": "The document has just changed: read it again, then accept it.",
+    "error": "Cannot reach the server. Try again in a moment."
   }
 }

@@ -4,6 +4,7 @@ import type { DiagnosticItem } from './healthConnectDiagnostic'
 import {
   getHuaweiLast30Days,
   getHuaweiTodayHourlyDetail,
+  getHuaweiTodayMinuteDetail,
   signInHuaweiHealth,
 } from './huaweiHealth'
 
@@ -56,6 +57,24 @@ export async function getHuaweiHealthDiagnostic(): Promise<
       value: i18n.t('diagnostic.huawei.hourlyValue', hourly),
       status: hourly.withSteps > 0 ? 'ok' : 'unknown',
     })
+
+    // Detail by the minute, for the activity minutes (ADR 0010): its
+    // own failure (a limit on the number of groups?) is worth knowing.
+    try {
+      const minutes = await getHuaweiTodayMinuteDetail()
+
+      items.push({
+        label: i18n.t('diagnostic.huawei.minutes'),
+        value: i18n.t('diagnostic.huawei.minutesValue', minutes),
+        status: minutes.withSteps > 0 ? 'ok' : 'unknown',
+      })
+    } catch (error) {
+      items.push({
+        label: i18n.t('diagnostic.huawei.minutes'),
+        value: error instanceof Error ? error.message : JSON.stringify(error),
+        status: 'error',
+      })
+    }
   } catch (error) {
     items.push({
       label: 'HUAWEI Health Kit',

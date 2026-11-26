@@ -5,6 +5,7 @@ import type { TFunction } from 'i18next'
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,7 +15,11 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { signInWithDemoCode, signInWithGoogleIdToken } from '../api/auth'
+import {
+  signInWithDemoCode,
+  signInWithGoogleIdToken,
+  type LegalVersions,
+} from '../api/auth'
 import {
   GoogleSignInFailure,
   isGoogleSignInSupported,
@@ -27,7 +32,7 @@ const MAX_DISPLAY_NAME_LENGTH = 50
 
 type Step =
   | { name: 'google' }
-  | { name: 'display-name'; idToken: string }
+  | { name: 'display-name'; idToken: string; legal: LegalVersions }
   | { name: 'demo' }
 
 function describeError(error: unknown, t: TFunction) {
@@ -47,7 +52,8 @@ function describeError(error: unknown, t: TFunction) {
  * 1. Google sign-in, then the ID token is sent without display name:
  *    a returning user is signed in directly.
  * 2. For a new account only, the user chooses a display name (prefilled
- *    with the Google given name) and the same ID token is sent again.
+ *    with the Google given name), accepts the terms of use and the
+ *    privacy policy (ADR 0017), and the same ID token is sent again.
  *
  * Store reviewers, who cannot sign in with Google from their test
  * devices, use the discreet demo access link and the access
@@ -73,6 +79,7 @@ export default function SignInScreen() {
 
   const [step, setStep] = useState<Step>({ name: 'google' })
   const [displayName, setDisplayName] = useState('')
+  const [legalAccepted, setLegalAccepted] = useState(false)
   const [demoCode, setDemoCode] = useState('')
   const insets = useSafeAreaInsets()
   const [loading, setLoading] = useState(false)
@@ -97,7 +104,12 @@ export default function SignInScreen() {
       }
 
       setDisplayName(credential.givenName ?? '')
-      setStep({ name: 'display-name', idToken: credential.idToken })
+      setLegalAccepted(false)
+      setStep({
+        name: 'display-name',
+        idToken: credential.idToken,
+        legal: result.legal,
+      })
     } catch (err) {
       setError(describeError(err, t))
     } finally {
@@ -117,11 +129,18 @@ export default function SignInScreen() {
       return
     }
 
+    if (!legalAccepted) {
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
 
-      const result = await signInWithGoogleIdToken(step.idToken, name)
+      const result = await signInWithGoogleIdToken(step.idToken, {
+        displayName: name,
+        acceptedLegal: step.legal,
+      })
 
       if (result.status === 'signed-in') {
         router.replace(destinationAfterSignIn(next))
@@ -268,32 +287,55 @@ export default function SignInScreen() {
                 editable={!loading}
               />
 
+              {/* Explicit consent before the account exists (ADR 0017),
+                  and before the display name, the only content a user
+                  creates, is visible to others (ADR 0004). */}
+              <Pressable
+                style={styles.consent}
+                onPress={() => setLegalAccepted((accepted) => !accepted)}
+                disabled={loading}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: legalAccepted }}
+              >
+                <View
+                  style={[styles.checkbox, legalAccepted && styles.checkboxOn]}
+                >
+                  {legalAccepted && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+
+                <Text style={styles.terms}>
+                  {t('signIn.terms.before')}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={() => openPublicPage('agreement')}
+                  >
+                    {t('signIn.terms.link')}
+                  </Text>
+                  {t('signIn.terms.between')}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={() => openPublicPage('privacy')}
+                  >
+                    {t('signIn.terms.privacyLink')}
+                  </Text>
+                  {t('signIn.terms.after')}
+                </Text>
+              </Pressable>
+
               <TouchableOpacity
                 style={[
                   styles.button,
-                  (!displayName.trim() || loading) && styles.buttonDisabled,
+                  (!displayName.trim() || !legalAccepted || loading) &&
+                    styles.buttonDisabled,
                 ]}
                 onPress={handleCreateAccount}
-                disabled={!displayName.trim() || loading}
+                disabled={!displayName.trim() || !legalAccepted || loading}
                 activeOpacity={0.8}
               >
                 <Text style={styles.buttonText}>
                   {loading ? t('signIn.name.creating') : t('signIn.name.continue')}
                 </Text>
               </TouchableOpacity>
-
-              {/* Terms accepted before the display name, the only content a
-                  user creates, is visible to others (ADR 0004). */}
-              <Text style={styles.terms}>
-                {t('signIn.terms.before')}
-                <Text
-                  style={styles.termsLink}
-                  onPress={() => openPublicPage('agreement')}
-                >
-                  {t('signIn.terms.link')}
-                </Text>
-                {t('signIn.terms.after')}
-              </Text>
             </>
           )}
 
@@ -375,12 +417,39 @@ const createStyles = (c: Colors) =>
       marginBottom: 12,
     },
 
+    consent: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 12,
+      marginTop: 20,
+    },
+
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: c.borderStrong,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+
+    checkboxOn: {
+      borderColor: c.primary,
+      backgroundColor: c.primary,
+    },
+
+    checkmark: {
+      color: c.onPrimary,
+      fontSize: 15,
+      fontWeight: '700',
+    },
+
     terms: {
-      marginTop: 14,
+      flex: 1,
       color: c.textSecondary,
-      fontSize: 13,
-      lineHeight: 18,
-      textAlign: 'center',
+      fontSize: 14,
+      lineHeight: 20,
     },
 
     termsLink: {

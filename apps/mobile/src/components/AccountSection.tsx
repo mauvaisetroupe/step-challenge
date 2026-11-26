@@ -14,6 +14,7 @@ import {
 import { signOut, type User } from '../api/auth'
 import { deleteAccount, getMe, updateDisplayName } from '../api/me'
 import { signOutFromGoogle } from '../auth/google'
+import { shareMyData } from '@/services/dataExport'
 import { useThemedStyles, type Colors } from '@/theme'
 
 const MAX_DISPLAY_NAME_LENGTH = 50
@@ -29,7 +30,7 @@ export default function AccountSection() {
   const [user, setUser] = useState<User | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [busy, setBusy] = useState<
-    null | 'loading' | 'saving' | 'signing-out' | 'deleting'
+    null | 'loading' | 'saving' | 'exporting' | 'signing-out' | 'deleting'
   >('loading')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -76,6 +77,22 @@ export default function AccountSection() {
     } catch (err) {
       console.error('Display name update error:', err)
       setError(t('account.nameError'))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  // Right of access (ADR 0017): all the data kept by the backend.
+  const handleExport = async () => {
+    setBusy('exporting')
+    setError(null)
+    setMessage(null)
+
+    try {
+      await shareMyData(t('account.export.dialogTitle'))
+    } catch (err) {
+      console.error('Data export error:', err)
+      setError(t('account.export.error'))
     } finally {
       setBusy(null)
     }
@@ -188,6 +205,20 @@ export default function AccountSection() {
         {message && <Text style={styles.success}>{message}</Text>}
         {error && <Text style={styles.error}>{error}</Text>}
       </View>
+
+      <Pressable
+        style={[styles.secondaryButton, busy !== null && styles.disabled]}
+        onPress={handleExport}
+        disabled={busy !== null}
+      >
+        <Text style={styles.secondaryButtonText}>
+          {busy === 'exporting'
+            ? t('account.export.exporting')
+            : t('account.export.button')}
+        </Text>
+      </Pressable>
+
+      <Text style={styles.hint}>{t('account.export.hint')}</Text>
 
       <Pressable
         style={[styles.secondaryButton, busy !== null && styles.disabled]}

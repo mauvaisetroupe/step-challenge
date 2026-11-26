@@ -31,6 +31,8 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string | undefined,
     path: string,
+    /** The parsed JSON error body, when there is one. */
+    readonly body?: Record<string, unknown>,
   ) {
     super(`API error ${status}${code ? ` (${code})` : ''} on ${path}`)
     this.name = 'ApiError'
@@ -60,10 +62,10 @@ export function onSignedOut(listener: Listener) {
   }
 }
 
-async function readErrorCode(response: Response) {
+async function readErrorBody(response: Response) {
   try {
     const body = await response.json()
-    return typeof body?.error === 'string' ? body.error : undefined
+    return typeof body === 'object' && body !== null ? body : undefined
   } catch {
     return undefined
   }
@@ -130,7 +132,14 @@ export async function apiFetch<T = unknown>(
     }
 
     if (!response.ok) {
-      throw new ApiError(response.status, await readErrorCode(response), path)
+      const errorBody = await readErrorBody(response)
+
+      throw new ApiError(
+        response.status,
+        typeof errorBody?.error === 'string' ? errorBody.error : undefined,
+        path,
+        errorBody,
+      )
     }
 
     // Some successes have no body (204, or 201 for a created report or

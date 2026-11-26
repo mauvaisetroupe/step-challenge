@@ -6,9 +6,15 @@ import {
 import { wakeHuaweiHms } from '../../modules/step-sync'
 import type { DayStat } from '../api/steps'
 import {
+  recordHuaweiGranted,
+  recordHuaweiWithdrawn,
+} from './huaweiConsentJournal'
+import {
   buildHourlyRequest,
+  buildMinuteRequest,
   buildPolymerizeRequest,
   countHoursWithSteps,
+  countMinutesWithSteps,
   huaweiAccessReasonOf,
   parseHourlySteps,
   parsePolymerizeResponse,
@@ -88,6 +94,23 @@ const SIGN_IN_TIMEOUT_MS = 90_000
  * screen.
  */
 export async function signInHuaweiHealth() {
+  try {
+    const signedIn = await signInToHuawei()
+
+    recordHuaweiGranted(signedIn.scopes)
+
+    return signedIn
+  } catch (error) {
+    // Consent refused or withdrawn in the HUAWEI Health app (ADR 0017).
+    if (error instanceof HuaweiAccessError && error.reason === 'notAuthorized') {
+      recordHuaweiWithdrawn('huawei_app')
+    }
+
+    throw error
+  }
+}
+
+async function signInToHuawei() {
   let result: HuaweiResult
 
   await thawHms()
@@ -171,6 +194,8 @@ export async function revokeHuaweiHealth() {
       `Huawei Health revocation failed: ${JSON.stringify(result)}`,
     )
   }
+
+  recordHuaweiWithdrawn('app')
 }
 
 /**
@@ -236,6 +261,16 @@ export async function getHuaweiTodayHourlyDetail() {
   return countHoursWithSteps(await polymerize(buildHourlyRequest(new Date())))
 }
 
+/**
+ * Today's minutes with steps in Huawei's cloud, and the busiest one
+ * (diagnostic: could the activity minutes of ADR 0010 be computed?).
+ */
+export async function getHuaweiTodayMinuteDetail() {
+  return countMinutesWithSteps(
+    await polymerize(buildMinuteRequest(new Date())),
+  )
+}
+
 /** Calls the REST API with a fresh token; the parsed JSON response. */
 async function polymerize(request: object): Promise<unknown> {
   let token = (await signInHuaweiHealth()).token
@@ -251,6 +286,8 @@ async function polymerize(request: object): Promise<unknown> {
     // 2026-11-26), or the switch off. A consent withdrawn in HUAWEI
     // Health shows the consent screen at sign-in instead.
     if (response.status === 401) {
+      recordHuaweiWithdrawn('switch')
+
       throw new HuaweiAccessError(
         'switchOff',
         `HUAWEI Health read failed: HTTP 401 ${await response.text()}`,

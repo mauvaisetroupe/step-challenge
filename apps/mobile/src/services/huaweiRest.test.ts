@@ -5,8 +5,10 @@ import { describe, it } from 'node:test'
 
 import {
   buildHourlyRequest,
+  buildMinuteRequest,
   buildPolymerizeRequest,
   countHoursWithSteps,
+  countMinutesWithSteps,
   formatUtcOffset,
   parseHourlySteps,
   parsePolymerizeResponse,
@@ -144,6 +146,34 @@ describe('hourly detail', () => {
     assert.equal(request.startTime, new Date(2026, 10, 24).getTime())
     assert.equal(request.endTime, end.getTime())
     assert.deepEqual(request.groupByTime, { duration: 3_600_000 })
+  })
+
+  it('asks for one-minute groups from local midnight', () => {
+    const end = new Date(2026, 10, 24, 10, 30)
+    const request = buildMinuteRequest(end)
+
+    assert.equal(request.startTime, new Date(2026, 10, 24).getTime())
+    assert.equal(request.endTime, end.getTime())
+    assert.deepEqual(request.groupByTime, { duration: 60_000 })
+  })
+
+  it('counts the minutes with steps and the busiest one', () => {
+    const minute = (steps: number) => ({
+      sampleSet: [
+        { samplePoints: [{ value: [{ fieldName: 'steps', integerValue: steps }] }] },
+      ],
+    })
+
+    assert.deepEqual(
+      countMinutesWithSteps({
+        group: [minute(0), minute(95), minute(112), { sampleSet: [] }],
+      }),
+      { withSteps: 2, maxSteps: 112 },
+    )
+    assert.deepEqual(countMinutesWithSteps(null), {
+      withSteps: 0,
+      maxSteps: 0,
+    })
   })
 
   it('counts the hours with steps', () => {

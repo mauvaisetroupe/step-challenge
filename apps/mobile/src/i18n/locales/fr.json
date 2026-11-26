@@ -14,7 +14,7 @@
     },
     "account": {
       "title": "Compte",
-      "detail": "Nom affiché, déconnexion, suppression"
+      "detail": "Nom affiché, export des données, déconnexion, suppression"
     },
     "badges": {
       "title": "Mes badges",
@@ -111,9 +111,12 @@
       "help": "Besoin d'aide ?",
       "revoke": "Retirer l'accès à HUAWEI Health",
       "revokeTitle": "Retirer l'accès à HUAWEI Health ?",
-      "revokeMessage": "Step Challenge ne lira plus tes pas dans HUAWEI Health et les relira dans Santé Connect. Les pas déjà envoyés restent ; pour les effacer, supprime ton compte (Plus → Compte).",
+      "revokeMessage": "Step Challenge ne lira plus tes pas dans HUAWEI Health et les relira dans Santé Connect. Veux-tu garder les pas déjà enregistrés dans Step Challenge, ou les supprimer ? La suppression concerne tous tes pas enregistrés, quelle que soit leur source ; Santé Connect renverra ensuite ses 30 derniers jours.",
       "revoked": "Accès à HUAWEI Health retiré. Pour l'autoriser de nouveau, choisis HUAWEI Health ci-dessus.",
-      "revokeFailed": "Step Challenge n'a pas pu retirer son accès à HUAWEI Health. Tu peux le faire toi-même dans HUAWEI Health → Moi → Gestion de la confidentialité : retire Step Challenge des applications autorisées."
+      "revokeFailed": "Step Challenge n'a pas pu retirer son accès à HUAWEI Health. Tu peux le faire toi-même dans HUAWEI Health → Moi → Gestion de la confidentialité : retire Step Challenge des applications autorisées.",
+      "revokeKeep": "Garder mes pas",
+      "revokeDelete": "Supprimer mes pas",
+      "revokedAndDeleted": "Accès à HUAWEI Health retiré et pas supprimés. Pour l'autoriser de nouveau, choisis HUAWEI Health ci-dessus."
     },
     "activity": {
       "title": "Activité",
@@ -419,6 +422,13 @@
       "message": "Ton compte, ton nom et tout ton historique de pas seront définitivement supprimés du serveur Step Challenge. Les données de Santé Connect sur ton téléphone ne sont pas touchées.\n\nCette action est irréversible.",
       "confirm": "Supprimer",
       "error": "La suppression a échoué. Réessaie plus tard."
+    },
+    "export": {
+      "button": "Exporter mes données",
+      "exporting": "Export...",
+      "hint": "Un fichier avec tout ce que Step Challenge garde sur toi : compte, pas, amis, badges, accords.",
+      "dialogTitle": "Mes données Step Challenge",
+      "error": "Impossible d'exporter tes données. Réessaie dans un moment."
     }
   },
   "signIn": {
@@ -453,9 +463,11 @@
       "creating": "Création..."
     },
     "terms": {
-      "before": "En créant ton compte, tu acceptes les ",
+      "before": "J'accepte les ",
       "link": "conditions d'utilisation",
-      "after": "."
+      "between": " et la ",
+      "privacyLink": "politique de confidentialité",
+      "after": " de Step Challenge."
     }
   },
   "errors": {
@@ -504,7 +516,9 @@
       "history_many": "{{count}} jours (API REST)",
       "history_other": "{{count}} jours (API REST)",
       "hourly": "Détail dans la journée",
-      "hourlyValue": "{{withSteps}} heures avec des pas sur {{hours}}"
+      "hourlyValue": "{{withSteps}} heures avec des pas sur {{hours}}",
+      "minutes": "Détail à la minute",
+      "minutesValue": "{{withSteps}} minutes avec des pas, au plus {{maxSteps}} pas en une minute"
     },
     "sources": {
       "title": "Sources des pas (aujourd'hui)",
@@ -545,7 +559,7 @@
     "activityScore": "Le score d'activité se calcule à partir de tes pas minute par minute, que Step Challenge ne lit pas dans HUAWEI Health.",
     "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui ne sont pas disponibles avec HUAWEI Health.",
     "sync": "Avec HUAWEI Health, tes pas sont envoyés à l'ouverture de l'application et quand tu actualises un écran, pas en arrière-plan.",
-    "statsNote": "Pas lus dans HUAWEI Health"
+    "statsNote": "Source des pas : HUAWEI Health"
   },
   "badges": {
     "title": "Badges",
@@ -576,5 +590,24 @@
       "earnedTimes_other": "Obtenu {{count}} fois",
       "notYet": "Pas encore obtenu."
     }
+  },
+  "consent": {
+    "title": "Avant de continuer",
+    "text": "Pour utiliser Step Challenge, lis et accepte ses conditions d'utilisation et sa politique de confidentialité.",
+    "updated": {
+      "terms": "Les conditions d'utilisation de Step Challenge ont changé. Lis-les et accepte-les pour continuer.",
+      "privacy": "La politique de confidentialité de Step Challenge a changé. Lis-la et accepte-la pour continuer."
+    },
+    "read": {
+      "terms": "Lire les conditions d'utilisation",
+      "privacy": "Lire la politique de confidentialité"
+    },
+    "accept": "J'accepte",
+    "refuse": "Refuser",
+    "refusedTitle": "Step Challenge ne peut pas fonctionner sans ton accord",
+    "refusedText": "Sans accord sur ces documents, Step Challenge ne peut ni garder tes pas ni les partager avec tes amis. Tu peux te déconnecter, ou supprimer ton compte et toutes tes données.",
+    "back": "Revenir et accepter",
+    "outdated": "Le document vient de changer : relis-le, puis accepte-le.",
+    "error": "Impossible de joindre le serveur. Réessaie dans un moment."
   }
 }
