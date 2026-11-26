@@ -19,7 +19,6 @@ backend       Fastify + PostgreSQL — https://step-api.architech.lu
 | `apps/mobile` | Application Expo (expo-router, onglets Accueil / Stats / Classement / Paramètres) |
 | `backend` | API Fastify (`/api/auth/*`, `/api/me`, `/api/me/steps`, `/api/leaderboard`, `/api/health`) |
 | `huawei` | Documents de la demande d'accès Huawei Health Kit |
-| `site` | Site public `step.architech.lu` (Hugo) |
 | `docs` | Documentation, ADR, état du projet |
 | `icons` | Sources des icônes et visuels Google Play |
 

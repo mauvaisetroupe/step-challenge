@@ -29,14 +29,6 @@
 | `npx eas-cli env:list --environment <env>` | Variables EAS d'un environnement |
 | `npx eas-cli credentials` | Clé d'importation (Android, production) |
 
-## Site (`site/`)
-
-| Commande | Fait |
-|---|---|
-| `hugo server` | Site sur `http://localhost:1313/`, rechargé à chaque modification |
-| `hugo --minify` | Construction complète dans `site/public/` |
-| `scripts/deploy-sftp.sh` | Envoi à la main chez OVH ([guide](../how-to/update-the-public-site.md#envoyer-à-la-main)) |
-
 ## Publier
 
 | Commande | Fait |

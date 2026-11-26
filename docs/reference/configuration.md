@@ -61,5 +61,6 @@ l'option `iosUrlScheme`.
 
 ## Site
 
-`site/hugo.toml` (langues, adresse, lien Play Store, e-mail de contact), et les secrets et variables GitHub du
-déploiement : [Mettre à jour le site](../how-to/update-the-public-site.md#secrets-et-variables-à-créer).
+Dans le dépôt `architech-sport` ([Mettre à jour le site](../how-to/update-the-public-site.md)). Ce dépôt n'en garde
+que les adresses : `apps/mobile/src/constants/links.ts` (pages légales), `app.json` (App Link des invitations) et
+`publicBaseUrl` dans `backend/src/config.ts` (liens d'invitation).

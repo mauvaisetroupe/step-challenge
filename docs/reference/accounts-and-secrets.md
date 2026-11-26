@@ -12,8 +12,8 @@ Tout ce qui existe hors du dépôt, et où le retrouver.
 | Google Cloud, projet `step-challenge` | Connexion Google : clients OAuth Web et Android ([Signature Android](android-signing.md)) |
 | Google Play Console, compte `mauvaisetroupe` | Publication, fiche, déclarations, accès de démonstration ([Publier sur Google Play](../how-to/publish-on-google-play.md)) |
 | Huawei AppGallery Connect | Publication AppGallery, Health Kit, empreintes ([Publier sur AppGallery](../how-to/publish-on-appgallery.md)) |
-| OVH, hébergement web | Le site public `step.architech.lu` (SFTP) |
-| Cloudflare, zone `architech.lu` | Le tunnel vers le VPS (`step-api.architech.lu`), décrit dans `vps-infra` |
+| OVH, hébergement web | Le site public `sport.architech.lu`, publié par le dépôt `architech-sport` |
+| Cloudflare, zone `architech.lu` | Le tunnel vers le VPS (`step-api.architech.lu`), décrit dans `vps-infra` ; la redirection de `step.architech.lu` vers `sport.architech.lu` (Rules → Redirect Rules) |
 
 ## Secrets
 

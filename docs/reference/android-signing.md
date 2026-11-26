@@ -35,7 +35,7 @@ La clé de debug est celle du **modèle React Native** : la même dans tous les 
 
 | Service | Empreinte | Clés déclarées | Pourquoi |
 |---|---|---|---|
-| **App Links** : `site/static/.well-known/assetlinks.json` (servi par le site public) | SHA-256 | Google Play, importation | Android vérifie que l'application qui ouvre les liens `https://step.architech.lu/i/…` est bien la nôtre. La clé de debug est volontairement absente : la variante de développement utilise son propre schéma d'URL |
+| **App Links** : `static/.well-known/assetlinks.json` du dépôt `architech-sport` (servi par `sport.architech.lu`) | SHA-256 | Google Play, importation | Android vérifie que l'application qui ouvre les liens `https://sport.architech.lu/step-challenge/i/…` est bien la nôtre. La clé de debug est volontairement absente : la variante de développement utilise son propre schéma d'URL |
 | **Connexion Google** : Google Cloud → API et services → Identifiants → un **client OAuth Android** par empreinte | SHA-1 | Google Play et importation (package de production) ; debug (package `.dev` de la variante de développement) | Google n'accepte la connexion que depuis une application dont le package et l'empreinte correspondent à un client Android |
 | **Huawei** : AppGallery Connect → Project settings → General information | SHA-256 | Google Play, importation, debug | HMS Core vérifie l'application avant d'autoriser Health Kit (voir [l'intégration Huawei](../explanation/huawei-integration.md), section 14) |
 

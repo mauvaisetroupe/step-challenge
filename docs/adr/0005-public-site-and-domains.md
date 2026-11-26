@@ -1,6 +1,6 @@
 # ADR 0005 — Site public et séparation des domaines
 
-- **Statut** : Accepté
+- **Statut** : Accepté, remplacé en partie par l'[ADR 0014](0014-public-site-on-sport-architech.md) (le site et les invitations sont sur `sport.architech.lu` ; `step.architech.lu` est une redirection ; la séparation de l'API sur `step-api.architech.lu` reste)
 - **Date** : 2026-10-05
 - **Décideur** : mauvaisetroupe
 - **Lié à** : [ADR 0002 — Amis](0002-friends.md) (liens d'invitation, App Links), [ADR 0004 — Signalement et blocage](0004-user-reporting-and-blocking.md) (conditions d'utilisation)

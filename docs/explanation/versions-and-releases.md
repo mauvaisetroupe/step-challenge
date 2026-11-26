@@ -6,7 +6,7 @@ Step Challenge arrive aux utilisateurs par **quatre chemins**, chacun avec son r
 flowchart LR
     repo["dépôt step-challenge"] -- "tag api-vX.Y.Z<br/>CI, images" --> vps["VPS<br/>step-api.architech.lu"]
     repo -- "app.json, eas build --local<br/>tag mobile-vX.Y.Z" --> play["Google Play"] & agc["AppGallery"]
-    repo -- "push sur main (site/)" --> ovh["OVH<br/>step.architech.lu"]
+    sport["dépôt architech-sport"] -- "push sur main" --> ovh["OVH<br/>sport.architech.lu"]
     play --> phone["téléphones"]
     agc --> phone
     phone -- "HTTPS, session" --> vps
@@ -18,7 +18,7 @@ flowchart LR
 | API (`backend/`) | Tag `api-vX.Y.Z` | La CI | Au déploiement (`deploy-app`) | `deploy-app` de la version précédente |
 | Application, Google Play | `version` de `app.json`, tag `mobile-vX.Y.Z` | Le Mac (EAS en local) | Après l'examen de Google, puis la mise à jour du Store | Impossible : une nouvelle version |
 | Application, AppGallery | Même version et même tag | Le Mac (profil `appgallery`) | Après l'examen de Huawei (3 à 5 jours) | Impossible : une nouvelle version |
-| Site (`site/`) | Aucun | La CI (`deploy-site.yml`) | Au push sur `main` | `git revert`, push |
+| Site (dépôt `architech-sport`) | Aucun | Sa CI | Au push sur `main` | `git revert`, push |
 
 Les numéros de l'API et de l'application sont **indépendants** : une version de l'API peut ne rien changer à
 l'application, et l'inverse.

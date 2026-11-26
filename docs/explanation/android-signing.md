@@ -45,7 +45,7 @@ la clé privée. Chaque service qui doit reconnaître « la vraie application »
 
 - **Connexion Google** : Google ne donne un jeton qu'à une application dont le package et le certificat correspondent
   à un client OAuth Android du projet `step-challenge`. Un client par clé.
-- **App Links** : Android n'ouvre les liens `https://step.architech.lu/i/…` directement dans l'application que si le
+- **App Links** : Android n'ouvre les liens `https://sport.architech.lu/step-challenge/i/…` directement dans l'application que si le
   site publie son empreinte dans `/.well-known/assetlinks.json`. Sans ça, un lien d'invitation ouvrirait le navigateur.
 - **Huawei** : HMS Core vérifie l'application avant de lui donner accès à Health Kit.
 

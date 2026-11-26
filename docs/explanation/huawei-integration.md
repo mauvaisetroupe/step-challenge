@@ -84,7 +84,7 @@ Agreement :
 https://step.architech.lu/agreement.html
 ```
 
-Ces pages sont hébergées par le backend Step Challenge.
+Ces pages étaient alors hébergées par le backend Step Challenge. Elles sont aujourd'hui sur `https://sport.architech.lu/step-challenge/` (ADR 0014) ; les anciennes adresses y sont redirigées.
 
 ---
 

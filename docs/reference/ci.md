@@ -1,7 +1,7 @@
 # Intégration continue
 
-Deux workflows GitHub Actions : `.github/workflows/ci.yml` (code, images, notes de version) et
-`.github/workflows/deploy-site.yml` (site public).
+Un workflow GitHub Actions : `.github/workflows/ci.yml` (code, images, notes de version). Le site public est publié
+par le dépôt `architech-sport` ([Mettre à jour le site](../how-to/update-the-public-site.md)).
 
 ## `ci.yml`
 
@@ -44,15 +44,9 @@ Releases.
 
 ## Messages de commit
 
-[Conventional Commits](https://www.conventionalcommits.org), en anglais, avec un scope (`mobile`, `backend`, `site`,
+[Conventional Commits](https://www.conventionalcommits.org), en anglais, avec un scope (`mobile`, `backend`,
 `deploy`, `adr`…). Le `!` est réservé à ce qui demande une action de l'exploitant ou empêche le retour en arrière ; la
 version de l'application se commite `chore(mobile): X.Y.Z`.
-
-## `deploy-site.yml`
-
-Construit le site Hugo sur une pull request qui touche `site/`, et l'envoie chez OVH en SFTP sur un push sur `main`
-qui touche `site/` (ou à la main, `workflow_dispatch`). Secrets et variables :
-[Mettre à jour le site](../how-to/update-the-public-site.md#déploiement).
 
 ## Où regarder
 

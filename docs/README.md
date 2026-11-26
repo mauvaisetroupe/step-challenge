@@ -18,7 +18,7 @@ Livrer :
 - [Publier une version de l'API](how-to/release-the-api.md) : tag, CI, images, notes de version, déploiement sur le VPS
 - [Publier l'application sur Google Play](how-to/publish-on-google-play.md) : version, build EAS local, Play Console, tag
 - [Publier l'application sur AppGallery](how-to/publish-on-appgallery.md) : APK, vérifications, AppGallery Connect
-- [Mettre à jour le site public](how-to/update-the-public-site.md) : Hugo, pages, déploiement SFTP
+- [Mettre à jour le site public](how-to/update-the-public-site.md) : dépôt `architech-sport`, ce qui en dépend ici
 
 Faire tourner :
 

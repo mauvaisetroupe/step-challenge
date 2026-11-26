@@ -19,7 +19,6 @@ La base de production n'est **jamais** utilisée en développement.
 | Docker avec Compose | Les bases de dev et de test, les migrations | Docker Desktop ou OrbStack |
 | Android Studio (SDK Android) | L'application | `brew install --cask android-studio`, puis l'assistant installe le SDK |
 | Un compte Expo | Variables d'environnement et credentials EAS | `npx eas-cli login` |
-| Hugo (version de la CI) | Seulement pour le site | [Mettre à jour le site](../how-to/update-the-public-site.md) |
 
 Dans `~/.zshrc` :
 

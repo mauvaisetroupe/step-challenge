@@ -6,19 +6,20 @@ Inventaire de tout ce qui est accessible **sans authentification**, et de l'endr
 
 **Ce qui est hébergé avec l'API (home lab jusqu'au 2026-10-27, VPS depuis) est authentifié.** Les seules exceptions sont celles qui ne peuvent pas l'être par nature (l'entrée dans l'authentification elle-même), listées ci-dessous avec leur justification. Tout contenu public est servi par l'hébergement public, pas par le home lab.
 
-Voir l'[ADR 0005 — Site public et séparation des domaines](../adr/0005-public-site-and-domains.md).
+Voir l'[ADR 0005 — Site public et séparation des domaines](../adr/0005-public-site-and-domains.md) et l'[ADR 0014 — Site public sur `sport.architech.lu`](../adr/0014-public-site-on-sport-architech.md).
 
-## Hébergement public : `step.architech.lu` (OVH, derrière Cloudflare)
+## Hébergement public : `sport.architech.lu` (OVH, derrière Cloudflare)
 
-Site statique généré par Hugo (`site/`). Aucun code serveur, aucune base de données, aucun secret.
+Site statique généré par Hugo, publié par le dépôt [`architech-sport`](https://github.com/mauvaisetroupe/architech-sport), commun aux applications de sport. Aucun code serveur, aucune base de données, aucun secret. Pour Step Challenge :
 
 | Chemin | Contenu | Pourquoi public |
 |---|---|---|
-| `/`, `/help/…`, `/faq.html` et leurs équivalents `/fr/…` (accueil, aide, guide) | Présentation de l'application, aide (Huawei, HMS Core…), guide utilisateur | Contenu marketing et d'aide |
-| `/sitemap.xml`, `/robots.txt` | Liste des pages publiques pour les moteurs de recherche | Référencement du contenu public |
-| `/privacy.html`, `/agreement.html`, `/delete-account.html` (et `/fr/…`) | Pages légales, aux URL déclarées dans la Play Console et chez Huawei | Doivent être lisibles par les examinateurs Google et Huawei, partout dans le monde |
-| `/i/<code>` | Page d'atterrissage d'une invitation : explique comment installer l'application | Ouverte par un invité qui n'a pas encore l'application ni de compte. Le code n'est que dans l'adresse ; la page ne contacte aucun serveur |
-| `/.well-known/assetlinks.json` | Package et empreintes des certificats de signature (publics) | Lu par Android et les serveurs de Google pour vérifier les App Links, sans identifiant |
+| `/step-challenge/`, `/step-challenge/help/…`, `/step-challenge/faq.html` et leurs équivalents `/fr/step-challenge/…` | Présentation de l'application, aide (Huawei, HMS Core…), FAQ | Contenu marketing et d'aide |
+| `/step-challenge/privacy.html`, `/step-challenge/agreement.html`, `/step-challenge/delete-account.html` (et `/fr/step-challenge/…`) | Pages légales, aux URL déclarées dans la Play Console et chez Google Cloud | Doivent être lisibles par les examinateurs Google et Huawei, partout dans le monde |
+| `/step-challenge/i/<code>` | Page d'atterrissage d'une invitation : explique comment installer l'application | Ouverte par un invité qui n'a pas encore l'application ni de compte. Le code n'est que dans l'adresse ; la page ne contacte aucun serveur |
+| `/.well-known/assetlinks.json` | Package et empreintes des certificats de signature (publics), une entrée par application du domaine | Lu par Android et les serveurs de Google pour vérifier les App Links, sans identifiant |
+
+`step.architech.lu`, l'ancien site, n'est plus qu'une redirection 301 de Cloudflare vers ces pages (depuis le 2026-11-26).
 
 ## API : `step-api.architech.lu` (VPS, tunnel Cloudflare)
 

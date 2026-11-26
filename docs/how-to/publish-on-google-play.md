@@ -33,7 +33,7 @@ git commit -am "chore(mobile): 1.12.0"
 Le `versionCode` n'est pas à toucher : EAS l'incrémente à chaque build de production (`appVersionSource: remote`,
 `autoIncrement` dans `eas.json`).
 
-**Tout commiter** : EAS refuse de construire avec des modifications non commitées dans le dépôt, `backend/` et `site/`
+**Tout commiter** : EAS refuse de construire avec des modifications non commitées dans le dépôt, `backend/`
 compris (`requireCommit` dans `eas.json`). Le build correspond ainsi exactement à un commit, celui que marquera le tag.
 
 ## 3. Construire
