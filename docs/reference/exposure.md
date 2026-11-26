@@ -16,7 +16,7 @@ Site statique généré par Hugo, publié par le dépôt [`architech-sport`](htt
 |---|---|---|
 | `/step-challenge/`, `/step-challenge/help/…`, `/step-challenge/faq.html` et leurs équivalents `/fr/step-challenge/…` | Présentation de l'application, aide (Huawei, HMS Core…), FAQ | Contenu marketing et d'aide |
 | `/step-challenge/privacy.html`, `/step-challenge/agreement.html`, `/step-challenge/delete-account.html` (et `/fr/step-challenge/…`) | Pages légales, aux URL déclarées dans la Play Console et chez Google Cloud | Doivent être lisibles par les examinateurs Google et Huawei, partout dans le monde |
-| `/step-challenge/i/<code>` | Page d'atterrissage d'une invitation : explique comment installer l'application | Ouverte par un invité qui n'a pas encore l'application ni de compte. Le code n'est que dans l'adresse ; la page ne contacte aucun serveur |
+| `/step-challenge/i/<code>` | Page d'atterrissage d'une invitation : explique comment installer l'application | Ouverte par un invité qui n'a pas encore l'application ni de compte. Le code n'est que dans l'adresse ; la page ne contacte aucun serveur. Seul le lien vers Google Play porte le code (`referrer`), pour que l'application ouvre l'invitation après l'installation ([ADR 0015](../adr/0015-invitation-through-install.md)) |
 | `/.well-known/assetlinks.json` | Package et empreintes des certificats de signature (publics), une entrée par application du domaine | Lu par Android et les serveurs de Google pour vérifier les App Links, sans identifiant |
 
 `step.architech.lu`, l'ancien site, n'est plus qu'une redirection 301 de Cloudflare vers ces pages (depuis le 2026-11-26).
