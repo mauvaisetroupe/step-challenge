@@ -54,6 +54,7 @@ Publication de chaque partie : [l'API](how-to/release-the-api.md), [Google Play]
 
 ### Par le mainteneur (Play Console, serveur, téléphone)
 
+- [ ] **La politique de confidentialité est en avance sur le serveur** (publiée le 2026-11-26, écart assumé) : elle annonce des sauvegardes **chiffrées** gardées **7 jours** ; elles sont encore en clair et gardées 30 jours. À faire dans `vps-infra` : chiffrement `age`, durée de 7 jours (par application), ADR 0001 de `vps-infra` à corriger (le VPS est au Canada, pas en France), disque à vérifier (`lsblk -f`). Au passage en Europe : mettre à jour la section 4 de la politique.
 - [ ] Suivre l'examen de la 1.2.1, puis envoyer l'icône de la fiche (`icons/playstore-icon.png`) si ce n'est pas déjà fait.
 - [ ] Vérifier sur la fiche publiée que les balises `<b>` de la description s'affichent en gras ; sinon les retirer.
 - [ ] Remplacer les captures d'écran du Store : elles montrent de vrais prénoms et de vrais pas.
