@@ -35,6 +35,7 @@ Faire tourner :
 - [Signature Android](reference/android-signing.md) : les trois clés, leurs empreintes, où elles sont déclarées
 - [Badges, points et niveaux](reference/badges.md) : catalogue, règles d'attribution, courbe des niveaux (brouillon)
 - [Surface d'exposition](reference/exposure.md) : tout ce qui est accessible sans authentification
+- [Vérification Huawei Health Kit](reference/huawei-verification.md) : exigences de Huawei pour lever la limite de 100 utilisateurs, et état de chacune
 - [Exploitation](exploitation.md) : pour qui héberge l'API (images, variables, démarrage, mises à jour, retour en
   arrière). Elle reste à la racine de `docs/` : l'ADR 0011 et le dépôt `vps-infra` y renvoient.
 

@@ -697,7 +697,7 @@ Remarque pour les examinateurs (300 caractères au plus), saisie dans AppGallery
 Huawei a accordé la permission de **test** de Health Service Kit (ID d'application 118922449) :
 
 * **100 premiers utilisateurs** : aucun compte à déclarer, le compteur de la console (Health Kit, permissions de test) compte les comptes HUAWEI qui se connectent ;
-* **valable un an** : sans demande de **vérification** acceptée d'ici fin novembre 2027, la permission est retirée. La vérification lève aussi la limite de 100 utilisateurs ; elle se demande une fois l'intégration testée et publiée sur AppGallery.
+* **valable un an** : sans demande de **vérification** acceptée d'ici fin novembre 2027, la permission est retirée. La vérification lève aussi la limite de 100 utilisateurs ; elle se demande une fois l'intégration testée et publiée sur AppGallery. Exigences et état : [Vérification Huawei Health Kit](../reference/huawei-verification.md).
 
 La suite de l'intégration est décidée dans l'[ADR 0013](../adr/0013-step-source-choice.md) (une seule source de pas, choisie par l'utilisateur).
 

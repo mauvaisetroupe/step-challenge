@@ -125,7 +125,7 @@ La bibliothèque n'a pas de `HmsHealthAccount.signOut`. Ce qui retire l'accès d
 
 - **Quand** : au retour à Santé Connect, après la confirmation. Le prochain choix de Huawei Health redemande le consentement.
 - **Si elle échoue** (HMS Core absent, gelé, réseau) : la source change quand même ; un message dit que l'accès n'a pas pu être retiré et comment le faire dans Huawei Health. Une source qui ne change pas parce que Huawei ne répond pas serait pire.
-- **Gel** : cet appel passe par le processus de Health Kit de HMS Core (`container1`), celui qui gèle (contexte), et non par celui de la connexion. Avec la lecture REST, ce processus n'a en principe pas servi depuis longtemps : il démarre pour l'appel. Délai maximal de 15 secondes. À vérifier sur le Pixel.
+- **Gel** : cet appel passe par le processus de Health Kit de HMS Core (`container1`), celui qui gèle (contexte), et non par celui de la connexion. Avec la lecture REST, ce processus n'a en principe pas servi depuis longtemps : il démarre pour l'appel. Délai maximal de 15 secondes. Vérifié sur le Pixel le 2026-11-26 : `container1` démarre pour l'appel, `cancelAuthorization` réussit en moins d'une seconde (1,7 s vu de l'application), et le choix suivant de Huawei Health redemande le consentement.
 
 ### L'écran
 
@@ -177,7 +177,7 @@ Si l'API REST devenait inaccessible (refus de Huawei à la vérification, par ex
 
 - **Chemin des données** : cloud de Huawei → téléphone → notre serveur, comme les pas de Santé Connect passent du téléphone au serveur. Le jeton HUAWEI reste sur le téléphone.
 - **Politique de confidentialité** : ajouter Huawei Health comme origine possible des pas (même donnée, même usage), lue dans le cloud de Huawei avec l'accord de l'utilisateur.
-- **Huawei** : la demande de **vérification** (fin de la limite de 100 utilisateurs) se fait après les tests, avec cette version publiée sur AppGallery ; y dire que la lecture passe par l'API REST.
+- **Huawei** : la demande de **vérification** (fin de la limite de 100 utilisateurs) se fait après les tests, avec cette version publiée sur AppGallery ; y dire que la lecture passe par l'API REST. Exigences de Huawei et état : [Vérification Huawei Health Kit](../reference/huawei-verification.md).
 - **Google Play** : le build Play contient déjà le SDK Huawei Health (depuis la 1.8.2). Rien ne change dans le formulaire Data safety : les données et leur usage sont les mêmes.
 
 ## Conséquences
