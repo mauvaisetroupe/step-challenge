@@ -58,18 +58,56 @@ Le serveur reçoit le code, l'échange avec le secret client, garde le jeton de 
 
 **Option C**, sous réserve des points ouverts 1 à 3.
 
+### Vue d'ensemble
+
+Aujourd'hui (ADR 0013), tout passe par le téléphone ; demain, le serveur parle à HUAWEI et le téléphone ne parle plus qu'au serveur.
+
+```mermaid
+flowchart LR
+    subgraph today["Aujourd'hui (1.14 à 1.17)"]
+        direction LR
+        app1["Application"] -- "connexion, retrait<br/>(SDK)" --> hms["HMS Core<br/>(sur le téléphone, gèle)"]
+        hms -- "jeton" --> app1
+        app1 -- "lecture des pas<br/>(API REST, jeton)" --> hk1["Cloud HUAWEI<br/>Health Kit"]
+        app1 -- "totaux par jour" --> srv1["Serveur<br/>Step Challenge"]
+    end
+
+    subgraph tomorrow["ADR 0016"]
+        direction LR
+        app2["Application"] -- "session<br/>Step Challenge" --> srv2["Serveur<br/>Step Challenge"]
+        app2 -. "consentement<br/>(onglet du navigateur)" .-> oauth["HUAWEI ID<br/>(OAuth)"]
+        oauth -. "code" .-> srv2
+        srv2 -- "code + secret,<br/>rafraîchissement" --> oauth
+        srv2 -- "lecture des pas<br/>(API REST)" --> hk2["Cloud HUAWEI<br/>Health Kit"]
+        srv2 --- db[("Base :<br/>jeton chiffré,<br/>journal, pas")]
+    end
+```
+
+HUAWEI Health, sur le téléphone, continue de synchroniser la montre avec le cloud HUAWEI : c'est de là que les deux architectures lisent les pas.
+
 ### L'autorisation
 
-```
-Application        Serveur Step Challenge                    HUAWEI
-    │ POST /api/me/huawei/authorization │                        │
-    │──────────────────────────────────▶│ state lié à la session │
-    │◀──── URL d'autorisation ──────────│                        │
-    │ onglet du navigateur ─────────────────────────────────────▶│ consentement
-    │                                   │◀── redirect_uri?code&state
-    │                                   │ code + secret ────────▶│
-    │                                   │◀── jetons ─────────────│
-    │◀── retour dans l'application ─────│ (App Link)             │
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Utilisateur
+    participant A as Application
+    participant S as Serveur Step Challenge
+    participant H as HUAWEI ID (OAuth)
+
+    U->>A: Source des pas → HUAWEI Health
+    A->>S: POST /api/me/huawei/authorization (session)
+    S->>S: state aléatoire, lié à la session, usage unique
+    S-->>A: URL d'autorisation (client_id, scopes, state, display=touch)
+    A->>H: ouvre l'URL dans un onglet du navigateur
+    U->>H: se connecte, coche les pas et l'historique
+    H->>S: redirect_uri?code=…&state=… (le code ne passe pas par l'application)
+    S->>S: vérifie state
+    S->>H: POST /oauth2/v3/token (code + secret client)
+    H-->>S: jeton d'accès (60 min) + jeton de rafraîchissement (180 j) + scopes
+    S->>S: chiffre et garde le jeton de rafraîchissement, note « accordée » au journal
+    S-->>A: redirection vers un App Link : l'onglet se ferme
+    A->>S: relit les pas
 ```
 
 - La **redirection va au serveur**, pas à l'application : le code n'arrive jamais sur le téléphone, et le secret reste sur le serveur.
@@ -88,11 +126,49 @@ Application        Serveur Step Challenge                    HUAWEI
 - **Les totaux par jour** : lus par le serveur, à intervalles réguliers et quand l'application s'ouvre, puis enregistrés comme aujourd'hui (règle du maximum par jour, ADR 0013).
 - **Le détail heure par heure** de la vue 1j : lu par le serveur à la demande de l'application et renvoyé sans être enregistré, comme le promet la politique de confidentialité.
 
+```mermaid
+sequenceDiagram
+    participant T as Tâche planifiée<br/>ou ouverture de l'application
+    participant S as Serveur Step Challenge
+    participant H as HUAWEI ID (OAuth)
+    participant K as Cloud Health Kit (REST)
+
+    T->>S: lire les pas d'un utilisateur
+    alt jeton d'accès absent ou expiré
+        S->>H: POST /oauth2/v3/token (jeton de rafraîchissement + secret)
+        H-->>S: nouveau jeton d'accès (gardé en mémoire)
+    end
+    S->>K: sampleSet:polymerize (30 jours, par jour)
+    K-->>S: totaux par jour
+    S->>S: enregistre (maximum par jour, ADR 0013)
+    Note over S,K: Vue 1j : même lecture, par heure,<br/>renvoyée à l'application sans être enregistrée
+```
+
 ### Le retrait
 
 - Bouton « Retirer l'accès » : le serveur annule l'autorisation chez Huawei (API REST `consents`, point ouvert 4), efface le jeton et note le retrait.
 - Retrait depuis HUAWEI Health ou interrupteur coupé : le rafraîchissement ou la lecture échoue ; le serveur efface le jeton, note l'événement, et l'application affiche le message de la 1.16.0 avec une nouvelle autorisation.
 - Suppression du compte : retrait chez Huawei, puis effacement.
+
+```mermaid
+sequenceDiagram
+    participant A as Application
+    participant S as Serveur Step Challenge
+    participant H as HUAWEI (OAuth, Health Kit)
+
+    alt Retrait dans Step Challenge (ou suppression du compte)
+        A->>S: DELETE /api/me/huawei/authorization
+        S->>H: annule l'autorisation (API REST consents)
+        S->>S: efface le jeton, note « retirée » au journal
+        S-->>A: accès retiré
+    else Retrait dans HUAWEI Health, ou interrupteur coupé
+        S->>H: rafraîchissement ou lecture
+        H-->>S: refus (jeton invalide, 401, 403)
+        S->>S: efface le jeton, note « refusée par HUAWEI » au journal
+        A->>S: lit les pas
+        S-->>A: « accès HUAWEI perdu » → message et bouton Autoriser
+    end
+```
 
 ### L'application
 
