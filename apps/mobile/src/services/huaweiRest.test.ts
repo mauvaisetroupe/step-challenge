@@ -8,6 +8,7 @@ import {
   buildPolymerizeRequest,
   countHoursWithSteps,
   formatUtcOffset,
+  parseHourlySteps,
   parsePolymerizeResponse,
   type PolymerizeRequest,
 } from './huaweiRest'
@@ -161,5 +162,21 @@ describe('hourly detail', () => {
       { hours: 4, withSteps: 2 },
     )
     assert.deepEqual(countHoursWithSteps(null), { hours: 0, withSteps: 0 })
+  })
+
+  it('gives the steps of each local hour until the end', () => {
+    const end = new Date(2026, 10, 24, 3, 30)
+    const at = (hour: number, steps: number) => ({
+      startTime: new Date(2026, 10, 24, hour).getTime(),
+      sampleSet: [
+        { samplePoints: [{ value: [{ fieldName: 'steps', integerValue: steps }] }] },
+      ],
+    })
+
+    assert.deepEqual(
+      parseHourlySteps({ group: [at(1, 120), at(3, 35)] }, end),
+      [0, 120, 0, 35],
+    )
+    assert.deepEqual(parseHourlySteps(null, end), [0, 0, 0, 0])
   })
 })

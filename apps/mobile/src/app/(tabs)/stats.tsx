@@ -26,6 +26,7 @@ import {
   syncLast30Days,
   syncTodaySteps,
 } from '../../services/stepSync'
+import { getHuaweiHourlySteps } from '@/services/huaweiHealth'
 import { noHealthConnectNotice } from '@/services/noHealthConnectNotice'
 import { syncPhoneSteps } from '@/services/phoneSteps'
 import { loadStepSource, useStepSource } from '@/services/stepSource'
@@ -300,6 +301,9 @@ export default function StatsScreen() {
   const [monthlyStats, setMonthlyStats] = useState<MonthStat[]>([])
   // 1-day view: steps per minute (Android).
   const [daySlices, setDaySlices] = useState<StepSlice[]>([])
+  // 1-day view with Huawei Health: steps per hour, empty when the device
+  // only uploads daily totals (ADR 0013).
+  const [huaweiHours, setHuaweiHours] = useState<number[]>([])
   const sleepHours = useSleepHours()
   const inactivePeriods = useMemo(
     () => findInactivePeriods(daySlices, sleepHours),
@@ -472,7 +476,27 @@ export default function StatsScreen() {
           return
         }
 
-        // 1 day: no hourly detail without Health Connect.
+        // 1 day: no detail by the minute without Health Connect. Huawei
+        // Health has steps per hour when a watch uploads them.
+        let hours: number[] = []
+
+        if (withHuawei) {
+          const end = pastDay
+            ? new Date(getDayRange(day).end.getTime() - 1)
+            : now
+
+          try {
+            hours = await getHuaweiHourlySteps(end)
+          } catch (err) {
+            console.error('HUAWEI Health hourly read failed:', err)
+          }
+
+          if (!isLatest()) {
+            return
+          }
+        }
+
+        setHuaweiHours(hours.some((steps) => steps > 0) ? hours : [])
         setDaySlices([])
         setDailyStats([])
         setMonthlyStats([])
@@ -671,7 +695,9 @@ export default function StatsScreen() {
                 hourlySteps={
                   daySlices.length > 0
                     ? hourlyStepsFromSlices(daySlices, timelineEnd)
-                    : []
+                    : stepSource === 'huawei'
+                      ? huaweiHours
+                      : []
                 }
                 inactivePeriods={inactivePeriods}
                 sleepHours={sleepHours}

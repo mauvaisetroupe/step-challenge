@@ -1,7 +1,7 @@
 # ADR 0013 — Une seule source de pas, choisie par l'utilisateur ; Huawei Health lu par son API cloud
 
 - **Statut** : Accepté
-- **Date** : 2026-11-24, amendé le 2026-11-26 (suggestion de Huawei Health sur l'Accueil, annulation de l'autorisation HUAWEI)
+- **Date** : 2026-11-24, amendé le 2026-11-26 (suggestion de Huawei Health sur l'Accueil, annulation de l'autorisation HUAWEI, courbe 1j heure par heure)
 - **Décideur** : mauvaisetroupe
 
 ## Contexte
@@ -197,7 +197,7 @@ Si l'API REST devenait inaccessible (refus de Huawei à la vérification, par ex
 3. **Limite d'historique de l'API REST** (environ 60 jours constatés, pour 1 mois demandé) : à comprendre avant de s'y fier ; l'application s'en tient à 30 jours.
 4. **Mémoriser la source de chaque jour** sur le serveur (support, diagnostic). Non retenu pour l'instant : demanderait une migration et un champ d'API.
 5. **Historique à la première connexion** (2026-11-25) : chez la testeuse, l'API n'a renvoyé que le jour même, alors que le Pixel en reçoit 30. Huawei ne donne peut-être que les données postérieures à l'autorisation de l'utilisateur, ou la synchronisation cloud venait d'être activée ; à trancher avec le diagnostic des jours suivants. Si c'est la règle de Huawei, revoir la phrase de confirmation (« les 30 derniers jours seront relus ») et la conséquence « 30 jours d'historique dès la connexion ».
-6. **Détail dans la journée** (2026-11-25) : le regroupement par durée (`groupByTime.duration`) donne des pas heure par heure avec une montre Huawei, rien avec le podomètre d'un téléphone non Huawei (section 16 de l'intégration Huawei). À vérifier à la minute avant de reprendre la courbe 1j, puis l'inactivité et le score, avec Huawei Health : décision à part.
+6. **Détail dans la journée** (2026-11-25) : le regroupement par durée (`groupByTime.duration`) donne des pas heure par heure avec une montre Huawei, rien avec le podomètre d'un téléphone non Huawei (section 16 de l'intégration Huawei). **Décidé le 2026-11-26** (1.16.0) : Statistiques → 1j lit les pas heure par heure du jour affiché par l'API REST, et trace la courbe quand au moins une heure a des pas ; sinon, un message dit que l'appareil n'envoie que le total du jour. Ce détail reste sur le téléphone (seul le total du jour va au serveur). L'inactivité et le score demandent la minute, toujours non vérifiée : décision à part.
 7. **HMS Core** : gardé pour la connexion, comme Health Sync l'exige. Une connexion OAuth web sans HMS Core est possible, mais l'échange du code demande un secret client, donc notre serveur (sauf si Huawei accepte PKCE, non vérifié) : à reconsidérer seulement si l'installation de HMS Core rebute des utilisateurs.
 
 ## Hors de cette décision

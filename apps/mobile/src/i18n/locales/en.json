@@ -525,7 +525,7 @@
     }
   },
   "huaweiSource": {
-    "hourly": "The hour-by-hour detail isn't available with HUAWEI Health: Step Challenge only reads each day's total from it.",
+    "hourly": "No hour-by-hour detail for this day: the device counting your steps only sends the day's total to HUAWEI Health (as a phone's step counter does; a Huawei watch sends the detail).",
     "activityScore": "The activity score is computed from your steps minute by minute, which Step Challenge doesn't read from HUAWEI Health.",
     "sleepHours": "Sleep hours are used for the activity score and the inactive periods, which aren't available with HUAWEI Health.",
     "sync": "With HUAWEI Health, your steps are sent when the app opens and when you refresh a screen, not in the background.",

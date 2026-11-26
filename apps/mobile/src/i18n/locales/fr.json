@@ -541,7 +541,7 @@
     }
   },
   "huaweiSource": {
-    "hourly": "Le détail heure par heure n'est pas disponible avec HUAWEI Health : Step Challenge n'y lit que le total de chaque jour.",
+    "hourly": "Pas de détail heure par heure pour ce jour : l'appareil qui compte tes pas n'envoie à HUAWEI Health que le total du jour (c'est le cas du podomètre d'un téléphone ; une montre Huawei envoie le détail).",
     "activityScore": "Le score d'activité se calcule à partir de tes pas minute par minute, que Step Challenge ne lit pas dans HUAWEI Health.",
     "sleepHours": "Les heures de sommeil servent au score d'activité et aux périodes d'inactivité, qui ne sont pas disponibles avec HUAWEI Health.",
     "sync": "Avec HUAWEI Health, tes pas sont envoyés à l'ouverture de l'application et quand tu actualises un écran, pas en arrière-plan.",

@@ -3,12 +3,14 @@ import {
   HmsHealthAccount,
 } from '@hmscore/react-native-hms-health'
 
+import { wakeHuaweiHms } from '../../modules/step-sync'
 import type { DayStat } from '../api/steps'
 import {
   buildHourlyRequest,
   buildPolymerizeRequest,
   countHoursWithSteps,
   huaweiAccessReasonOf,
+  parseHourlySteps,
   parsePolymerizeResponse,
   POLYMERIZE_URL,
 } from './huaweiRest'
@@ -79,6 +81,8 @@ const SIGN_IN_TIMEOUT_MS = 90_000
 export async function signInHuaweiHealth() {
   let result: HuaweiResult
 
+  await thawHms()
+
   try {
     result = (await withTimeout(
       HmsHealthAccount.signIn([STEP_READ_SCOPE]),
@@ -145,6 +149,8 @@ const REVOKE_TIMEOUT_MS = 15_000
  * Android may freeze, hence the time limit.
  */
 export async function revokeHuaweiHealth() {
+  await thawHms()
+
   const result = (await withTimeout(
     consents.cancelAuthorizationAll(false),
     REVOKE_TIMEOUT_MS,
@@ -155,6 +161,17 @@ export async function revokeHuaweiHealth() {
     throw new Error(
       `Huawei Health revocation failed: ${JSON.stringify(result)}`,
     )
+  }
+}
+
+/**
+ * Android may have frozen HMS Core's Health Kit process, which then
+ * leaves sign-in unanswered and fails revocation with 50011: wake it
+ * first (docs/explanation/huawei-integration.md, section 16).
+ */
+async function thawHms() {
+  if (!(await wakeHuaweiHms().catch(() => false))) {
+    console.warn('HMS Core probe unanswered')
   }
 }
 
@@ -189,6 +206,29 @@ export async function getHuaweiLast30Days(): Promise<DayStat[]> {
   start.setDate(start.getDate() - (HISTORY_DAYS - 1))
 
   const request = buildPolymerizeRequest(start, end)
+
+  return parsePolymerizeResponse(await polymerize(request), request)
+}
+
+/**
+ * Steps of each hour of `day`, until `end` (now for today, the last
+ * millisecond of the day otherwise), for the 1-day timeline. All zeros
+ * when the device only uploads daily totals (a phone's step counter).
+ */
+export async function getHuaweiHourlySteps(end: Date) {
+  return parseHourlySteps(await polymerize(buildHourlyRequest(end)), end)
+}
+
+/**
+ * Today's hours, and those with steps in Huawei's cloud (diagnostic:
+ * does this user's device upload more than daily totals?).
+ */
+export async function getHuaweiTodayHourlyDetail() {
+  return countHoursWithSteps(await polymerize(buildHourlyRequest(new Date())))
+}
+
+/** Calls the REST API with a fresh token; the parsed JSON response. */
+async function polymerize(request: object): Promise<unknown> {
   let token = (await signInHuaweiHealth()).token
   let response = await postPolymerize(request, token)
 
@@ -213,22 +253,7 @@ export async function getHuaweiLast30Days(): Promise<DayStat[]> {
     throw await readFailure(response)
   }
 
-  return parsePolymerizeResponse(await response.json(), request)
-}
-
-/**
- * Today's hours, and those with steps in Huawei's cloud (diagnostic:
- * does this user's device upload more than daily totals?).
- */
-export async function getHuaweiTodayHourlyDetail() {
-  const { token } = await signInHuaweiHealth()
-  const response = await postPolymerize(buildHourlyRequest(new Date()), token)
-
-  if (!response.ok) {
-    throw await readFailure(response)
-  }
-
-  return countHoursWithSteps(await response.json())
+  return response.json()
 }
 
 /** Error of a failed REST read, typed when the user can fix it. */

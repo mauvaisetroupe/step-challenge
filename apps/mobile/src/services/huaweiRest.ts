@@ -83,10 +83,10 @@ export function parsePolymerizeResponse(
 }
 
 /**
- * Today's steps grouped by hour, from local midnight to `end`. Only for
- * the diagnostic: on a Pixel counting with Huawei Health, Huawei's cloud
- * only has daily totals and every hour comes back empty; tells whether
- * a Huawei watch uploads finer data.
+ * Steps grouped by hour, from the local midnight of `end` to `end`.
+ * Depends on the device that counts: a Huawei watch uploads hourly
+ * data, a Pixel counting with Huawei Health only daily totals, and
+ * every hour then comes back empty.
  */
 export function buildHourlyRequest(end: Date) {
   const midnight = new Date(end)
@@ -129,6 +129,29 @@ export function huaweiAccessReasonOf(
   }
 
   return null
+}
+
+/**
+ * Steps of each local hour, from midnight to the hour of `end`, the
+ * shape of the 1-day timeline (hourlyStepsFromSlices); an hour missing
+ * from the response has 0 steps.
+ */
+export function parseHourlySteps(response: unknown, end: Date) {
+  const hours = Array.from({ length: end.getHours() + 1 }, () => 0)
+
+  for (const group of (response as PolymerizeResponse)?.group ?? []) {
+    if (typeof group.startTime !== 'number') {
+      continue
+    }
+
+    const hour = new Date(group.startTime).getHours()
+
+    if (hour < hours.length) {
+      hours[hour] += groupSteps(group)
+    }
+  }
+
+  return hours
 }
 
 type Group = NonNullable<PolymerizeResponse['group']>[number]
