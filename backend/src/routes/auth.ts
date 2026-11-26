@@ -7,11 +7,13 @@ import {
   type OidcIdentity,
 } from '../auth/google.js'
 import {
+  type AcceptedLegal,
   DisplayNameRequiredError,
   signInDemo,
   signInWithOidc,
 } from '../auth/signIn.js'
 import { isDemoAccessCode } from '../demo/demoAccount.js'
+import { LEGAL_VERSIONS } from '../legal.js'
 import { RATE_LIMITS } from '../rateLimit.js'
 
 export type AuthRoutesOptions = {
@@ -48,6 +50,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
     Body: {
       idToken: string
       displayName?: string
+      acceptedLegal?: AcceptedLegal
     }
   }>(
     '/auth/google',
@@ -61,6 +64,16 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
           properties: {
             idToken: { type: 'string', minLength: 1, maxLength: 4096 },
             displayName: { type: 'string', minLength: 1, maxLength: 50 },
+            // Versions of the legal documents accepted on the account
+            // creation screen (ADR 0017).
+            acceptedLegal: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                terms: { type: 'string', maxLength: 20 },
+                privacy: { type: 'string', maxLength: 20 },
+              },
+            },
           },
         },
       },
@@ -87,6 +100,7 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
           db,
           identity,
           request.body.displayName,
+          request.body.acceptedLegal,
         )
 
         return reply.code(result.isNewUser ? 201 : 200).send(result)
@@ -94,6 +108,9 @@ const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (
         if (error instanceof DisplayNameRequiredError) {
           return reply.code(422).send({
             error: 'display_name_required',
+            // Versions to show and send back with the display name
+            // (ADR 0017).
+            legal: LEGAL_VERSIONS,
           })
         }
 

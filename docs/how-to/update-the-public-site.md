@@ -17,7 +17,7 @@ Langue : l'anglais à la racine, le français sous `/fr/`, **avant** la section 
 ## Ce qui dépend du site dans ce dépôt
 
 - **Application** : les pages légales et d'aide ouvertes depuis l'application (`apps/mobile/src/constants/links.ts` : Plus → Informations légales et Aide, Source des pas, Amis), l'App Link des invitations (`app.json`, `pathPrefix` `/step-challenge/i/`) et `src/app/+native-intent.tsx`, qui retire le préfixe `/step-challenge`.
-- **API** : la base des liens d'invitation (`publicBaseUrl` dans `backend/src/config.ts`).
+- **API** : la base des liens d'invitation (`publicBaseUrl` dans `backend/src/config.ts`), et la version en vigueur des conditions d'utilisation et de la politique de confidentialité (`LEGAL_VERSIONS` dans `backend/src/legal.ts`, [ADR 0017](../adr/0017-consent-and-user-rights.md)). Un changement **de fond** de l'une d'elles change aussi sa version (la date `updated` de la page) et demande de publier l'API : tous les utilisateurs l'acceptent alors de nouveau à l'ouverture de l'application. Une correction de forme ne change pas la version.
 - **`assetlinks.json`** : à mettre à jour dans `architech-sport` si une clé de signature change ([Signature Android](../reference/android-signing.md)).
 
 Une page légale (confidentialité, conditions, suppression du compte) se met à jour **avant** l'envoi d'une version de l'application qui en dépend : les examinateurs des boutiques la lisent.

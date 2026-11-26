@@ -121,7 +121,7 @@ describe('POST /api/auth/google', { skip: skipWithoutDatabase }, () => {
     const response = await signIn(app, { idToken: 'valid:alice' })
 
     assert.equal(response.statusCode, 422)
-    assert.deepEqual(response.json(), { error: 'display_name_required' })
+    assert.equal(response.json().error, 'display_name_required')
 
     const users = await pool!.query('SELECT count(*)::int AS n FROM users')
 

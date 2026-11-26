@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 
 /**
  * Rate limits (ADR 0001 for sign-in, ADR 0002 for invitations, ADR 0004
- * for reports, ADR 0006 for demo access), applied per client IP address.
+ * for reports, ADR 0006 for demo access, ADR 0017 for data export), applied per client IP address.
  *
  * Generous for a person, tight enough to slow down scripts: account
  * creation in bulk, guessing invitation codes.
@@ -22,6 +22,8 @@ export const RATE_LIMITS = {
   // Demo access (ADR 0006): a reviewer signs in a few times at most;
   // this leaves no room for guessing the access code.
   demoSignIn: { max: 10, timeWindow: '1 hour' },
+  // Data export (ADR 0017): a whole account per call, rarely needed.
+  export: { max: 10, timeWindow: '1 hour' },
 } as const
 
 /**

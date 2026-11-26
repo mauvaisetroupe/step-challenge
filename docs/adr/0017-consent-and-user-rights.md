@@ -1,6 +1,6 @@
 # ADR 0017 — Accord explicite, trace des autorisations et droits des utilisateurs
 
-- **Statut** : Proposé
+- **Statut** : Accepté
 - **Date** : 2026-11-26
 - **Décideur** : mauvaisetroupe
 - **Lié à** : [ADR 0001 — Authentification](0001-authentication.md) (création du compte), [ADR 0004 — Signalement et blocage](0004-user-reporting-and-blocking.md) (conditions d'utilisation), [ADR 0012 — Compatibilité de l'API](0012-api-backward-compatibility.md), [ADR 0013 — Choix de la source des pas](0013-step-source-choice.md) (retrait de HUAWEI Health), [ADR 0016 — HUAWEI Health par le serveur](0016-huawei-health-through-the-server.md) (proposé, non retenu pour l'instant)

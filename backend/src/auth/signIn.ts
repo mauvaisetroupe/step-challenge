@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import type { Pool } from 'pg'
 
 import { ensureDemoAccount } from '../demo/demoAccount.js'
+import { acceptLegal, LEGAL_DOCUMENTS, LEGAL_VERSIONS } from '../legal.js'
 import type { OidcIdentity } from './google.js'
 import { createSession } from './sessions.js'
 
@@ -39,16 +40,22 @@ function isUniqueViolation(error: unknown, constraint: string) {
   )
 }
 
+/** Versions of the legal documents seen when creating the account. */
+export type AcceptedLegal = Partial<Record<string, string>>
+
 /**
  * Signs in a verified OIDC identity.
  *
  * Finds the user linked to (issuer, subject), or creates one with the
- * given display name, then opens a new session.
+ * given display name, then opens a new session. A new account also
+ * records the legal documents accepted at their version in force
+ * (ADR 0017); an outdated one stays to accept.
  */
 export async function signInWithOidc(
   db: Pool,
   identity: OidcIdentity,
   displayName: string | undefined,
+  acceptedLegal: AcceptedLegal = {},
   isRetry = false,
 ): Promise<SignInResult> {
   const client = await db.connect()
@@ -98,6 +105,14 @@ export async function signInWithOidc(
         `,
         [randomUUID(), user.id, identity.issuer, identity.subject],
       )
+
+      await acceptLegal(
+        client,
+        user.id,
+        LEGAL_DOCUMENTS.filter(
+          (document) => acceptedLegal[document] === LEGAL_VERSIONS[document],
+        ),
+      )
     }
 
     const sessionToken = await createSession(client, user.id)
@@ -115,7 +130,7 @@ export async function signInWithOidc(
       isUniqueViolation(error, 'user_credentials_issuer_subject_key') &&
       !isRetry
     ) {
-      return signInWithOidc(db, identity, displayName, true)
+      return signInWithOidc(db, identity, displayName, acceptedLegal, true)
     }
 
     throw error

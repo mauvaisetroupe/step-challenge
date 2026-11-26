@@ -35,3 +35,4 @@ Le schéma complet n'est plus tenu à jour dans un fichier. Une fois l'applicati
 | `V006__daily_activity.sql` | 0010 | Minutes actives, très actives et inactives dans `daily_steps` |
 | `B006__schema.sql` | 0011 | Schéma complet après `V006`, pour une base vide |
 | `V007__badges.sql` | — | `user_badges` : badges obtenus ([spécification](../../docs/reference/badges.md)) |
+| `V008__user_consents.sql` | 0017 | `user_consents` : journal des accords (conditions, politique de confidentialité, autorisation HUAWEI Health) |

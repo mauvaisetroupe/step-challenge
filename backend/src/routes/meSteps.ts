@@ -274,6 +274,19 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
       }
     },
   )
+
+  /**
+   * Deletes all the user's daily totals, whatever their source: the
+   * choice offered when withdrawing HUAWEI Health (ADR 0017). Badges
+   * already earned stay.
+   */
+  app.delete('/me/steps', async (request, reply) => {
+    await db.query('DELETE FROM daily_steps WHERE user_id = $1', [
+      request.auth!.userId,
+    ])
+
+    return reply.code(204).send()
+  })
 }
 
 export default meStepsRoutes
