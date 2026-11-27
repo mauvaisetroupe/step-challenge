@@ -116,7 +116,24 @@
       "revokeFailed": "Step Challenge n'a pas pu retirer son accès à HUAWEI Health. Tu peux le faire toi-même dans HUAWEI Health → Moi → Gestion de la confidentialité : retire Step Challenge des applications autorisées.",
       "revokeKeep": "Garder mes pas",
       "revokeDelete": "Supprimer mes pas",
-      "revokedAndDeleted": "Accès à HUAWEI Health retiré et pas supprimés. Pour l'autoriser de nouveau, choisis HUAWEI Health ci-dessus."
+      "revokedAndDeleted": "Accès à HUAWEI Health retiré et pas supprimés. Pour l'autoriser de nouveau, choisis HUAWEI Health ci-dessus.",
+      "reread": {
+        "title": "Relire mes 30 derniers jours",
+        "description": "Si ta source a corrigé des pas (par exemple après des pas comptés en double), relis les 30 derniers jours : Step Challenge te montre les jours qui changent, même à la baisse, avant de remplacer quoi que ce soit.",
+        "button": "Relire mes 30 derniers jours",
+        "reading": "Lecture...",
+        "nothing": "Rien à corriger : Step Challenge a déjà les mêmes pas que ta source.",
+        "message": "Ces jours vont prendre les pas de ta source :",
+        "line": "{{date}} : {{from}} → {{to}}",
+        "more_one": "… et {{count}} autre jour",
+        "more_many": "… et {{count}} autres jours",
+        "more_other": "… et {{count}} autres jours",
+        "confirm": "Remplacer",
+        "done_one": "{{count}} jour corrigé.",
+        "done_many": "{{count}} jours corrigés.",
+        "done_other": "{{count}} jours corrigés.",
+        "error": "Impossible de relire tes pas. Réessaie dans un moment."
+      }
     },
     "activity": {
       "title": "Activité",

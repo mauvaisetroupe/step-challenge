@@ -39,6 +39,8 @@ import {
 import {
   isHealthConnectAvailable,
   openHealthConnectSettingsIfAvailable,
+  previewReplacement,
+  replaceStoredSteps,
   syncLast30Days,
 } from '@/services/stepSync'
 import { useTheme } from '@/theme'
@@ -69,6 +71,7 @@ export default function StepSourceSettingsScreen() {
   >(null)
   const [huaweiToday, setHuaweiToday] = useState<HuaweiToday | null>(null)
   const [loading, setLoading] = useState(false)
+  const [rereading, setRereading] = useState(false)
   // False on a phone without Health Connect (Huawei).
   const [healthConnect, setHealthConnect] = useState<boolean | null>(null)
 
@@ -246,6 +249,82 @@ export default function StepSourceSettingsScreen() {
     )
   }
 
+  // A source that wrote too many steps, then corrected (ADR 0013,
+  // amendment of 2026-11-27): replace the stored days, lower included,
+  // once the user saw what changes.
+  const MAX_LISTED_CHANGES = 8
+
+  const confirmReread = async () => {
+    setRereading(true)
+    setMessage(null)
+
+    try {
+      const preview = await previewReplacement()
+
+      if (!preview || preview.changes.length === 0) {
+        setMessage(t('settings.sources.reread.nothing'))
+        return
+      }
+
+      const lines = preview.changes.slice(0, MAX_LISTED_CHANGES).map(
+        ({ date, from, to }) => {
+          const [year, month, day] = date.split('-').map(Number)
+
+          return t('settings.sources.reread.line', {
+            date: formatDate(new Date(year, month - 1, day), {
+              day: 'numeric',
+              month: 'short',
+            }),
+            from: from === null ? '—' : formatNumber(from),
+            to: formatNumber(to),
+          })
+        },
+      )
+
+      if (preview.changes.length > MAX_LISTED_CHANGES) {
+        lines.push(
+          t('settings.sources.reread.more', {
+            count: preview.changes.length - MAX_LISTED_CHANGES,
+          }),
+        )
+      }
+
+      Alert.alert(
+        t('settings.sources.reread.title'),
+        `${t('settings.sources.reread.message')}\n\n${lines.join('\n')}`,
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('settings.sources.reread.confirm'),
+            onPress: () => reread(preview.days),
+          },
+        ],
+      )
+    } catch (error) {
+      console.error('Step reread preview failed:', error)
+      setMessage(t('settings.sources.reread.error'))
+    } finally {
+      setRereading(false)
+    }
+  }
+
+  const reread = async (days: Parameters<typeof replaceStoredSteps>[0]) => {
+    setRereading(true)
+
+    try {
+      const changed = await replaceStoredSteps(days)
+
+      setMessage(
+        t('settings.sources.reread.done', { count: changed.length }),
+      )
+    } catch (error) {
+      console.error('Step reread failed:', error)
+      setMessage(t('settings.sources.reread.error'))
+    } finally {
+      setRereading(false)
+    }
+  }
+
   if (Platform.OS !== 'android') {
     return (
       <SettingsPage>
@@ -350,6 +429,24 @@ export default function StepSourceSettingsScreen() {
             title={t('settings.sources.refresh')}
             onPress={load}
             disabled={loading}
+          />
+        </>
+      )}
+
+      {(source === 'huawei' || healthConnect === true) && (
+        <>
+          <Subtitle>{t('settings.sources.reread.title')}</Subtitle>
+
+          <Description>{t('settings.sources.reread.description')}</Description>
+
+          <SecondaryButton
+            title={
+              rereading
+                ? t('settings.sources.reread.reading')
+                : t('settings.sources.reread.button')
+            }
+            onPress={confirmReread}
+            disabled={rereading || switching}
           />
         </>
       )}

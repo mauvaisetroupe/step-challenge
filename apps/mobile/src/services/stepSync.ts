@@ -12,12 +12,13 @@ import {
   type Permission,
 } from 'react-native-health-connect'
 
-import { postMySteps, type DayStat } from '../api/steps'
+import { getMySteps, postMySteps, type DayStat } from '../api/steps'
 import { computeDayActivity } from './activity'
 import { getHuaweiLast30Days } from './huaweiHealth'
 import { syncPhoneSteps } from './phoneSteps'
 import { loadSleepHours } from './sleepHours'
 import { getHealthConnectStepSlices } from './stepSlices'
+import { planReplacement } from './stepReplacePlan'
 import { loadStepSource } from './stepSource'
 
 export type { DayStat }
@@ -390,3 +391,36 @@ export async function syncLast30Days(
   )
 }
 
+
+/**
+ * The last 30 days of the chosen source (Health Connect or Huawei
+ * Health), without activity minutes, and the days whose total differs
+ * from the stored one (ADR 0013, amendment of 2026-11-27). Null on a
+ * phone with neither: the phone step counter only knows today.
+ */
+export async function previewReplacement() {
+  let days: DayStat[]
+
+  if ((await loadStepSource()) === 'huawei') {
+    days = await getHuaweiLast30Days()
+  } else if (await isHealthConnectAvailable()) {
+    days = await getHealthConnectLast30Days({ activityDays: 0 })
+  } else {
+    return null
+  }
+
+  const stored = await getMySteps(days[0]?.date)
+
+  return { days, changes: planReplacement(days, stored) }
+}
+
+/**
+ * Replaces the stored totals by the source ones, lower included, after
+ * the user confirmed the changes. Returns the dates actually changed.
+ */
+export async function replaceStoredSteps(days: DayStat[]) {
+  return postMySteps(
+    days.map(({ date, steps }) => ({ date, steps })),
+    { replace: true },
+  )
+}

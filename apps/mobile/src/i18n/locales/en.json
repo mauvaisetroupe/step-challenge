@@ -114,7 +114,22 @@
       "revokeFailed": "Step Challenge could not remove its access to HUAWEI Health. You can do it yourself in HUAWEI Health → Me → Privacy management: remove Step Challenge from the authorized apps.",
       "revokeKeep": "Keep my steps",
       "revokeDelete": "Delete my steps",
-      "revokedAndDeleted": "Access to HUAWEI Health removed and steps deleted. To allow it again, choose HUAWEI Health above."
+      "revokedAndDeleted": "Access to HUAWEI Health removed and steps deleted. To allow it again, choose HUAWEI Health above.",
+      "reread": {
+        "title": "Read my last 30 days again",
+        "description": "If your source corrected some steps (for example after steps counted twice), read the last 30 days again: Step Challenge shows you the days that change, even downward, before replacing anything.",
+        "button": "Read my last 30 days again",
+        "reading": "Reading...",
+        "nothing": "Nothing to correct: Step Challenge already has the same steps as your source.",
+        "message": "These days will take the steps of your source:",
+        "line": "{{date}}: {{from}} → {{to}}",
+        "more_one": "… and {{count}} more day",
+        "more_other": "… and {{count}} more days",
+        "confirm": "Replace",
+        "done_one": "{{count}} day corrected.",
+        "done_other": "{{count}} days corrected.",
+        "error": "Could not read your steps again. Try again in a moment."
+      }
     },
     "activity": {
       "title": "Activity",

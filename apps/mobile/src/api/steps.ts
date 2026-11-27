@@ -22,8 +22,15 @@ const MAX_DAYS_PER_REQUEST = 31
  * The backend keeps the highest value per day, so sending a day again
  * is harmless. Returns the dates it actually recorded (new day, higher
  * total or new activity minutes).
+ *
+ * `replace`, only after the user checked the changes: a different total
+ * replaces the stored one, lower included, except 0 (ADR 0013,
+ * amendment of 2026-11-27). An older API ignores it.
  */
-export async function postMySteps(days: DayStat[]) {
+export async function postMySteps(
+  days: DayStat[],
+  { replace = false }: { replace?: boolean } = {},
+) {
   const updatedDates: string[] = []
 
   for (let i = 0; i < days.length; i += MAX_DAYS_PER_REQUEST) {
@@ -31,7 +38,10 @@ export async function postMySteps(days: DayStat[]) {
       '/api/me/steps',
       {
         method: 'POST',
-        body: { days: days.slice(i, i + MAX_DAYS_PER_REQUEST) },
+        body: {
+          days: days.slice(i, i + MAX_DAYS_PER_REQUEST),
+          ...(replace && { mode: 'replace' }),
+        },
       },
     )
 
