@@ -1,7 +1,7 @@
 # ADR 0013 — Une seule source de pas, choisie par l'utilisateur ; Huawei Health lu par son API cloud
 
 - **Statut** : Accepté
-- **Date** : 2026-11-24, amendé le 2026-11-26 (suggestion de Huawei Health sur l'Accueil, annulation de l'autorisation HUAWEI, courbe 1j heure par heure, historique d'un mois)
+- **Date** : 2026-11-24, amendé le 2026-11-26 (suggestion de Huawei Health sur l'Accueil, annulation de l'autorisation HUAWEI, courbe 1j heure par heure, historique d'un mois) et le 2026-11-27 (relecture des 30 derniers jours, à la baisse)
 - **Décideur** : mauvaisetroupe
 
 ## Contexte
@@ -172,6 +172,29 @@ Si l'API REST devenait inaccessible (refus de Huawei à la vérification, par ex
 ### Le serveur
 
 **Aucun changement d'API.** La règle du maximum par jour reste : un changement de source ne fait jamais baisser un jour déjà envoyé. C'est acceptable parce que les deux sources mesurent les pas de la même personne, et que changer de source reste rare. Une source qui compte moins (le téléphone seul, après une montre) ne prend le dessus que sur les jours suivants.
+
+### Relire les 30 derniers jours, à la baisse (amendement du 2026-11-27)
+
+**Constat** (une testeuse, 2026-11-27) : Mi Fitness, seule source de ses pas, écrit certains jours plusieurs fois les mêmes pas dans Santé Connect (environ trois fois le vrai total). Santé Connect départage deux applications, mais additionne les enregistrements d'une même application. Une fois Santé Connect corrigé, la règle du maximum garde les jours gonflés pour toujours, dans les classements des amis aussi.
+
+**Pourquoi la règle du maximum reste la règle** : une synchronisation automatique à la baisse effacerait l'historique dans des cas fréquents :
+
+- un nouveau téléphone, dont Santé Connect est vide ou presque : 30 jours ramenés à 0 ;
+- deux appareils sur le même compte (un ancien téléphone resté connecté, dont le travailleur Kotlin synchronise encore) : le dernier envoi gagne ;
+- un changement de source sans historique (HUAWEI Health sans le scope d'historique) : 0 sur les jours passés ;
+- une lecture partielle : application source qui réécrit ses données, cloud HUAWEI en retard ;
+- les versions déjà installées et le travailleur Kotlin, si le changement était côté serveur seulement.
+
+**Décision** : une action volontaire, Plus → Source des pas → **Relire mes 30 derniers jours** :
+
+- l'application lit les 30 jours dans la source choisie et les compare aux jours du serveur (`GET /api/me/steps`) ;
+- elle affiche les jours qui changeraient (« 12 nov. : 50 214 → 16 380 »), et ne remplace qu'après confirmation ;
+- elle envoie les totaux avec `mode: 'replace'` dans `POST /api/me/steps` (champ facultatif ; absent, `'max'`, la règle habituelle). Le serveur remplace alors un jour par un total différent, **sauf par 0** : un jour vide dans la source garde sa valeur, ce qui protège d'une source vide ou en retard ;
+- les minutes d'activité ne sont pas renvoyées : celles déjà enregistrées restent (elles suivent le total, ADR 0010) ;
+- les badges déjà gagnés restent (figés à l'obtention, [spécification des badges](../reference/badges.md)) ;
+- une ancienne API ignore `mode` (champ inconnu retiré, ADR 0012) : rien ne baisse, l'application le dit par le nombre de jours corrigés.
+
+Aucun risque de triche nouveau : un client peut déjà envoyer n'importe quel total plus grand.
 
 ### Confidentialité
 

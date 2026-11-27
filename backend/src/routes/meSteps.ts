@@ -77,6 +77,11 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
    * The server keeps the highest value per day: sending the same or a
    * lower total again has no effect, so the sync is idempotent.
    *
+   * With `mode: 'replace'`, asked by the user after checking the
+   * changes (ADR 0013, amendment of 2026-11-27), a different total
+   * replaces the stored one, lower included, except 0: a day empty in
+   * the source keeps its value.
+   *
    * The activity minutes (ADR 0010), all three or none, follow the
    * steps: they are replaced when the total received is the same or
    * higher (steps arriving late, from a watch, can lower the inactive
@@ -91,7 +96,7 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
    * fails the sync: the next one, or opening the badges, catches up.
    */
   app.post<{
-    Body: { days: DayEntry[] }
+    Body: { days: DayEntry[]; mode?: 'max' | 'replace' }
   }>(
     '/me/steps',
     {
@@ -128,12 +133,13 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
                 },
               },
             },
+            mode: { type: 'string', enum: ['max', 'replace'] },
           },
         },
       },
     },
     async (request, reply) => {
-      const { days } = request.body
+      const { days, mode = 'max' } = request.body
       const dates = days.map((day) => day.date)
 
       if (new Set(dates).size !== dates.length) {
@@ -175,7 +181,8 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
       }
 
       // Rows skipped by the WHERE clause (lower total, or same total
-      // without new minutes) are neither updated nor returned.
+      // without new minutes; in replace mode, same total or 0) are
+      // neither updated nor returned.
       const result = await db.query<{ date: string }>(
         `
         INSERT INTO daily_steps (
@@ -193,6 +200,11 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
             updated_at = now()
         WHERE daily_steps.steps < EXCLUDED.steps
            OR (
+               $7 = 'replace'
+               AND EXCLUDED.steps > 0
+               AND EXCLUDED.steps <> daily_steps.steps
+           )
+           OR (
                daily_steps.steps = EXCLUDED.steps
                AND EXCLUDED.active_minutes IS NOT NULL
                AND (EXCLUDED.active_minutes, EXCLUDED.very_active_minutes, EXCLUDED.inactive_minutes)
@@ -208,6 +220,7 @@ const meStepsRoutes: FastifyPluginAsync<MeStepsRoutesOptions> = async (
           ...ACTIVITY_FIELDS.map((field) =>
             days.map((day) => day[field] ?? null),
           ),
+          mode,
         ],
       )
 

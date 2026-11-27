@@ -385,6 +385,96 @@ describe('POST /api/me/steps, activity minutes (ADR 0010)', {
   })
 })
 
+describe('POST /api/me/steps, replace mode (ADR 0013)', {
+  skip: skipWithoutDatabase,
+}, () => {
+  function replaceSteps(app: TestApp, token: string, days: unknown) {
+    return app.inject({
+      method: 'POST',
+      url: '/api/me/steps',
+      headers: bearer(token),
+      payload: { days, mode: 'replace' },
+    })
+  }
+
+  async function stored(token: string, app: TestApp) {
+    const response = await getSteps(app, token, '?from=2000-01-01')
+
+    return Object.fromEntries(
+      response
+        .json()
+        .map((day: { date: string; steps: number }) => [day.date, day.steps]),
+    )
+  }
+
+  it('lowers a day only when asked', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+    const day = await serverDate(-1)
+
+    await postSteps(app, token, [{ date: day, steps: 50000 }])
+
+    const kept = await postSteps(app, token, [{ date: day, steps: 16000 }])
+
+    assert.deepEqual(kept.json().updatedDates, [])
+    assert.equal((await stored(token, app))[day], 50000)
+
+    const replaced = await replaceSteps(app, token, [
+      { date: day, steps: 16000 },
+    ])
+
+    assert.equal(replaced.statusCode, 200)
+    assert.deepEqual(replaced.json().updatedDates, [day])
+    assert.equal((await stored(token, app))[day], 16000)
+  })
+
+  it('never replaces a day by 0, and skips unchanged days', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+    const [empty, same, raised] = await Promise.all([
+      serverDate(-3),
+      serverDate(-2),
+      serverDate(-1),
+    ])
+
+    await postSteps(app, token, [
+      { date: empty, steps: 9000 },
+      { date: same, steps: 7000 },
+      { date: raised, steps: 5000 },
+    ])
+
+    const response = await replaceSteps(app, token, [
+      { date: empty, steps: 0 },
+      { date: same, steps: 7000 },
+      { date: raised, steps: 6000 },
+    ])
+
+    assert.deepEqual(response.json().updatedDates, [raised])
+    assert.deepEqual(await stored(token, app), {
+      [empty]: 9000,
+      [same]: 7000,
+      [raised]: 6000,
+    })
+  })
+
+  it('refuses an unknown mode', async () => {
+    const app = await buildApp()
+    const { token } = await signInAs(app, 'alice')
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/me/steps',
+      headers: bearer(token),
+      payload: {
+        days: [{ date: await serverDate(), steps: 10 }],
+        mode: 'min',
+      },
+    })
+
+    assert.equal(response.statusCode, 400)
+  })
+})
+
 describe('GET /api/me/steps', { skip: skipWithoutDatabase }, () => {
   async function insertSteps(userId: string, offsetDays: number) {
     await pool!.query(
